@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>🥟 딤섬 클리커 컨피규레이터</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  body { display: flex; background: #f6f1e7; }
+
+  #panel {
+    width: 320px; min-width: 320px; height: 100%; overflow-y: auto;
+    background: #fffdf8; border-right: 1px solid #e8dfc9; padding: 16px 18px 40px;
+  }
+  #panel h1 { font-size: 17px; margin-bottom: 2px; }
+  #panel .sub { font-size: 11px; color: #a09a8c; margin-bottom: 14px; }
+  details { margin-bottom: 10px; border: 1px solid #eee4cf; border-radius: 10px; background: #fff; }
+  details > summary {
+    cursor: pointer; padding: 9px 12px; font-weight: 600; font-size: 13px;
+    color: #6b5d43; list-style: none; user-select: none;
+  }
+  details > summary::before { content: "▸ "; color: #d3a95f; }
+  details[open] > summary::before { content: "▾ "; }
+  .body { padding: 4px 12px 12px; }
+  .row { display: flex; align-items: center; margin: 7px 0; gap: 8px; }
+  .row label { flex: 0 0 108px; font-size: 12px; color: #55503f; }
+  .row input[type=range] { flex: 1; accent-color: #d3a95f; }
+  .row .val { flex: 0 0 44px; font-size: 11px; text-align: right; color: #8b7f60; font-variant-numeric: tabular-nums; }
+  .row select, .row input[type=number] { flex: 1; font-size: 12px; padding: 3px 6px; border: 1px solid #ddd2b5; border-radius: 6px; }
+  .row input[type=checkbox] { accent-color: #d3a95f; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  button {
+    background: #e9b95f; color: #4d3a14; border: none; border-radius: 8px;
+    padding: 7px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  button:hover { background: #f2c771; }
+  button.ghost { background: #f1ead7; color: #6b5d43; }
+  #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
+  #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; }
+  #status {
+    position: fixed; right: 14px; top: 12px; background: #4d3a14; color: #ffe9b8;
+    font-size: 12px; padding: 6px 12px; border-radius: 999px; opacity: 0; transition: opacity .2s;
+    pointer-events: none; z-index: 10;
+  }
+  #status.on { opacity: .92; }
+  #viewer { flex: 1; height: 100%; position: relative; }
+  #viewer canvas { display: block; }
+  .hint { font-size: 10.5px; color: #b0a68e; margin-top: 4px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h1>🥟 딤섬 클리커 컨피규레이터</h1>
+  <div class="sub">슬라이더를 움직이면 STL이 실시간으로 다시 설계됩니다</div>
+
+  <details open>
+    <summary>외곽 디자인</summary>
+    <div class="body">
+      <div class="row"><label>가로 W</label><input type="range" id="W" min="40" max="70" step="0.5" value="44"><span class="val" id="Wv"></span></div>
+      <div class="row"><label>세로 D</label><input type="range" id="D" min="34" max="65" step="0.5" value="39"><span class="val" id="Dv"></span></div>
+      <div class="row"><label>모서리 둥글기</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
+      <div class="row"><label>벽 두께</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
+      <div class="row"><label>장식 홈</label><input type="checkbox" id="bands" checked></div>
+      <div class="hint">모서리 둥글기를 끝까지 올리면 원형에 가까워집니다</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>층 높이</summary>
+    <div class="body">
+      <div class="row"><label>1층 (배터리)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
+      <div class="row"><label>2층 (보드)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="20.5"><span class="val" id="f2Hv"></span></div>
+      <div class="row"><label>3층 (뚜껑)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
+      <div class="row"><label>스위치 보스</label><input type="range" id="bossH" min="0" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
+      <div class="row"><label>스탠드 매립</label><input type="range" id="standSink" min="0" max="3" step="0.2" value="1.2"><span class="val" id="standSinkv"></span></div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>부품 배치 (2층)</summary>
+    <div class="body">
+      <div class="row"><label>ESP32 X</label><input type="range" id="espX" min="-18" max="18" step="0.5" value="-10"><span class="val" id="espXv"></span></div>
+      <div class="row"><label>ESP32 Y</label><input type="range" id="espY" min="-14" max="14" step="0.5" value="0"><span class="val" id="espYv"></span></div>
+      <div class="row"><label>ESP32 회전</label>
+        <select id="espRot"><option value="0">가로 (24×18)</option><option value="90" selected>세로 (18×24)</option></select>
+      </div>
+      <div class="row"><label>충전모듈 Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="0"><span class="val" id="modYv"></span></div>
+      <div class="row"><label>OLED 위치</label>
+        <select id="oledSide">
+          <option value="N" selected>북쪽 벽 (뒤)</option>
+          <option value="W">서쪽 벽 (왼쪽)</option>
+          <option value="S">남쪽 벽 (앞)</option>
+          <option value="none">없음</option>
+        </select>
+      </div>
+      <div class="row"><label>배선구멍 X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="4"><span class="val" id="wireXv"></span></div>
+      <div class="row"><label>배선구멍 Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12.5"><span class="val" id="wireYv"></span></div>
+      <div class="hint">충전모듈은 USB 포트가 항상 오른쪽(동쪽) 벽에 붙습니다. 반투명 부품으로 간섭을 확인하세요.</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>보기</summary>
+    <div class="body">
+      <div class="row"><label>분해 ⟷ 조립</label><input type="range" id="explode" min="0" max="1" step="0.01" value="0.55"><span class="val" id="explodev"></span></div>
+      <div class="btns">
+        <button id="animBtn">▶ 조립 애니메이션</button>
+        <button class="ghost" id="ghostBtn">부품 표시: 켬</button>
+        <button class="ghost" id="xrayBtn">케이스 반투명: 끔</button>
+      </div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>STL 내보내기</summary>
+    <div class="body">
+      <div class="btns">
+        <button id="ex1">1층.stl</button>
+        <button id="ex2">2층.stl</button>
+        <button id="ex3">3층.stl</button>
+      </div>
+      <div class="row" style="margin-top:8px"><label>3층 출력용 뒤집기</label><input type="checkbox" id="flip3" checked></div>
+      <div class="hint">3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다</div>
+    </div>
+  </details>
+
+  <div id="dims"></div>
+  <div id="warnings"></div>
+</div>
+
+<div id="viewer"></div>
+<div id="status">모델 생성 중…</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three-mesh-bvh": "./vendor/three-mesh-bvh.module.js",
+    "three-bvh-csg": "./vendor/three-bvh-csg.module.js",
+    "three/addons/controls/OrbitControls.js": "./vendor/OrbitControls.js",
+    "three/addons/loaders/STLLoader.js": "./vendor/STLLoader.js",
+    "three/addons/exporters/STLExporter.js": "./vendor/STLExporter.js",
+    "three/addons/utils/BufferGeometryUtils.js": "./vendor/BufferGeometryUtils.js"
+  }
+}
+</script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
