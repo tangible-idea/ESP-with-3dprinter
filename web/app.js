@@ -14,6 +14,7 @@ const BAT = { w: 36.5, d: 28.5, h: 4.3, clr: 0.7 };
 const ESP = { l: 24, w: 18, h: 4.2 };
 const MOD = { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 }; // USB가 x끝에서 1mm 돌출
 const OLED = { w: 15, hgt: 16, t: 2.4 };
+const OLED_TOWER_TOP = 4.2 + OLED.hgt + 1.0;   // 2층 바닥 기준 OLED 타워 상단 (21.2)
 const STAND_FLARE_Z = 5.4;   // keyboard_switch_stand.stl: 몸통(플레어) 시작 높이
 const STAND_H = 14.0;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
@@ -26,9 +27,9 @@ const POCKET_CLR = 0.4;
 // ------------------------------------------------------------------
 const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true,
-  f1H: 7.5, f2H: 20.5, f3H: 10, bossH: 2.5, standSink: 1.2,
-  espX: -10, espY: 0, espRot: 90, modY: 0, oledSide: 'N',
-  wireX: 4, wireY: -12.5,
+  f1H: 7.5, f2H: 16, f3H: 10, bossH: 2.5, standSink: 1.2,
+  espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W',
+  wireX: -6, wireY: -12,
 };
 const sliders = ['W','D','R','wall','f1H','f2H','f3H','bossH','standSink',
                  'espX','espY','modY','wireX','wireY'];
@@ -279,19 +280,22 @@ function buildFloor2() {
   const mc = modCenter();
   b = sub(b, boxBrush(MOD.l + POCKET_CLR, MOD.w + POCKET_CLR, F2_PLATFORM + 2, mc.x, mc.y, F2_PLATE, 1.5));
 
-  // OLED 소켓
+  // OLED 소켓 타워 — 2층 높이와 무관하게 항상 OLED가 다 들어가는 높이.
+  // 2층 벽보다 높으면 3층 뚜껑의 노치(cutout)에 끼워짐 → 조립 키 역할.
   if (P.oledSide !== 'none') {
-    const { m, innerFace } = oledFrame();
-    let boss = boxBrush(18, 4.4, P.f2H - F2_PLATE, 0, innerFace - 2.1, F2_PLATE, 0, m);
-    boss = inter(boss, extrude(baseShape(P.wall - 0.01), P.f2H, 0));
-    b = add(b, boss);
-    b = sub(b, boxBrush(OLED.w + 0.5, OLED.t + 0.3, P.f2H, 0, innerFace - (OLED.t + 0.3) / 2, 4.2, 0, m));
+    const { m, innerFace, dHalf } = oledFrame();
+    const towerD = P.wall + 4.4;   // 외벽 포함 타워 깊이
+    let tower = boxBrush(18, towerD, OLED_TOWER_TOP - F2_PLATE,
+                         0, dHalf - towerD / 2, F2_PLATE, 0, m);
+    tower = inter(tower, extrude(baseShape(0), OLED_TOWER_TOP, 0));  // 외곽 곡면 따라 자르기
+    b = add(b, tower);
+    b = sub(b, boxBrush(OLED.w + 0.5, OLED.t + 0.3, OLED_TOWER_TOP, 0, innerFace - (OLED.t + 0.3) / 2, 4.2, 0, m));
     b = sub(b, boxBrush(11, OLED.t + 0.3, 4.2 - F2_PLATE + 0.1, 0, innerFace - (OLED.t + 0.3) / 2, F2_PLATE, 0, m));
-    // 디스플레이 창 (벽 관통)
+    // 디스플레이 창 (타워 외벽 관통)
     const wg = new THREE.ExtrudeGeometry(rrShape(13.5, 8, 1.5), { depth: P.wall + 2, bevelEnabled: false, curveSegments: 12 });
     wg.deleteAttribute('uv');
     wg.rotateX(-Math.PI / 2);
-    wg.translate(0, innerFace - 0.8, Math.min(4.2 + OLED.hgt * 0.62, P.f2H - 4.5));
+    wg.translate(0, innerFace - 0.8, 4.2 + OLED.hgt * 0.62);
     b = sub(b, toMan(wg, m));
   }
 
@@ -323,6 +327,17 @@ function buildFloor3() {
   b = sub(b, boxBrush(7, 7, P.f3H + P.bossH, 0, 0, P.f3H - F3_PLATE - 0.5, 0.8));
 
   b = sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+
+  // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
+  if (P.oledSide !== 'none') {
+    const { m, dHalf } = oledFrame();
+    const cutTop = Math.min(OLED_TOWER_TOP - P.f2H + 0.8, P.f3H + P.bossH + 1);
+    if (cutTop > 0) {
+      const cutD = P.wall + 5.4;
+      b = sub(b, boxBrush(18.8, cutD, cutTop + 0.1, 0, dHalf + 0.5 - cutD / 2, -0.1, 0, m));
+    }
+  }
+
   b = decoBands(b, [P.f3H * 0.4]);
   return b;
 }
@@ -467,11 +482,17 @@ function updateInfo(ms) {
   if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
   if (Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
   if (rectsOverlap(eRect, mRect)) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다');
-  if (P.oledSide !== 'none' && P.f2H < 4.2 + OLED.hgt + 0.3) warn.push(`⚠ OLED(세로 16mm) 때문에 2층 높이는 ${(4.2 + OLED.hgt + 0.3).toFixed(1)}mm 이상이어야 합니다`);
-  if (P.oledSide !== 'none' && P.oledSide !== 'W' && rectsOverlap(eRect, { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (innerHalfD() - 2.2), w: 18, d: 4.4 }))
-    warn.push('⚠ ESP32가 OLED 소켓과 겹칩니다');
-  if (P.oledSide === 'W' && rectsOverlap(eRect, { x: -(innerHalfW() - 2.2), y: 0, w: 4.4, d: 18 }))
-    warn.push('⚠ ESP32가 OLED 소켓과 겹칩니다');
+  if (P.oledSide !== 'none') {
+    // OLED 타워 footprint (월드 좌표)
+    const tD = P.wall + 5.4;
+    const tower = P.oledSide === 'W'
+      ? { x: -(P.W / 2 - tD / 2), y: 0, w: tD, d: 19.2 }
+      : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (P.D / 2 - tD / 2), w: 19.2, d: tD };
+    if (rectsOverlap(eRect, tower)) warn.push('⚠ ESP32가 OLED 타워와 겹칩니다');
+    if (rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
+    if (OLED_TOWER_TOP - P.f2H > P.f3H - F3_PLATE - 0.3)
+      warn.push('⚠ OLED 타워가 3층 상판을 뚫습니다 — 2층 또는 3층 높이를 키우세요');
+  }
   if (P.f1H < F1_PLATE + BAT.h + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
   document.getElementById('warnings').textContent = warn.join('\n');
 }
