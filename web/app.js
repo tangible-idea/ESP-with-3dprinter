@@ -29,7 +29,7 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossH: 2.5, standSink: 1.2,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W',
-  wireX: -6, wireY: -12,
+  wireX: -6, wireY: -12, wireRot: 0,
 };
 const sliders = ['W','D','R','wall','f1H','f2H','f3H','bossH','standSink',
                  'espX','espY','modY','wireX','wireY'];
@@ -46,6 +46,7 @@ for (const k of sliders) {
   show();
 }
 document.getElementById('espRot').addEventListener('change', e => { P.espRot = +e.target.value; queueRebuild(); });
+document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
 
@@ -291,6 +292,10 @@ function buildFloor2() {
     b = add(b, tower);
     b = sub(b, boxBrush(OLED.w + 0.5, OLED.t + 0.3, OLED_TOWER_TOP, 0, innerFace - (OLED.t + 0.3) / 2, 4.2, 0, m));
     b = sub(b, boxBrush(11, OLED.t + 0.3, 4.2 - F2_PLATE + 0.1, 0, innerFace - (OLED.t + 0.3) / 2, F2_PLATE, 0, m));
+    // OLED 뒷면 구멍 (타워 뒷벽 관통) — 핀 납땜부/배선이 내부로 빠짐
+    b = sub(b, boxBrush(12, towerD - OLED.t - P.wall - 0.2, 9.0,
+                        0, innerFace - OLED.t - 0.3 - (towerD - OLED.t - P.wall - 0.2) / 2,
+                        4.2, 1.2, m));
     // 디스플레이 창 (타워 외벽 관통)
     const wg = new THREE.ExtrudeGeometry(rrShape(13.5, 8, 1.5), { depth: P.wall + 2, bevelEnabled: false, curveSegments: 12 });
     wg.deleteAttribute('uv');
@@ -303,8 +308,10 @@ function buildFloor2() {
   const usbM = new THREE.Matrix4().makeTranslation(innerHalfW(), P.modY, F2_PLATE + MOD.usbZ);
   b = sub(b, meshBrush(ASSETS.usb, usbM));
 
-  // 배터리 배선 구멍
-  b = sub(b, boxBrush(8, 4, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 1.5));
+  // 배터리 배선 구멍 (긴 슬롯 — +/− 두 가닥이 함께 통과, 가로/세로 회전 가능)
+  const ww = P.wireRot === 90 ? 5 : 14;
+  const wd = P.wireRot === 90 ? 14 : 5;
+  b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
 
   // 바닥 rabbet + 장식
   b = sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
