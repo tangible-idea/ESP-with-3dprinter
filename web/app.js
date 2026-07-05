@@ -14,7 +14,7 @@ const BAT = { w: 36.5, d: 28.5, h: 4.3, clr: 0.7 };
 const ESP = { l: 24, w: 18, h: 4.2 };
 const MOD = { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 }; // USB가 x끝에서 1mm 돌출
 const OLED = { w: 15, hgt: 16, t: 2.4 };
-const OLED_TOWER_TOP = 4.2 + OLED.hgt + 1.0;   // 2층 바닥 기준 OLED 타워 상단 (21.2)
+const OLED_TOWER_TOP = 4.2 + OLED.hgt + 0.3 + 1.2;   // 2층 바닥 기준 OLED 타워 상단 (21.7, 천장 1.2)
 const STAND_FLARE_Z = 5.4;   // keyboard_switch_stand.stl: 몸통(플레어) 시작 높이
 const STAND_H = 14.0;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
@@ -290,12 +290,11 @@ function buildFloor2() {
                          0, dHalf - towerD / 2, F2_PLATE, 0, m);
     tower = inter(tower, extrude(baseShape(0), OLED_TOWER_TOP, 0));  // 외곽 곡면 따라 자르기
     b = add(b, tower);
-    b = sub(b, boxBrush(OLED.w + 0.5, OLED.t + 0.3, OLED_TOWER_TOP, 0, innerFace - (OLED.t + 0.3) / 2, 4.2, 0, m));
-    b = sub(b, boxBrush(11, OLED.t + 0.3, 4.2 - F2_PLATE + 0.1, 0, innerFace - (OLED.t + 0.3) / 2, F2_PLATE, 0, m));
-    // OLED 뒷면 구멍 (타워 뒷벽 관통) — 핀 납땜부/배선이 내부로 빠짐
-    b = sub(b, boxBrush(12, towerD - OLED.t - P.wall - 0.2, 9.0,
-                        0, innerFace - OLED.t - 0.3 - (towerD - OLED.t - P.wall - 0.2) / 2,
-                        4.2, 1.2, m));
+    // 뒤에서 장착: OLED 전체(15.5 x 16.3)가 내부에서 통째로 들어가는 포켓.
+    // 뒷면은 완전 개방(뒷벽 관통), 앞은 외벽+디스플레이 창이 잡아줌. 위는 막힘.
+    const pocketD = towerD - P.wall + 0.2;   // 뒷벽까지 완전 관통
+    b = sub(b, boxBrush(OLED.w + 0.5, pocketD, OLED.hgt + 0.3,
+                        0, innerFace - pocketD / 2, 4.2, 0, m));
     // 디스플레이 창 (타워 외벽 관통)
     const wg = new THREE.ExtrudeGeometry(rrShape(13.5, 8, 1.5), { depth: P.wall + 2, bevelEnabled: false, curveSegments: 12 });
     wg.deleteAttribute('uv');
