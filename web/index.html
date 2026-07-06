@@ -62,8 +62,9 @@
       <div class="row"><label>모서리 둥글기</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
       <div class="row"><label>벽 두께</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
       <div class="row"><label>결합 유격</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
+      <div class="row"><label>V형 결합부</label><input type="checkbox" id="jointV" checked></div>
       <div class="row"><label>장식 홈</label><input type="checkbox" id="bands" checked></div>
-      <div class="hint">모서리 둥글기를 끝까지 올리면 원형에 가까워집니다. 결합 유격을 줄일수록 층이 꽉 끼웁니다 (헐거우면 낮추고, 안 들어가면 올리세요). 설정은 자동 저장됩니다.</div>
+      <div class="hint">V형 결합부: 홈·턱을 58° 경사 단면으로 만들어 2층 밑면에 서포트가 필요 없고 조립 시 스스로 중앙 정렬됩니다. 끄면 기존 사각 단면. 결합 유격을 줄일수록 꽉 끼움. 설정은 자동 저장됩니다.</div>
     </div>
   </details>
 
@@ -150,6 +151,6 @@
   }
 }
 </script>
-<script type="module" src="./app.js?v=13"></script>
+<script type="module" src="./app.js?v=14"></script>
 </body>
 </html>

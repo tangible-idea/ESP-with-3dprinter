@@ -27,7 +27,7 @@ const POCKET_CLR = 0.4;
 // 파라미터 & UI 바인딩
 // ------------------------------------------------------------------
 const P = {
-  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
+  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossH: 2.5, standSink: 1.2,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W',
   wireX: -6, wireY: -12, wireRot: 0,
@@ -63,6 +63,8 @@ document.getElementById('espRot').value = String(P.espRot);
 document.getElementById('wireRot').value = String(P.wireRot);
 document.getElementById('oledSide').value = P.oledSide;
 document.getElementById('bands').checked = P.bands;
+document.getElementById('jointV').checked = P.jointV;
+document.getElementById('jointV').addEventListener('change', e => { P.jointV = e.target.checked; queueRebuild(); });
 document.getElementById('espRot').addEventListener('change', e => { P.espRot = +e.target.value; queueRebuild(); });
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
@@ -185,9 +187,36 @@ function boxBrush(w, d, h, cx, cy, z0, r = 0, matrix = null) {
   const s = r > 0 ? rrShape(w, d, r) : rrShape(w, d, 0.05);
   return toMan(extrudeGeo(s, h, z0, cx, cy), matrix);
 }
-function topRidge(z) {   // 아래층 상단 턱 — 유격(fitClr)만큼 안쪽으로
-  const o = RABBET.out + P.fitClr;
-  return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+// 결합부 프로파일 — 기존(사각) / V형(계단식 58°, 홈 천장이 없어 서포트 불필요)
+const V = { c: 1.8, hw: 1.2, d: 1.8, step: 0.3 };   // 중심 inset, 밑변 반폭, 깊이, 계단 높이
+
+function topRidge(z) {   // 아래층 상단 턱
+  if (!P.jointV) {
+    const o = RABBET.out + P.fitClr;
+    return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+  }
+  // V형: 계단식 삼각 단면 (5단, 높이 1.5 — 홈보다 0.3 낮아 꼭대기 여유)
+  let r = null;
+  for (let k = 0; k < 5; k++) {
+    const hw = V.hw * (1 - (V.step * k) / V.d) - P.fitClr;
+    if (hw <= 0.05) break;
+    const ring = ringBrush(V.c - hw, Math.min(V.c + hw, P.wall), V.step + 0.02,
+                           z + V.step * k);
+    r = r ? add(r, ring) : ring;
+  }
+  return r;
+}
+
+function bottomJointCut(b) {   // 위층 바닥 결합부 컷
+  if (!P.jointV) {
+    return sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+  }
+  // V형 홈: 계단마다 0.2mm씩 좁아져 최대 평면 오버행이 0.2mm → 서포트 프리
+  for (let k = 0; k < 6; k++) {
+    const hw = V.hw * (1 - (V.step * k) / V.d);
+    b = sub(b, ringBrush(V.c - hw, V.c + hw, V.step + 0.04, V.step * k - 0.02));
+  }
+  return b;
 }
 const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r; };
 const add = (a, b) => csgOp(a, b, 'add');
@@ -339,7 +368,7 @@ function buildFloor2() {
   b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
 
   // 바닥 rabbet + 장식
-  b = sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+  b = bottomJointCut(b);
   b = decoBands(b, [P.f2H * 0.3, P.f2H * 0.66]);
   return b;
 }
@@ -358,7 +387,7 @@ function buildFloor3() {
   // 중앙 배선 통로 (상판 관통)
   b = sub(b, boxBrush(7, 7, P.f3H + P.bossH, 0, 0, P.f3H - F3_PLATE - 0.5, 0.8));
 
-  b = sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+  b = bottomJointCut(b);
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
