@@ -18,37 +18,59 @@ const OLED_TOWER_TOP = 4.2 + OLED.hgt + 0.3 + 1.2;   // 2층 바닥 기준 OLED 
 const STAND_FLARE_Z = 5.4;   // keyboard_switch_stand.stl: 몸통(플레어) 시작 높이
 const STAND_H = 14.0;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
-const RIDGE = { inn: 2.1, out: 0.9, h: 1.5 };      // 아래층 턱 (외곽 inset 기준)
-const RABBET = { out: 0.7, d: 1.8 };                // 위층 바닥 단차
+const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 아래층 턱 높이/폭
+const RABBET = { out: 0.7, d: 1.8 };  // 위층 바닥 단차 (외곽 inset 기준)
+// 턱 바깥면 inset = RABBET.out + P.fitClr → 결합 유격을 슬라이더로 조절
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
 // 파라미터 & UI 바인딩
 // ------------------------------------------------------------------
 const P = {
-  W: 44, D: 39, R: 8, wall: 2.3, bands: true,
+  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1H: 7.5, f2H: 16, f3H: 10, bossH: 2.5, standSink: 1.2,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W',
   wireX: -6, wireY: -12, wireRot: 0,
 };
-const sliders = ['W','D','R','wall','f1H','f2H','f3H','bossH','standSink',
+
+// 저장된 설정 복원 (localStorage)
+try {
+  const saved = JSON.parse(localStorage.getItem('dimsum-params') || '{}');
+  for (const k in saved) if (k in P) P[k] = saved[k];
+} catch (e) { /* 무시 */ }
+const saveParams = () => {
+  try { localStorage.setItem('dimsum-params', JSON.stringify(P)); } catch (e) { /* 무시 */ }
+};
+
+const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink',
                  'espX','espY','modY','wireX','wireY'];
 let rebuildTimer = null;
 function queueRebuild() {
+  saveParams();
   clearTimeout(rebuildTimer);
   rebuildTimer = setTimeout(rebuild, 250);
 }
 for (const k of sliders) {
   const el = document.getElementById(k);
   const vl = document.getElementById(k + 'v');
-  const show = () => { vl.textContent = (+el.value).toFixed(1); };
+  const dec = (+el.step < 0.1) ? 2 : 1;
+  const show = () => { vl.textContent = (+el.value).toFixed(dec); };
+  el.value = P[k];   // 저장값 반영
   el.addEventListener('input', () => { P[k] = +el.value; show(); queueRebuild(); });
   show();
 }
+document.getElementById('espRot').value = String(P.espRot);
+document.getElementById('wireRot').value = String(P.wireRot);
+document.getElementById('oledSide').value = P.oledSide;
+document.getElementById('bands').checked = P.bands;
 document.getElementById('espRot').addEventListener('change', e => { P.espRot = +e.target.value; queueRebuild(); });
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
+document.getElementById('resetBtn').addEventListener('click', () => {
+  localStorage.removeItem('dimsum-params');
+  location.reload();
+});
 
 // ------------------------------------------------------------------
 // three.js 씬
@@ -163,6 +185,10 @@ function boxBrush(w, d, h, cx, cy, z0, r = 0, matrix = null) {
   const s = r > 0 ? rrShape(w, d, r) : rrShape(w, d, 0.05);
   return toMan(extrudeGeo(s, h, z0, cx, cy), matrix);
 }
+function topRidge(z) {   // 아래층 상단 턱 — 유격(fitClr)만큼 안쪽으로
+  const o = RABBET.out + P.fitClr;
+  return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+}
 const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r; };
 const add = (a, b) => csgOp(a, b, 'add');
 const sub = (a, b) => csgOp(a, b, 'subtract');
@@ -240,7 +266,7 @@ const innerHalfD = () => P.D / 2 - P.wall;
 function buildFloor1() {
   let b = extrude(baseShape(0), F1_PLATE);                       // 바닥판
   b = add(b, ringBrush(0, P.wall, P.f1H - F1_PLATE, F1_PLATE));  // 벽
-  b = add(b, ringBrush(RIDGE.out, RIDGE.inn, RIDGE.h, P.f1H));   // 상단 턱
+  b = add(b, topRidge(P.f1H));   // 상단 턱
   // 배터리 고정 테두리
   const bw = BAT.w + BAT.clr, bd = BAT.d + BAT.clr;
   if (innerHalfW() * 2 > bw + 1 && innerHalfD() * 2 > bd + 1) {
@@ -272,7 +298,7 @@ function oledFrame() {
 function buildFloor2() {
   let b = extrude(baseShape(0), F2_PLATE);
   b = add(b, ringBrush(0, P.wall, P.f2H - F2_PLATE, F2_PLATE));
-  b = add(b, ringBrush(RIDGE.out, RIDGE.inn, RIDGE.h, P.f2H));
+  b = add(b, topRidge(P.f2H));
   b = add(b, extrude(baseShape(P.wall), F2_PLATFORM, F2_PLATE));  // 포켓 플랫폼
 
   // 포켓

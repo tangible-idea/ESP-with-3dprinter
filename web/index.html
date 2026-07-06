@@ -25,7 +25,7 @@
   .body { padding: 4px 12px 12px; }
   .row { display: flex; align-items: center; margin: 7px 0; gap: 8px; }
   .row label { flex: 0 0 108px; font-size: 12px; color: #55503f; }
-  .row input[type=range] { flex: 1; accent-color: #d3a95f; }
+  .row input[type=range] { flex: 1; min-width: 0; accent-color: #d3a95f; }
   .row .val { flex: 0 0 44px; font-size: 11px; text-align: right; color: #8b7f60; font-variant-numeric: tabular-nums; }
   .row select, .row input[type=number] { flex: 1; font-size: 12px; padding: 3px 6px; border: 1px solid #ddd2b5; border-radius: 6px; }
   .row input[type=checkbox] { accent-color: #d3a95f; }
@@ -61,8 +61,9 @@
       <div class="row"><label>세로 D</label><input type="range" id="D" min="34" max="65" step="0.5" value="39"><span class="val" id="Dv"></span></div>
       <div class="row"><label>모서리 둥글기</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
       <div class="row"><label>벽 두께</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
+      <div class="row"><label>결합 유격</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
       <div class="row"><label>장식 홈</label><input type="checkbox" id="bands" checked></div>
-      <div class="hint">모서리 둥글기를 끝까지 올리면 원형에 가까워집니다</div>
+      <div class="hint">모서리 둥글기를 끝까지 올리면 원형에 가까워집니다. 결합 유격을 줄일수록 층이 꽉 끼웁니다 (헐거우면 낮추고, 안 들어가면 올리세요). 설정은 자동 저장됩니다.</div>
     </div>
   </details>
 
@@ -111,6 +112,7 @@
         <button id="animBtn">▶ 조립 애니메이션</button>
         <button class="ghost" id="ghostBtn">부품 표시: 켬</button>
         <button class="ghost" id="xrayBtn">케이스 반투명: 끔</button>
+        <button class="ghost" id="resetBtn">설정 초기화</button>
       </div>
     </div>
   </details>
@@ -148,6 +150,6 @@
   }
 }
 </script>
-<script type="module" src="./app.js?v=12"></script>
+<script type="module" src="./app.js?v=13"></script>
 </body>
 </html>
