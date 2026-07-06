@@ -34,6 +34,7 @@ const POCKET_CLR = 0.4;
 // 파라미터 & UI 바인딩
 // ------------------------------------------------------------------
 const P = {
+  shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossH: 2.5, standSink: 1.2,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049',
@@ -66,6 +67,26 @@ for (const k of sliders) {
   el.addEventListener('input', () => { P[k] = +el.value; show(); queueRebuild(); });
   show();
 }
+// 모양 선택: 원형이면 W=지름, D/R 슬라이더는 비활성. 원형 전환 시 기본 Ø54 보장
+function applyShapeUI() {
+  const circ = P.shape === 'circle';
+  document.getElementById('D').disabled = circ;
+  document.getElementById('R').disabled = circ;
+}
+document.getElementById('shape').value = P.shape;
+applyShapeUI();
+document.getElementById('shape').addEventListener('change', e => {
+  P.shape = e.target.value;
+  if (P.shape === 'circle' && P.W < 52) {
+    P.W = 54;   // 배터리 대각선 46.3 + 여유 + 벽 → 원형 기본 지름
+    const el = document.getElementById('W');
+    el.value = 54;
+    document.getElementById('Wv').textContent = '54.0';
+  }
+  applyShapeUI();
+  queueRebuild();
+});
+
 document.getElementById('espRot').value = String(P.espRot);
 document.getElementById('wireRot').value = String(P.wireRot);
 document.getElementById('oledSide').value = P.oledSide;
@@ -176,9 +197,12 @@ function rrPath(cls, w, d, r) {
   return p;
 }
 const rrShape = (w, d, r) => rrPath(THREE.Shape, w, d, r);
+// 모양: 둥근 네모 / 완전 원형(D=W, R=W/2 → rrPath가 원이 됨)
+const effD = () => P.shape === 'circle' ? P.W : P.D;
+const effR = () => P.shape === 'circle' ? P.W / 2 : P.R;
 // 외곽 base 의 inset 버전 (둥근 모서리 유지)
-const baseShape  = i => rrShape(P.W - 2 * i, P.D - 2 * i, P.R - i);
-const basePath   = i => rrPath(THREE.Path, P.W - 2 * i, P.D - 2 * i, P.R - i);
+const baseShape  = i => rrShape(P.W - 2 * i, effD() - 2 * i, effR() - i);
+const basePath   = i => rrPath(THREE.Path, P.W - 2 * i, effD() - 2 * i, effR() - i);
 
 function extrudeGeo(shape, h, z0 = 0, cx = 0, cy = 0) {
   const g = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false, curveSegments: 14 });
@@ -262,9 +286,8 @@ async function loadAssets() {
     loadSTL('../stl_files/oled_0.49inch.stl'),
     loadSTL('../dimsum/obj_2_sup 2.0 face.stl'),
   ]);
-  // USB 구멍 툴: 정규화 → 길이 60% 압축 → 중심 정렬 → 나팔 입구가 +X를 향하게
+  // USB 구멍 툴: 정규화 → 중심 정렬 → 나팔 입구가 +X를 향하게 (길이 9, 사용 시 벽두께에 맞춰 x 스케일)
   normalize(usb, false);
-  usb.scale(0.6, 1, 1);
   usb.computeBoundingBox();
   const ub = usb.boundingBox;
   usb.translate(-(ub.min.x + ub.max.x) / 2, -(ub.min.y + ub.max.y) / 2, -(ub.min.z + ub.max.z) / 2);
@@ -292,14 +315,24 @@ async function loadAssets() {
 function decoBands(body, zList) {
   if (!P.bands) return body;
   for (const z of zList) {
-    const s = rrShape(P.W + 0.1, P.D + 0.1, P.R);
+    const s = rrShape(P.W + 0.1, effD() + 0.1, effR());
     s.holes.push(basePath(0.6));
     body = sub(body, extrude(s, 1.2, z - 0.6));
   }
   return body;
 }
 const innerHalfW = () => P.W / 2 - P.wall;
-const innerHalfD = () => P.D / 2 - P.wall;
+const innerHalfD = () => effD() / 2 - P.wall;
+
+// 벽 안쪽/바깥 면의 깊이 좌표: 가로 위치 hw(중앙 기준 절대값)에서 벽면까지의 거리.
+// 직선 구간이면 상수, 모서리/원형 구간이면 곡률을 따라 계산 (원형 모드 핵심)
+function surfAt(hw, acrossHalf, depthHalf, inset) {
+  const R = effR() - inset;
+  const cx = acrossHalf - effR(), cy = depthHalf - effR();
+  if (hw <= cx) return depthHalf - inset;
+  const dq = R * R - (hw - cx) * (hw - cx);
+  return dq > 0 ? cy + Math.sqrt(dq) : 0;   // 0 = 그 폭에서는 벽면이 없음 (경고용)
+}
 
 function buildFloor1() {
   let b = extrude(baseShape(0), F1_PLATE);                       // 바닥판
@@ -322,15 +355,20 @@ function espFoot() {  // ESP32 footprint (회전 반영)
   return { w: l + POCKET_CLR, d: w + POCKET_CLR };
 }
 function modCenter() {
-  return { x: innerHalfW() - 0.2 - MOD.l / 2, y: P.modY };
+  // 동쪽 벽 안쪽면(곡률 반영)에 PCB 끝이 0.2 남기고 닿도록
+  const edgeX = surfAt(Math.abs(P.modY) + MOD.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
+  return { x: edgeX - 0.2 - MOD.l / 2, y: P.modY, edgeX };
 }
 function oledFrame() {
   // OLED 그룹 로컬(+Y벽) → 월드 변환
   const side = P.oledSide;
-  const dHalf = (side === 'W') ? P.W / 2 : P.D / 2;
+  const dHalf = (side === 'W') ? P.W / 2 : effD() / 2;
+  const acrossHalf = (side === 'W') ? effD() / 2 : P.W / 2;
   const ang = side === 'N' ? 0 : side === 'W' ? Math.PI / 2 : Math.PI;
   const m = new THREE.Matrix4().makeRotationZ(ang);
-  return { dHalf, m, innerFace: dHalf - P.wall };
+  // 모듈 앞면 안착 평면: 모듈 폭 모서리가 곡면 벽에 닿는 깊이 (직선 벽이면 = 벽 안쪽면)
+  const seatY = surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, P.wall);
+  return { dHalf, acrossHalf, m, innerFace: dHalf - P.wall, seatY };
 }
 
 function buildFloor2() {
@@ -349,31 +387,34 @@ function buildFloor2() {
   // 2층 벽보다 높으면 3층 뚜껑의 노치(cutout)에 끼워짐 → 조립 키 역할.
   if (P.oledSide !== 'none') {
     const spec = oledSpec();
-    const { m, innerFace, dHalf } = oledFrame();
-    const towerD = P.wall + spec.t + 2.0;   // 외벽 포함 타워 깊이
+    const { m, dHalf, seatY } = oledFrame();
+    // 곡면 벽이면 모듈이 곡률 안쪽 평면(seatY)에 앉음 → 타워가 그만큼 깊어짐
+    const towerBack = seatY - spec.t - 2.0;
+    const towerD = dHalf - towerBack;
     const tTop = oledTowerTop();
     let tower = boxBrush(oledTowerW(), towerD, tTop - F2_PLATE,
                          0, dHalf - towerD / 2, F2_PLATE, 0, m);
     tower = inter(tower, extrude(baseShape(0), tTop, 0));  // 외곽 곡면 따라 자르기
     b = add(b, tower);
     // 뒤에서 장착: OLED 전체가 내부에서 통째로 들어가는 포켓.
-    // 뒷면은 완전 개방(뒷벽 관통), 앞은 외벽+디스플레이 창이 잡아줌. 위는 막힘.
-    const pocketD = towerD - P.wall + 0.2;   // 뒷벽까지 완전 관통
+    // 뒷면은 완전 개방(뒷벽 관통), 앞은 seatY 평면 + 디스플레이 창이 잡아줌. 위는 막힘.
+    const pocketD = spec.t + 2.2;   // 뒷벽까지 완전 관통
     b = sub(b, boxBrush(spec.w + 0.5, pocketD, spec.hgt + 0.3,
-                        0, innerFace - pocketD / 2, 4.2, 0, m));
-    // 디스플레이 창 (타워 외벽 관통)
-    const wg = new THREE.ExtrudeGeometry(rrShape(spec.winW, spec.winH, 1.5), { depth: P.wall + 2, bevelEnabled: false, curveSegments: 12 });
+                        0, seatY - pocketD / 2, 4.2, 0, m));
+    // 디스플레이 창 (seatY 평면에서 외벽까지 관통 — 곡면이면 깊은 터널)
+    const winDepth = (dHalf - seatY) + P.wall + 2;
+    const wg = new THREE.ExtrudeGeometry(rrShape(spec.winW, spec.winH, 1.5), { depth: winDepth, bevelEnabled: false, curveSegments: 12 });
     wg.deleteAttribute('uv');
     wg.rotateX(-Math.PI / 2);
-    wg.translate(0, innerFace - 0.8, 4.2 + spec.winC);
+    wg.translate(0, seatY - 0.8, 4.2 + spec.winC);
     b = sub(b, toMan(wg, m));
-    // 0.96": 모서리 4홀(22×22)용 위치결정 핀 — 벽 안쪽면에서 포켓으로 돌출
+    // 0.96": 모서리 4홀(22×22)용 위치결정 핀 — 안착면에서 포켓으로 돌출
     if (spec.pegs) {
       const pg = spec.pegs;
       const zc = 4.2 + spec.hgt / 2;   // 포켓 중심 높이
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
         const peg = new THREE.CylinderGeometry(pg.d / 2, pg.d / 2 - 0.2, pg.len, 12);
-        peg.translate(sx * pg.pitch / 2, innerFace - pg.len / 2 + 0.05,
+        peg.translate(sx * pg.pitch / 2, seatY - pg.len / 2 + 0.05,
                       zc + sz * pg.pitch / 2);   // 실린더 축 = y (벽 → 내부 방향)
         peg.deleteAttribute('uv');
         b = add(b, toMan(peg, m));
@@ -381,9 +422,15 @@ function buildFloor2() {
     }
   }
 
-  // USB-C 구멍 (충전모듈 USB 정면, 동쪽 벽)
-  const usbM = new THREE.Matrix4().makeTranslation(innerHalfW(), P.modY, F2_PLATE + MOD.usbZ);
-  b = sub(b, meshBrush(ASSETS.usb, usbM));
+  // USB-C 구멍 (충전모듈 USB 정면, 동쪽 벽) — 곡면이면 터널이 길어지므로 툴 길이 자동 조절
+  {
+    const outerX = surfAt(Math.abs(P.modY) + 5.5, effD() / 2, P.W / 2, 0);
+    const L = Math.max(5.4, outerX + 0.4 - (mc.edgeX - 1.5));   // 원본 툴 길이 9 기준
+    const usbM = new THREE.Matrix4()
+      .makeTranslation(outerX + 0.4 - L / 2, P.modY, F2_PLATE + MOD.usbZ)
+      .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 1));
+    b = sub(b, meshBrush(ASSETS.usb, usbM));
+  }
 
   // 배터리 배선 구멍 (긴 슬롯 — +/− 두 가닥이 함께 통과, 가로/세로 회전 가능)
   const ww = P.wireRot === 90 ? 5 : 14;
@@ -414,10 +461,10 @@ function buildFloor3() {
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
-    const { m, dHalf } = oledFrame();
+    const { m, dHalf, seatY } = oledFrame();
     const cutTop = Math.min(oledTowerTop() - P.f2H + 0.8, P.f3H + P.bossH + 1);
     if (cutTop > 0) {
-      const cutD = P.wall + oledSpec().t + 3.0;
+      const cutD = (dHalf - seatY) + oledSpec().t + 3.0;
       b = sub(b, boxBrush(oledTowerW() + 0.8, cutD, cutTop + 0.1,
                           0, dHalf + 0.5 - cutD / 2, -0.1, 0, m));
     }
@@ -459,14 +506,14 @@ function placeGhosts() {
   G[1].add(ghostMesh(mg, MATS.mod, T(mc.x, mc.y, F2_PLATE)));
   if (P.oledSide !== 'none') {
     const spec = oledSpec();
-    const { m, innerFace } = oledFrame();
+    const { m, seatY } = oledFrame();
     let og;
     if (P.oledType === '096') {   // 0.96"은 STL이 없어 간단 박스 고스트
       og = new THREE.BoxGeometry(spec.w, spec.t, spec.hgt);
-      og.translate(0, innerFace - spec.t / 2 - 0.15, 4.2 + spec.hgt / 2);
+      og.translate(0, seatY - spec.t / 2 - 0.15, 4.2 + spec.hgt / 2);
     } else {
       og = ASSETS.oled.clone();
-      og.translate(-spec.w / 2, innerFace - spec.t - 0.15, 4.2);
+      og.translate(-spec.w / 2, seatY - spec.t - 0.15, 4.2);
     }
     og.applyMatrix4(m);
     G[1].add(ghostMesh(og, MATS.oled));
@@ -568,8 +615,8 @@ document.getElementById('xrayBtn').addEventListener('click', e => {
 // ------------------------------------------------------------------
 // 치수/경고
 // ------------------------------------------------------------------
-function insideInner(hx, hy) {   // (±hx, ±hy) 사각형이 내부 rrect 안에 있는지
-  const iw = innerHalfW(), id = innerHalfD(), r = Math.max(P.R - P.wall, 0.05);
+function insideInner(hx, hy) {   // (±hx, ±hy) 사각형이 내부 rrect/원 안에 있는지
+  const iw = innerHalfW(), id = innerHalfD(), r = Math.max(effR() - P.wall, 0.05);
   if (hx > iw || hy > id) return false;
   const dx = hx - (iw - r), dy = hy - (id - r);
   return !(dx > 0 && dy > 0 && dx * dx + dy * dy > r * r);
@@ -582,8 +629,9 @@ function updateInfo(ms, fit) {
   const fitTxt = fit
     ? (fit.ok ? ' · 조립 간섭 없음 ✓' : ` · 조립 간섭 ${fit.i12.toFixed(1)}/${fit.i23.toFixed(1)}mm³ ⚠`)
     : '';
+  const sizeTxt = P.shape === 'circle' ? `Ø${P.W}` : `${P.W} × ${P.D}`;
   document.getElementById('dims').textContent =
-    `전체 ${P.W} × ${P.D} × ${total.toFixed(1)}mm (보스 포함) · CSG ${ms.toFixed(0)}ms${fitTxt}`;
+    `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함) · CSG ${ms.toFixed(0)}ms${fitTxt}`;
   const warn = [];
   if (fit && !fit.ok) warn.push('⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요');
   if (!insideInner(BAT.w / 2 + 0.4, BAT.d / 2 + 0.4)) warn.push('⚠ 배터리(36.5×28.5)가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요');
@@ -593,20 +641,22 @@ function updateInfo(ms, fit) {
   const mRect = { x: mc.x, y: mc.y, w: MOD.l + POCKET_CLR, d: MOD.w + POCKET_CLR };
   if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
   if (Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
+  if (mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
   if (rectsOverlap(eRect, mRect)) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다');
   if (P.oledSide !== 'none') {
+    const of = oledFrame();
     // OLED 타워 footprint (월드 좌표)
-    const tD = P.wall + oledSpec().t + 3.0;
+    const tD = (of.dHalf - of.seatY) + oledSpec().t + 3.0;
     const tW = oledTowerW() + 1.2;
     const tower = P.oledSide === 'W'
       ? { x: -(P.W / 2 - tD / 2), y: 0, w: tD, d: tW }
-      : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (P.D / 2 - tD / 2), w: tW, d: tD };
+      : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (effD() / 2 - tD / 2), w: tW, d: tD };
     if (rectsOverlap(eRect, tower)) warn.push('⚠ ESP32가 OLED 타워와 겹칩니다');
     if (rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
     if (oledTowerTop() - P.f2H > P.f3H - F3_PLATE - 0.3)
       warn.push('⚠ OLED 타워가 3층 상판을 뚫습니다 — 2층 또는 3층 높이를 키우세요');
-    if (oledTowerW() + 2 > (P.oledSide === 'W' ? P.D : P.W) - 2 * P.wall - 1.5)
-      warn.push('⚠ OLED가 벽 폭에 비해 큽니다 — W/D를 키우세요');
+    if (of.seatY < oledSpec().t + 4)
+      warn.push('⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요');
   }
   if (P.f1H < F1_PLATE + BAT.h + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
   document.getElementById('warnings').textContent = warn.join('\n');
