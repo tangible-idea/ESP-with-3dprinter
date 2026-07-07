@@ -687,10 +687,118 @@ function applyExplode() {
   G[0].position.z = 0;
   G[1].position.z = P.f1H + gap;
   G[2].position.z = P.f1H + P.f2H + gap * 2;
+  updateWires();
 }
 document.getElementById('explode').addEventListener('input', () => {
   document.getElementById('explodev').textContent = (+document.getElementById('explode').value).toFixed(2);
   applyExplode();
+});
+
+// ------------------------------------------------------------------
+// 배선 시각화: 배터리 → 충전모듈 → ESP32 → OLED (실제 핀 배치 기반)
+// ------------------------------------------------------------------
+let wiresOn = true;
+const wireGroup = new THREE.Group();
+scene.add(wireGroup);
+const WIRE_COLORS = { plus: 0xd63c2f, minus: 0x333333, sda: 0x2e9e57, scl: 0xe0a13a };
+
+function wireLabel(text, colorHex, pos) {
+  const c = document.createElement('canvas');
+  c.width = 160; c.height = 44;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(255,253,248,0.9)';
+  g.fillRect(0, 0, 160, 44);
+  g.strokeStyle = '#c9bfa5'; g.lineWidth = 3; g.strokeRect(0, 0, 160, 44);
+  g.fillStyle = '#' + colorHex.toString(16).padStart(6, '0');
+  g.font = 'bold 26px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, 80, 23);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  sp.scale.set(7, 1.9, 1);
+  sp.position.copy(pos).add(new THREE.Vector3(0, 0, 2.2));
+  wireGroup.add(sp);
+}
+
+function addWire(points, color, label1, label2) {
+  const vs = points.map(p => new THREE.Vector3(...p));
+  const curve = new THREE.CatmullRomCurve3(vs, false, 'catmullrom', 0.3);
+  const tube = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 40, 0.35, 8),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.5 }));
+  wireGroup.add(tube);
+  for (const [v, txt] of [[vs[0], label1], [vs[vs.length - 1], label2]]) {
+    if (!txt) continue;
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 8),
+                               new THREE.MeshStandardMaterial({ color }));
+    dot.position.copy(v);
+    wireGroup.add(dot);
+    wireLabel(txt, color, v);
+  }
+}
+
+function updateWires() {
+  wireGroup.clear();
+  if (!wiresOn) return;
+  try {
+    const z1b = G[0].position.z, z2b = G[1].position.z;
+    const mc = modCenter();
+
+    // --- 배터리 (1층) → 충전모듈 B+/B− : 2층 바닥 배선구멍 경유 ---
+    const batTop = z1b + F1_PLATE + BAT.h;
+    const tabX = (P.wireX >= 0 ? 1 : -1) * (BAT.w / 2 - 4);   // 배선구멍 쪽 끝에 탭
+    const modW = mc.x - MOD.l / 2;                            // 모듈 서쪽(USB 반대) 끝
+    const bz = z2b + F2_PLATE + 2;                            // 모듈 패드 높이
+    const holeTop = z2b + F2_PLATE + F2_PLATFORM + 1.5;
+    for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, '배터리 +', 'B+'],
+                                     [-1, WIRE_COLORS.minus, '배터리 −', 'B−']]) {
+      addWire([
+        [tabX, sy * 5, batTop],
+        [P.wireX + sy * 1.2, P.wireY, z2b - 2],
+        [P.wireX + sy * 1.2, P.wireY, holeTop],
+        [modW + 1.2, mc.y + sy * 4.5, bz + 2],
+        [modW + 1.2, mc.y + sy * 4.5, bz],
+      ], col, l1, l2);
+    }
+
+    // --- ESP32 핀 (pinout: USB쪽부터 북열 5V,G,3V3 / 남열 5,6,7,8=SDA,9=SCL) ---
+    const rot = P.espRot === 90;
+    const espPin = (dx, dy) => {
+      const [rx, ry] = rot ? [-dy, dx] : [dx, dy];
+      return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + ESP.h];
+    };
+    const pin5V = espPin(-9, 8), pinGND = espPin(-6.5, 8), pin3V3 = espPin(-4, 8);
+    const pinSDA = espPin(-1.5, -8), pinSCL = espPin(1, -8);
+
+    // --- 충전모듈 OUT+/OUT− → ESP32 5V/GND ---
+    const arc = 6;   // 보드 위로 띄우는 높이
+    const outP = [modW + 3.5, mc.y + 6, bz], outM = [modW + 3.5, mc.y - 6, bz];
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.max(a[2], b[2]) + arc];
+    addWire([outP, mid(outP, pin5V), pin5V], WIRE_COLORS.plus, 'OUT+', '5V');
+    addWire([outM, mid(outM, pinGND), pinGND], WIRE_COLORS.minus, 'OUT−', 'GND');
+
+    // --- ESP32 → OLED (I2C: 3V3, GND, GPIO8=SDA, GPIO9=SCL) ---
+    if (P.oledSide !== 'none') {
+      const spec = oledSpec();
+      const { m, seatY } = oledFrame();
+      const pinZ = 4.2 + (P.oledType === '096' ? spec.hgt - 2.5 : 11.5);   // 핀 행 높이 (실측 도면)
+      const oledPin = (i) => {   // GND,VCC,SCL,SDA 순서 (2.54 피치)
+        const lx = -3.81 + i * 2.54;
+        const v = new THREE.Vector3(lx, seatY - spec.t - 0.6, 0).applyMatrix4(m);
+        return [v.x, v.y, z2b + pinZ];
+      };
+      const oGND = oledPin(0), oVCC = oledPin(1), oSCL = oledPin(2), oSDA = oledPin(3);
+      const gnd2 = espPin(-6.5, 8);
+      addWire([pin3V3, mid(pin3V3, oVCC), oVCC], WIRE_COLORS.plus, '3V3', 'VCC');
+      addWire([gnd2, mid(gnd2, oGND), oGND], WIRE_COLORS.minus, null, 'GND');
+      addWire([pinSDA, mid(pinSDA, oSDA), oSDA], WIRE_COLORS.sda, 'G8', 'SDA');
+      addWire([pinSCL, mid(pinSCL, oSCL), oSCL], WIRE_COLORS.scl, 'G9', 'SCL');
+    }
+  } catch (e) { /* 초기화 전 호출 등은 무시 */ }
+}
+document.getElementById('wiresBtn').addEventListener('click', e => {
+  wiresOn = !wiresOn;
+  e.target.textContent = '배선 표시: ' + (wiresOn ? '켬' : '끔');
+  updateWires();
 });
 
 // 조립 애니메이션
