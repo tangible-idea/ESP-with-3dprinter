@@ -700,7 +700,7 @@ document.getElementById('explode').addEventListener('input', () => {
 let wiresOn = true;
 const wireGroup = new THREE.Group();
 scene.add(wireGroup);
-const WIRE_COLORS = { plus: 0xd63c2f, minus: 0x333333, sda: 0x2e9e57, scl: 0xe0a13a };
+const WIRE_COLORS = { plus: 0xd63c2f, minus: 0x333333, sda: 0x2e9e57, scl: 0xe0a13a, gpio: 0x8e44ad };
 
 function wireLabel(text, colorHex, pos) {
   const c = document.createElement('canvas');
@@ -792,6 +792,20 @@ function updateWires() {
       addWire([gnd2, mid(gnd2, oGND), oGND], WIRE_COLORS.minus, null, 'GND');
       addWire([pinSDA, mid(pinSDA, oSDA), oSDA], WIRE_COLORS.sda, 'G8', 'SDA');
       addWire([pinSCL, mid(pinSCL, oSCL), oSCL], WIRE_COLORS.scl, 'G9', 'SCL');
+    }
+
+    // --- 스위치 (3층 스탠드) → ESP32: 두 가닥, 하나는 GPIO4 하나는 GND (극성 무관) ---
+    {
+      const z3b = G[2].position.z;
+      const swZ = z3b + P.f3H + effBossH() - P.standSink + 1.5;   // 스위치 핀 (스탠드 안착부)
+      const chanZ = z3b + P.f3H - F3_PLATE - 3;                   // 상판 중앙 통로(7×7) 아래
+      const pinG4 = espPin(-1.5, 8);                              // GPIO4 (3V3 옆)
+      const dropMid = (sx, dst) =>
+        [(sx + dst[0]) / 2, dst[1] / 2, (chanZ + dst[2]) / 2];
+      addWire([[-1.4, 0, swZ], [-1.4, 0, chanZ], dropMid(-1.4, pinG4), pinG4],
+              WIRE_COLORS.gpio, '스위치', 'G4');
+      addWire([[1.4, 0, swZ], [1.4, 0, chanZ], dropMid(1.4, pinGND), pinGND],
+              WIRE_COLORS.minus, null, null);
     }
   } catch (e) { /* 초기화 전 호출 등은 무시 */ }
 }
