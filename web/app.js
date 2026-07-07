@@ -407,7 +407,8 @@ function buildFloor2() {
 
   // 포켓
   const ef = espFoot();
-  b = sub(b, boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5));
+  const espPocket = () => boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5);
+  b = sub(b, espPocket());
   const mc = modCenter();
   // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
   b = sub(b, boxBrush(MOD.l + POCKET_CLR + 1, MOD.w + POCKET_CLR, F2_PLATFORM + 2,
@@ -450,6 +451,8 @@ function buildFloor2() {
         b = add(b, toMan(peg, m));
       }
     }
+    // ESP32 포켓 우선: 타워 add로 메워진 부분을 다시 파내 ESP32 홈을 확보
+    b = sub(b, espPocket());
   }
 
   // USB-C 구멍 (충전모듈 USB 정면) — 원형이면 플랫 패드 관통, 네모면 동쪽 벽 관통
