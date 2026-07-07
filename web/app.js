@@ -360,8 +360,8 @@ const flatPadX = () => Math.sqrt(Math.max((P.W / 2) ** 2 - 81, 1));
 
 function modCenter() {
   if (P.shape === 'circle') {
-    // 원형: 모듈은 무조건 중앙, 플랫 패드 안쪽면에 안착
-    const edgeX = flatPadX() - P.wall;
+    // 원형: 모듈은 무조건 중앙, 플랫 패드(두께 2.5) 안쪽면에 안착
+    const edgeX = flatPadX() - 2.5;
     return { x: edgeX - 0.2 - MOD.l / 2, y: 0, edgeX };
   }
   // 동쪽 벽 안쪽면(곡률 반영)에 PCB 끝이 0.2 남기고 닿도록
@@ -389,11 +389,11 @@ function buildFloor2() {
   // 원형 모드: 동쪽 벽에 플랫 USB 패드 (사진 참조 디자인) — 곡면을 깎고 평평한 벽 세그먼트로 대체
   if (P.shape === 'circle') {
     const fx = flatPadX();
-    const padTop = P.f2H - 2.5;   // 상단 림/결합부는 원형 유지
-    // 평평한 벽 세그먼트를 먼저 덧대고
-    b = add(b, boxBrush(2.5, 18, padTop - F2_PLATE, fx - 1.2, 0, F2_PLATE));
-    // 그 바깥 곡면을 잘라내 플랫 페이스 생성
-    b = sub(b, boxBrush(10, 18, padTop - 0.5, fx + 5, 0, 0.5));
+    const padTop = Math.max(8, P.f2H - 2.5);   // USB 구멍(상단 7.2)을 덮되 상단 림은 원형 유지
+    // 평평한 벽 세그먼트: 바닥(z0)까지 내림 — 하단 결합 홈이 자연스럽게 관통해 박편이 안 생김
+    b = add(b, boxBrush(2.5, 18, padTop, fx - 1.25, 0, 0));
+    // 곡면 컷은 결합부(z<2.0) 위에서만 → 하단 링·스커트 온전히 보존
+    b = sub(b, boxBrush(10, 18, padTop - 2.0, fx + 5, 0, 2.0));
   }
 
   // 포켓
