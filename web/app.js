@@ -72,6 +72,7 @@ function applyShapeUI() {
   const circ = P.shape === 'circle';
   document.getElementById('D').disabled = circ;
   document.getElementById('R').disabled = circ;
+  document.getElementById('modY').disabled = circ;   // 원형: 충전모듈은 항상 중앙 고정
 }
 document.getElementById('shape').value = P.shape;
 applyShapeUI();
@@ -354,7 +355,15 @@ function espFoot() {  // ESP32 footprint (회전 반영)
   const w = P.espRot === 90 ? ESP.l : ESP.w;
   return { w: l + POCKET_CLR, d: w + POCKET_CLR };
 }
+// 원형 모드: 동쪽 벽의 플랫 USB 패드 (반폭 9) 외면 x 좌표
+const flatPadX = () => Math.sqrt(Math.max((P.W / 2) ** 2 - 81, 1));
+
 function modCenter() {
+  if (P.shape === 'circle') {
+    // 원형: 모듈은 무조건 중앙, 플랫 패드 안쪽면에 안착
+    const edgeX = flatPadX() - P.wall;
+    return { x: edgeX - 0.2 - MOD.l / 2, y: 0, edgeX };
+  }
   // 동쪽 벽 안쪽면(곡률 반영)에 PCB 끝이 0.2 남기고 닿도록
   const edgeX = surfAt(Math.abs(P.modY) + MOD.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
   return { x: edgeX - 0.2 - MOD.l / 2, y: P.modY, edgeX };
@@ -376,6 +385,16 @@ function buildFloor2() {
   b = add(b, ringBrush(0, P.wall, P.f2H - F2_PLATE, F2_PLATE));
   b = add(b, topRidge(P.f2H));
   b = add(b, extrude(baseShape(P.wall), F2_PLATFORM, F2_PLATE));  // 포켓 플랫폼
+
+  // 원형 모드: 동쪽 벽에 플랫 USB 패드 (사진 참조 디자인) — 곡면을 깎고 평평한 벽 세그먼트로 대체
+  if (P.shape === 'circle') {
+    const fx = flatPadX();
+    const padTop = P.f2H - 2.5;   // 상단 림/결합부는 원형 유지
+    // 평평한 벽 세그먼트를 먼저 덧대고
+    b = add(b, boxBrush(2.5, 18, padTop - F2_PLATE, fx - 1.2, 0, F2_PLATE));
+    // 그 바깥 곡면을 잘라내 플랫 페이스 생성
+    b = sub(b, boxBrush(10, 18, padTop - 0.5, fx + 5, 0, 0.5));
+  }
 
   // 포켓
   const ef = espFoot();
@@ -422,12 +441,14 @@ function buildFloor2() {
     }
   }
 
-  // USB-C 구멍 (충전모듈 USB 정면, 동쪽 벽) — 곡면이면 터널이 길어지므로 툴 길이 자동 조절
+  // USB-C 구멍 (충전모듈 USB 정면) — 원형이면 플랫 패드 관통, 네모면 동쪽 벽 관통
   {
-    const outerX = surfAt(Math.abs(P.modY) + 5.5, effD() / 2, P.W / 2, 0);
+    const outerX = P.shape === 'circle'
+      ? flatPadX()
+      : surfAt(Math.abs(mc.y) + 5.5, effD() / 2, P.W / 2, 0);
     const L = Math.max(5.4, outerX + 0.4 - (mc.edgeX - 1.5));   // 원본 툴 길이 9 기준
     const usbM = new THREE.Matrix4()
-      .makeTranslation(outerX + 0.4 - L / 2, P.modY, F2_PLATE + MOD.usbZ)
+      .makeTranslation(outerX + 0.4 - L / 2, mc.y, F2_PLATE + MOD.usbZ)
       .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 1));
     b = sub(b, meshBrush(ASSETS.usb, usbM));
   }
@@ -640,8 +661,8 @@ function updateInfo(ms, fit) {
   const mc = modCenter();
   const mRect = { x: mc.x, y: mc.y, w: MOD.l + POCKET_CLR, d: MOD.w + POCKET_CLR };
   if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
-  if (Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
-  if (mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
+  if (P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
+  if (P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
   if (rectsOverlap(eRect, mRect)) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다');
   if (P.oledSide !== 'none') {
     const of = oledFrame();
