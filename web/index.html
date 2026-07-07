@@ -10,7 +10,7 @@
   body { display: flex; background: #f6f1e7; }
 
   #panel {
-    width: 320px; min-width: 320px; height: 100%; overflow-y: auto;
+    width: 400px; min-width: 400px; height: 100%; overflow-y: auto;
     background: #fffdf8; border-right: 1px solid #e8dfc9; padding: 16px 18px 40px;
   }
   #panel h1 { font-size: 17px; margin-bottom: 2px; }
@@ -27,6 +27,12 @@
   .row label { flex: 0 0 108px; font-size: 12px; color: #55503f; }
   .row input[type=range] { flex: 1; min-width: 0; accent-color: #d3a95f; }
   .row .val { flex: 0 0 44px; font-size: 11px; text-align: right; color: #8b7f60; font-variant-numeric: tabular-nums; }
+  .nudge {
+    flex: 0 0 auto; width: 22px; height: 22px; padding: 0; font-size: 15px; line-height: 1;
+    background: #f1ead7; color: #6b5d43; border-radius: 6px; font-weight: 600;
+  }
+  .nudge:hover { background: #e6d9b8; }
+  .nudge:disabled { opacity: .35; cursor: default; }
   .row select, .row input[type=number] { flex: 1; font-size: 12px; padding: 3px 6px; border: 1px solid #ddd2b5; border-radius: 6px; }
   .row input[type=checkbox] { accent-color: #d3a95f; }
   .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -151,6 +157,18 @@
     </div>
   </details>
 
+  <details open>
+    <summary>프리셋 (설정 저장/불러오기)</summary>
+    <div class="body">
+      <div class="btns">
+        <button id="presetExport">⬇ 내보내기 (.json)</button>
+        <button class="ghost" id="presetImport">⬆ 불러오기</button>
+      </div>
+      <input type="file" id="presetFile" accept="application/json,.json" style="display:none">
+      <div class="hint">현재 모든 설정을 .json 파일로 저장하거나, 저장해둔 파일을 불러와 그대로 복원합니다. 여러 디자인을 파일로 관리할 수 있습니다.</div>
+    </div>
+  </details>
+
   <div id="dims"></div>
   <div id="warnings"></div>
 </div>
@@ -171,6 +189,6 @@
   }
 }
 </script>
-<script type="module" src="./app.js?v=25"></script>
+<script type="module" src="./app.js?v=26"></script>
 </body>
 </html>

@@ -69,6 +69,28 @@ for (const k of sliders) {
   el.addEventListener('input', () => { P[k] = +el.value; show(); queueRebuild(); });
   show();
 }
+
+// 모든 range 슬라이더에 −/+ 미세조절 버튼 주입 (min/max/step는 각 슬라이더에서 읽음)
+function nudge(el, dir) {
+  if (el.disabled) return;
+  const step = +el.step || 1;
+  const decimals = (step < 1) ? (String(step).split('.')[1] || '').length : 0;
+  let v = +el.value + dir * step;
+  v = Math.min(+el.max, Math.max(+el.min, v));
+  el.value = decimals ? v.toFixed(decimals) : Math.round(v);
+  el.dispatchEvent(new Event('input'));
+}
+for (const el of document.querySelectorAll('input[type=range]')) {
+  const mk = (txt, dir) => {
+    const b = document.createElement('button');
+    b.className = 'nudge'; b.textContent = txt; b.tabIndex = -1;
+    b.addEventListener('click', () => nudge(el, dir));
+    return b;
+  };
+  const val = el.nextElementSibling;   // .val 스팬 (있으면)
+  el.parentNode.insertBefore(mk('−', -1), el);
+  el.parentNode.insertBefore(mk('+', +1), val && val.classList.contains('val') ? val : el.nextSibling);
+}
 // 모양 선택: 원형이면 W=지름, D/R 슬라이더는 비활성. 원형 전환 시 기본 Ø54 보장
 function applyShapeUI() {
   const circ = P.shape === 'circle';
@@ -112,6 +134,58 @@ document.getElementById('bands').addEventListener('change', e => { P.bands = e.t
 document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.removeItem('dimsum-params');
   location.reload();
+});
+
+// 모든 UI 컨트롤을 현재 P 값으로 동기화 (프리셋 불러오기 후 호출)
+function syncControls() {
+  for (const k of sliders) {
+    const el = document.getElementById(k);
+    const dec = (+el.step < 0.1) ? 2 : 1;
+    el.value = P[k];
+    document.getElementById(k + 'v').textContent = (+el.value).toFixed(dec);
+  }
+  document.getElementById('shape').value = P.shape;
+  document.getElementById('espRot').value = String(P.espRot);
+  document.getElementById('wireRot').value = String(P.wireRot);
+  document.getElementById('oledSide').value = P.oledSide;
+  document.getElementById('oledType').value = P.oledType;
+  document.getElementById('bands').checked = P.bands;
+  document.getElementById('jointV').checked = P.jointV;
+  document.getElementById('bossOn').checked = P.bossOn;
+  document.getElementById('bossH').disabled = !P.bossOn;
+  applyShapeUI();
+}
+
+// 프리셋 내보내기/불러오기 (전체 설정 JSON)
+document.getElementById('presetExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(P, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dimsum-preset.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+const presetFile = document.getElementById('presetFile');
+document.getElementById('presetImport').addEventListener('click', () => presetFile.click());
+presetFile.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const obj = JSON.parse(r.result);
+      let n = 0;
+      for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
+      syncControls();
+      saveParams();
+      rebuild();
+      document.getElementById('warnings').textContent = `✓ 프리셋 불러옴 (${n}개 항목 적용)`;
+    } catch (err) {
+      document.getElementById('warnings').textContent = '⚠ 프리셋 파일을 읽을 수 없습니다 (JSON 형식 오류)';
+    }
+  };
+  r.readAsText(file);
+  presetFile.value = '';   // 같은 파일 다시 선택 가능하도록
 });
 
 // ------------------------------------------------------------------
