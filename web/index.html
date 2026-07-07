@@ -80,8 +80,6 @@
       <div class="row"><label>1층 (배터리)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
       <div class="row"><label>2층 (보드)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="16"><span class="val" id="f2Hv"></span></div>
       <div class="row"><label>3층 (뚜껑)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
-      <div class="row"><label>스위치 보스</label><input type="range" id="bossH" min="0" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
-      <div class="row"><label>스탠드 매립</label><input type="range" id="standSink" min="0" max="3" step="0.2" value="1.2"><span class="val" id="standSinkv"></span></div>
     </div>
   </details>
 
@@ -114,6 +112,16 @@
         <select id="wireRot"><option value="0" selected>가로 (14×5)</option><option value="90">세로 (5×14)</option></select>
       </div>
       <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. 충전모듈 USB는 항상 오른쪽(동쪽) 벽.</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>부품 배치 (3층)</summary>
+    <div class="body">
+      <div class="row"><label>스위치 Boss</label><input type="checkbox" id="bossOn" checked></div>
+      <div class="row"><label>Boss 높이</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
+      <div class="row"><label>스탠드 매립 깊이</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
+      <div class="hint">Boss = 스위치 스탠드가 앉도록 뚜껑 위에 볼록하게 올린 받침 돌기. 끄면 스탠드가 뚜껑 상판에 바로 매립됩니다. 매립 깊이가 클수록 스탠드가 깊게 파묻힘 (Boss 높이 + 상판 3.2mm 한도).</div>
     </div>
   </details>
 
@@ -163,6 +171,6 @@
   }
 }
 </script>
-<script type="module" src="./app.js?v=20"></script>
+<script type="module" src="./app.js?v=24"></script>
 </body>
 </html>

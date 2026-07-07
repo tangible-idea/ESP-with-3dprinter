@@ -19,9 +19,11 @@ const OLED_TYPES = {
   '096': { w: 26, hgt: 26, t: 3.5, winW: 23.2, winH: 12.4, winC: 12.0,
            pegs: { pitch: 22, d: 1.8, len: 2.0 } },   // 모서리 4홀(22×22)용 위치결정 핀
 };
+const OLED_HCLR = 0.4;   // OLED 세로(높이) 삽입 여유
 const oledSpec = () => OLED_TYPES[P.oledType] || OLED_TYPES['049'];
-const oledTowerW = () => oledSpec().w + 3;                        // 좌우 레일 1.25씩
-const oledTowerTop = () => 4.2 + oledSpec().hgt + 0.3 + 1.2;      // 턱 4.2 + 모듈 + 천장 1.2
+const effBossH = () => P.bossOn ? P.bossH : 0;   // 스위치 보스(둔덕) 끄면 상판에 바로 매립
+const oledTowerW = () => oledSpec().w + 3;                             // 좌우 레일 1.25씩
+const oledTowerTop = () => 4.2 + oledSpec().hgt + OLED_HCLR + 1.2;     // 턱 4.2 + 모듈 + 여유 + 천장 1.2
 const STAND_FLARE_Z = 5.4;   // keyboard_switch_stand.stl: 몸통(플레어) 시작 높이
 const STAND_H = 14.0;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
@@ -36,7 +38,7 @@ const POCKET_CLR = 0.4;
 const P = {
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
-  f1H: 7.5, f2H: 16, f3H: 10, bossH: 2.5, standSink: 1.2,
+  f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049',
   wireX: -6, wireY: -12, wireRot: 0,
 };
@@ -96,6 +98,13 @@ document.getElementById('oledType').addEventListener('change', e => { P.oledType
 document.getElementById('bands').checked = P.bands;
 document.getElementById('jointV').checked = P.jointV;
 document.getElementById('jointV').addEventListener('change', e => { P.jointV = e.target.checked; queueRebuild(); });
+document.getElementById('bossOn').checked = P.bossOn;
+document.getElementById('bossH').disabled = !P.bossOn;
+document.getElementById('bossOn').addEventListener('change', e => {
+  P.bossOn = e.target.checked;
+  document.getElementById('bossH').disabled = !P.bossOn;
+  queueRebuild();
+});
 document.getElementById('espRot').addEventListener('change', e => { P.espRot = +e.target.value; queueRebuild(); });
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
@@ -400,7 +409,9 @@ function buildFloor2() {
   const ef = espFoot();
   b = sub(b, boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5));
   const mc = modCenter();
-  b = sub(b, boxBrush(MOD.l + POCKET_CLR, MOD.w + POCKET_CLR, F2_PLATFORM + 2, mc.x, mc.y, F2_PLATE, 1.5));
+  // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
+  b = sub(b, boxBrush(MOD.l + POCKET_CLR + 1, MOD.w + POCKET_CLR, F2_PLATFORM + 2,
+                      mc.x - 0.5, mc.y, F2_PLATE, 0.4));
 
   // OLED 소켓 타워 — 2층 높이와 무관하게 항상 OLED가 다 들어가는 높이.
   // 2층 벽보다 높으면 3층 뚜껑의 노치(cutout)에 끼워짐 → 조립 키 역할.
@@ -418,7 +429,7 @@ function buildFloor2() {
     // 뒤에서 장착: OLED 전체가 내부에서 통째로 들어가는 포켓.
     // 뒷면은 완전 개방(뒷벽 관통), 앞은 seatY 평면 + 디스플레이 창이 잡아줌. 위는 막힘.
     const pocketD = spec.t + 2.2;   // 뒷벽까지 완전 관통
-    b = sub(b, boxBrush(spec.w + 0.5, pocketD, spec.hgt + 0.3,
+    b = sub(b, boxBrush(spec.w + 0.5, pocketD, spec.hgt + OLED_HCLR,
                         0, seatY - pocketD / 2, 4.2, 0, m));
     // 디스플레이 창 (seatY 평면에서 외벽까지 관통 — 곡면이면 깊은 터널)
     const winDepth = (dHalf - seatY) + P.wall + 2;
@@ -468,22 +479,22 @@ function buildFloor3() {
   let b = ringBrush(0, P.wall, P.f3H, 0);                             // 벽
   b = add(b, extrude(baseShape(P.wall - 0.1), F3_PLATE, P.f3H - F3_PLATE)); // 상판
   // 스위치 보스 (뚜껑 꼭지처럼 봉긋한 받침)
-  const bossTop = P.f3H + P.bossH;
-  if (P.bossH > 0.1) {
-    b = add(b, boxBrush(21, 23, P.bossH, 0, 0, P.f3H, 5));
+  const bossTop = P.f3H + effBossH();
+  if (effBossH() > 0.1) {
+    b = add(b, boxBrush(21, 23, effBossH(), 0, 0, P.f3H, 5));
   }
   // 스탠드 실물 메시로 절삭 → 자연스럽게 매립
   const standZ = bossTop - P.standSink - STAND_FLARE_Z;
   b = sub(b, meshBrush(ASSETS.standCut, new THREE.Matrix4().makeTranslation(0, 0, standZ)));
   // 중앙 배선 통로 (상판 관통)
-  b = sub(b, boxBrush(7, 7, P.f3H + P.bossH, 0, 0, P.f3H - F3_PLATE - 0.5, 0.8));
+  b = sub(b, boxBrush(7, 7, P.f3H + effBossH() + 1, 0, 0, P.f3H - F3_PLATE - 0.5, 0.8));
 
   b = bottomJointCut(b);
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
     const { m, dHalf, seatY } = oledFrame();
-    const cutTop = Math.min(oledTowerTop() - P.f2H + 0.8, P.f3H + P.bossH + 1);
+    const cutTop = Math.min(oledTowerTop() - P.f2H + 0.8, P.f3H + effBossH() + 1);
     if (cutTop > 0) {
       const cutD = (dHalf - seatY) + oledSpec().t + 3.0;
       b = sub(b, boxBrush(oledTowerW() + 0.8, cutD, cutTop + 0.1,
@@ -540,7 +551,7 @@ function placeGhosts() {
     G[1].add(ghostMesh(og, MATS.oled));
   }
   // 3층: 스탠드 + 딤섬 캐릭터
-  const standZ = P.f3H + P.bossH - P.standSink - STAND_FLARE_Z;
+  const standZ = P.f3H + effBossH() - P.standSink - STAND_FLARE_Z;
   G[2].add(ghostMesh(ASSETS.stand, MATS.stand, T(0, 0, standZ)));
   G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, standZ + STAND_H + 2)));
 }
@@ -646,7 +657,7 @@ function rectsOverlap(a, b) {
   return Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.y - b.y) * 2 < a.d + b.d;
 }
 function updateInfo(ms, fit) {
-  const total = P.f1H + P.f2H + P.f3H + P.bossH;
+  const total = P.f1H + P.f2H + P.f3H + effBossH();
   const fitTxt = fit
     ? (fit.ok ? ' · 조립 간섭 없음 ✓' : ` · 조립 간섭 ${fit.i12.toFixed(1)}/${fit.i23.toFixed(1)}mm³ ⚠`)
     : '';
@@ -680,6 +691,8 @@ function updateInfo(ms, fit) {
       warn.push('⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요');
   }
   if (P.f1H < F1_PLATE + BAT.h + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
+  if (P.standSink > effBossH() + F3_PLATE - 0.8)
+    warn.push('⚠ 스탠드 매립이 너무 깊습니다 — 보스를 켜거나 매립을 줄이세요 (상판 관통)');
   document.getElementById('warnings').textContent = warn.join('\n');
 }
 
