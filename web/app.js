@@ -40,7 +40,7 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049',
-  wireX: -6, wireY: -12, wireRot: 0,
+  wireX: -6, wireY: -12, wireRot: 0, swGpio: 4,
 };
 
 // 저장된 설정 복원 (localStorage)
@@ -701,6 +701,14 @@ let wiresOn = true;
 const wireGroup = new THREE.Group();
 scene.add(wireGroup);
 const WIRE_COLORS = { plus: 0xd63c2f, minus: 0x333333, sda: 0x2e9e57, scl: 0xe0a13a, gpio: 0x8e44ad };
+// ESP32-C3 supermini 핀 로컬 좌표 (USB가 -x 끝, 핀아웃 실측: 북열 5V,G,3V3,4,3,2,1,0 / 남열 5,6,7,8,9,10,20,21)
+const ESP_PINS = {
+  '5V': [-9, 8], 'GND': [-6.5, 8], '3V3': [-4, 8],
+  4: [-1.5, 8], 3: [1, 8], 2: [3.5, 8], 1: [6, 8], 0: [8.5, 8],
+  5: [-9, -8], 6: [-6.5, -8], 7: [-4, -8], 8: [-1.5, -8], 9: [1, -8],
+  10: [3.5, -8], 20: [6, -8], 21: [8.5, -8],
+};
+const SW_GPIO_CHOICES = [0, 1, 2, 3, 4, 5, 6, 7, 10, 20, 21];   // 8/9는 I2C(SDA/SCL) 예약
 
 function wireLabel(text, colorHex, pos) {
   const c = document.createElement('canvas');
@@ -717,23 +725,32 @@ function wireLabel(text, colorHex, pos) {
   sp.scale.set(7, 1.9, 1);
   sp.position.copy(pos).add(new THREE.Vector3(0, 0, 2.2));
   wireGroup.add(sp);
+  return sp;
 }
 
-function addWire(points, color, label1, label2) {
+function addWire(points, color, label1, label2, tag) {
+  const objs = [];
   const vs = points.map(p => new THREE.Vector3(...p));
   const curve = new THREE.CatmullRomCurve3(vs, false, 'catmullrom', 0.3);
   const tube = new THREE.Mesh(
     new THREE.TubeGeometry(curve, 40, 0.35, 8),
     new THREE.MeshStandardMaterial({ color, roughness: 0.5 }));
-  wireGroup.add(tube);
+  wireGroup.add(tube); objs.push(tube);
+  if (tag) {   // 우클릭 판정용 투명 히트 튜브 (가는 전선을 클릭하기 쉽게)
+    const hitTube = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 24, 2.0, 6),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    wireGroup.add(hitTube); objs.push(hitTube);
+  }
   for (const [v, txt] of [[vs[0], label1], [vs[vs.length - 1], label2]]) {
     if (!txt) continue;
     const dot = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 8),
                                new THREE.MeshStandardMaterial({ color }));
     dot.position.copy(v);
-    wireGroup.add(dot);
-    wireLabel(txt, color, v);
+    wireGroup.add(dot); objs.push(dot);
+    objs.push(wireLabel(txt, color, v));
   }
+  if (tag) objs.forEach(o => { o.userData.tag = tag; });
 }
 
 function updateWires() {
@@ -794,16 +811,17 @@ function updateWires() {
       addWire([pinSCL, mid(pinSCL, oSCL), oSCL], WIRE_COLORS.scl, 'G9', 'SCL');
     }
 
-    // --- 스위치 (3층 스탠드) → ESP32: 두 가닥, 하나는 GPIO4 하나는 GND (극성 무관) ---
+    // --- 스위치 (3층 스탠드) → ESP32: 두 가닥, 하나는 GPIO 하나는 GND (극성 무관) ---
+    // GPIO 번호는 보라 전선/라벨 우클릭으로 변경 (P.swGpio)
     {
       const z3b = G[2].position.z;
       const swZ = z3b + P.f3H + effBossH() - P.standSink + 1.5;   // 스위치 핀 (스탠드 안착부)
       const chanZ = z3b + P.f3H - F3_PLATE - 3;                   // 상판 중앙 통로(7×7) 아래
-      const pinG4 = espPin(-1.5, 8);                              // GPIO4 (3V3 옆)
+      const pinSw = espPin(...(ESP_PINS[P.swGpio] || ESP_PINS[4]));
       const dropMid = (sx, dst) =>
         [(sx + dst[0]) / 2, dst[1] / 2, (chanZ + dst[2]) / 2];
-      addWire([[-1.4, 0, swZ], [-1.4, 0, chanZ], dropMid(-1.4, pinG4), pinG4],
-              WIRE_COLORS.gpio, '스위치', 'G4');
+      addWire([[-1.4, 0, swZ], [-1.4, 0, chanZ], dropMid(-1.4, pinSw), pinSw],
+              WIRE_COLORS.gpio, '스위치', 'G' + P.swGpio, 'gpio');
       addWire([[1.4, 0, swZ], [1.4, 0, chanZ], dropMid(1.4, pinGND), pinGND],
               WIRE_COLORS.minus, null, null);
     }
@@ -813,6 +831,61 @@ document.getElementById('wiresBtn').addEventListener('click', e => {
   wiresOn = !wiresOn;
   e.target.textContent = '배선 표시: ' + (wiresOn ? '켬' : '끔');
   updateWires();
+});
+
+// 보라(GPIO) 전선/라벨 우클릭 → GPIO 번호 선택 메뉴
+const gpioMenu = document.createElement('div');
+gpioMenu.style.cssText =
+  'position:fixed; display:none; z-index:50; background:#fffdf8; border:1px solid #ddd2b5;' +
+  'border-radius:10px; box-shadow:0 4px 14px rgba(77,58,20,.18); padding:8px; width:172px;';
+gpioMenu.innerHTML =
+  '<div style="font-size:11px; font-weight:600; color:#6b5d43; margin:2px 4px 6px;">스위치 GPIO 선택</div>' +
+  '<div id="gpioGrid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px;"></div>';
+document.body.appendChild(gpioMenu);
+const gpioGrid = gpioMenu.querySelector('#gpioGrid');
+for (const n of SW_GPIO_CHOICES) {
+  const b = document.createElement('button');
+  b.textContent = 'G' + n;
+  b.style.cssText = 'padding:5px 0; font-size:11px; border-radius:6px;';
+  b.addEventListener('click', () => {
+    P.swGpio = n;
+    saveParams();
+    updateWires();
+    styleGpioMenu();
+    gpioMenu.style.display = 'none';
+  });
+  b.dataset.gpio = n;
+  gpioGrid.appendChild(b);
+}
+function styleGpioMenu() {   // 현재 선택 강조
+  for (const b of gpioGrid.children) {
+    const on = +b.dataset.gpio === +P.swGpio;
+    b.style.background = on ? '#e9b95f' : '#f1ead7';
+    b.style.color = on ? '#4d3a14' : '#6b5d43';
+  }
+}
+const pickRay = new THREE.Raycaster();
+renderer.domElement.addEventListener('contextmenu', e => {
+  if (!wiresOn) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  const ndc = new THREE.Vector2(
+    ((e.clientX - r.left) / r.width) * 2 - 1,
+    -((e.clientY - r.top) / r.height) * 2 + 1);
+  pickRay.setFromCamera(ndc, camera);
+  const hit = pickRay.intersectObjects(wireGroup.children, true)
+                     .find(h => h.object.userData.tag === 'gpio');
+  if (!hit) return;
+  e.preventDefault();
+  styleGpioMenu();
+  gpioMenu.style.left = Math.min(e.clientX + 6, window.innerWidth - 190) + 'px';
+  gpioMenu.style.top = Math.min(e.clientY + 6, window.innerHeight - 140) + 'px';
+  gpioMenu.style.display = 'block';
+});
+window.addEventListener('pointerdown', e => {
+  if (!gpioMenu.contains(e.target)) gpioMenu.style.display = 'none';
+});
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') gpioMenu.style.display = 'none';
 });
 
 // 조립 애니메이션
