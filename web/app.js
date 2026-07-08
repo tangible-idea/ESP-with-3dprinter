@@ -40,7 +40,7 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049',
-  wireX: -6, wireY: -12, wireRot: 0, swGpio: 4,
+  wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
 };
 
 // 저장된 설정 복원 (localStorage)
@@ -708,7 +708,13 @@ const ESP_PINS = {
   5: [-9, -8], 6: [-6.5, -8], 7: [-4, -8], 8: [-1.5, -8], 9: [1, -8],
   10: [3.5, -8], 20: [6, -8], 21: [8.5, -8],
 };
-const SW_GPIO_CHOICES = [0, 1, 2, 3, 4, 5, 6, 7, 10, 20, 21];   // 8/9는 I2C(SDA/SCL) 예약
+const ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+// 우클릭으로 핀을 바꿀 수 있는 배선 (태그 → P 키/이름). ESP32-C3는 I2C 핀도 자유 지정 가능
+const GPIO_ROLES = {
+  gpio: { key: 'swGpio', name: '스위치' },
+  sda:  { key: 'sdaGpio', name: 'OLED SDA' },
+  scl:  { key: 'sclGpio', name: 'OLED SCL' },
+};
 
 function wireLabel(text, colorHex, pos) {
   const c = document.createElement('canvas');
@@ -783,8 +789,9 @@ function updateWires() {
       const [rx, ry] = rot ? [-dy, dx] : [dx, dy];
       return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + ESP.h];
     };
-    const pin5V = espPin(-9, 8), pinGND = espPin(-6.5, 8), pin3V3 = espPin(-4, 8);
-    const pinSDA = espPin(-1.5, -8), pinSCL = espPin(1, -8);
+    const pin5V = espPin(...ESP_PINS['5V']), pinGND = espPin(...ESP_PINS.GND), pin3V3 = espPin(...ESP_PINS['3V3']);
+    const pinSDA = espPin(...(ESP_PINS[P.sdaGpio] || ESP_PINS[8]));
+    const pinSCL = espPin(...(ESP_PINS[P.sclGpio] || ESP_PINS[9]));
 
     // --- 충전모듈 OUT+/OUT− → ESP32 5V/GND ---
     const arc = 6;   // 보드 위로 띄우는 높이
@@ -807,8 +814,8 @@ function updateWires() {
       const gnd2 = espPin(-6.5, 8);
       addWire([pin3V3, mid(pin3V3, oVCC), oVCC], WIRE_COLORS.plus, '3V3', 'VCC');
       addWire([gnd2, mid(gnd2, oGND), oGND], WIRE_COLORS.minus, null, 'GND');
-      addWire([pinSDA, mid(pinSDA, oSDA), oSDA], WIRE_COLORS.sda, 'G8', 'SDA');
-      addWire([pinSCL, mid(pinSCL, oSCL), oSCL], WIRE_COLORS.scl, 'G9', 'SCL');
+      addWire([pinSDA, mid(pinSDA, oSDA), oSDA], WIRE_COLORS.sda, 'G' + P.sdaGpio, 'SDA', 'sda');
+      addWire([pinSCL, mid(pinSCL, oSCL), oSCL], WIRE_COLORS.scl, 'G' + P.sclGpio, 'SCL', 'scl');
     }
 
     // --- 스위치 (3층 스탠드) → ESP32: 두 가닥, 하나는 GPIO 하나는 GND (극성 무관) ---
@@ -833,37 +840,47 @@ document.getElementById('wiresBtn').addEventListener('click', e => {
   updateWires();
 });
 
-// 보라(GPIO) 전선/라벨 우클릭 → GPIO 번호 선택 메뉴
+// GPIO 배선(스위치/SDA/SCL) 전선·라벨 우클릭 → GPIO 번호 선택 메뉴
 const gpioMenu = document.createElement('div');
 gpioMenu.style.cssText =
   'position:fixed; display:none; z-index:50; background:#fffdf8; border:1px solid #ddd2b5;' +
-  'border-radius:10px; box-shadow:0 4px 14px rgba(77,58,20,.18); padding:8px; width:172px;';
+  'border-radius:10px; box-shadow:0 4px 14px rgba(77,58,20,.18); padding:8px; width:186px;';
 gpioMenu.innerHTML =
-  '<div style="font-size:11px; font-weight:600; color:#6b5d43; margin:2px 4px 6px;">스위치 GPIO 선택</div>' +
+  '<div id="gpioTitle" style="font-size:11px; font-weight:600; color:#6b5d43; margin:2px 4px 6px;"></div>' +
   '<div id="gpioGrid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px;"></div>';
 document.body.appendChild(gpioMenu);
 const gpioGrid = gpioMenu.querySelector('#gpioGrid');
-for (const n of SW_GPIO_CHOICES) {
-  const b = document.createElement('button');
-  b.textContent = 'G' + n;
-  b.style.cssText = 'padding:5px 0; font-size:11px; border-radius:6px;';
-  b.addEventListener('click', () => {
-    P.swGpio = n;
-    saveParams();
-    updateWires();
-    styleGpioMenu();
-    gpioMenu.style.display = 'none';
-  });
-  b.dataset.gpio = n;
-  gpioGrid.appendChild(b);
-}
-function styleGpioMenu() {   // 현재 선택 강조
-  for (const b of gpioGrid.children) {
-    const on = +b.dataset.gpio === +P.swGpio;
-    b.style.background = on ? '#e9b95f' : '#f1ead7';
-    b.style.color = on ? '#4d3a14' : '#6b5d43';
+const gpioTitle = gpioMenu.querySelector('#gpioTitle');
+
+function openGpioMenu(tag, clientX, clientY) {
+  const role = GPIO_ROLES[tag];
+  if (!role) return;
+  gpioTitle.textContent = role.name + ' GPIO 선택';
+  // 다른 배선이 이미 쓰는 핀은 제외 (충돌 방지)
+  const used = Object.values(GPIO_ROLES).filter(r => r.key !== role.key).map(r => +P[r.key]);
+  gpioGrid.innerHTML = '';
+  for (const n of ALL_GPIOS) {
+    const b = document.createElement('button');
+    b.textContent = 'G' + n;
+    const cur = +P[role.key] === n, taken = used.includes(n);
+    b.disabled = taken;
+    b.style.cssText = 'padding:5px 0; font-size:11px; border-radius:6px;' +
+      (cur ? 'background:#e9b95f;color:#4d3a14;'
+           : taken ? 'background:#efe9dc;color:#c3b89a;'
+                   : 'background:#f1ead7;color:#6b5d43;');
+    if (!taken) b.addEventListener('click', () => {
+      P[role.key] = n;
+      saveParams();
+      updateWires();
+      gpioMenu.style.display = 'none';
+    });
+    gpioGrid.appendChild(b);
   }
+  gpioMenu.style.left = Math.min(clientX + 6, window.innerWidth - 200) + 'px';
+  gpioMenu.style.top = Math.min(clientY + 6, window.innerHeight - 150) + 'px';
+  gpioMenu.style.display = 'block';
 }
+
 const pickRay = new THREE.Raycaster();
 renderer.domElement.addEventListener('contextmenu', e => {
   if (!wiresOn) return;
@@ -873,13 +890,10 @@ renderer.domElement.addEventListener('contextmenu', e => {
     -((e.clientY - r.top) / r.height) * 2 + 1);
   pickRay.setFromCamera(ndc, camera);
   const hit = pickRay.intersectObjects(wireGroup.children, true)
-                     .find(h => h.object.userData.tag === 'gpio');
+                     .find(h => GPIO_ROLES[h.object.userData.tag]);
   if (!hit) return;
   e.preventDefault();
-  styleGpioMenu();
-  gpioMenu.style.left = Math.min(e.clientX + 6, window.innerWidth - 190) + 'px';
-  gpioMenu.style.top = Math.min(e.clientY + 6, window.innerHeight - 140) + 'px';
-  gpioMenu.style.display = 'block';
+  openGpioMenu(hit.object.userData.tag, e.clientX, e.clientY);
 });
 window.addEventListener('pointerdown', e => {
   if (!gpioMenu.contains(e.target)) gpioMenu.style.display = 'none';
