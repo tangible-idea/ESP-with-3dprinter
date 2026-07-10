@@ -101,6 +101,7 @@
       <div class="row"><label>OLED 종류</label>
         <select id="oledType">
           <option value="049" selected>0.49" (15×16)</option>
+          <option value="049ext">0.49" 바깥 창 (별도 부품 삽입)</option>
           <option value="096">0.96" (26×26, 4홀 핀 고정)</option>
         </select>
       </div>
@@ -117,7 +118,7 @@
       <div class="row"><label>배선구멍 방향</label>
         <select id="wireRot"><option value="0" selected>가로 (14×5)</option><option value="90">세로 (5×14)</option></select>
       </div>
-      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. 충전모듈 USB는 항상 오른쪽(동쪽) 벽.</div>
+      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED 내장형은 타워 뒤(내부)에서 통째로 밀어 넣고, "바깥 창"은 벽 림에 관통 노치가 파여 별도 출력한 창 부품(window_for_oled0.49)이 박히고 뒤에서 커버(window_cover)로 닫는 방식입니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽.</div>
     </div>
   </details>
 
@@ -190,6 +191,6 @@
   }
 }
 </script>
-<script type="module" src="./app.js?v=31"></script>
+<script type="module" src="./app.js?v=32"></script>
 </body>
 </html>

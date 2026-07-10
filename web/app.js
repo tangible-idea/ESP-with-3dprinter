@@ -18,12 +18,18 @@ const OLED_TYPES = {
   '049': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 9.9 },
   '096': { w: 26, hgt: 26, t: 3.5, winW: 23.2, winH: 12.4, winC: 12.0,
            pegs: { pitch: 22, d: 1.8, len: 2.0 } },   // 모서리 4홀(22×22)용 위치결정 핀
+  // 바깥 창 방식: window_for_oled0.49.stl(별도 출력)이 벽 상단 노치에 박히고
+  // window_cover_for_oled0.49.stl 로 안쪽에서 닫음. 케이스에는 노치만 절삭.
+  '049ext': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 9.9, ext: true,
+              frameAbove: 11 },   // 림 위로 솟는 프레임 높이 (매립 3mm 기준)
 };
 const OLED_HCLR = 0.4;   // OLED 세로(높이) 삽입 여유
 const oledSpec = () => OLED_TYPES[P.oledType] || OLED_TYPES['049'];
 const effBossH = () => P.bossOn ? P.bossH : 0;   // 스위치 보스(둔덕) 끄면 상판에 바로 매립
-const oledTowerW = () => oledSpec().w + 3;                             // 좌우 레일 1.25씩
-const oledTowerTop = () => 4.2 + oledSpec().hgt + OLED_HCLR + 1.2;     // 턱 4.2 + 모듈 + 여유 + 천장 1.2
+const oledTowerW = () => oledSpec().ext ? 18.6 : oledSpec().w + 3;     // 좌우 레일 1.25씩
+const oledTowerTop = () => oledSpec().ext
+  ? P.f2H + oledSpec().frameAbove                                      // 외장 창: 림 위 프레임 상단
+  : 4.2 + oledSpec().hgt + OLED_HCLR + 1.2;                            // 턱 4.2 + 모듈 + 여유 + 천장 1.2
 const STAND_FLARE_Z = 5.4;   // keyboard_switch_stand.stl: 몸통(플레어) 시작 높이
 const STAND_H = 14.0;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
@@ -234,6 +240,7 @@ const partMat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, 
 const MATS = {
   bat: partMat(0x8494a8), esp: partMat(0x33475c), mod: partMat(0xc0503c),
   oled: partMat(0x1f9e86), stand: partMat(0x9061c2), face: partMat(0xf4d271),
+  win: partMat(0xb03434), cover: partMat(0x9aa3a7),
 };
 
 // 층 그룹 (분해/조립용)
@@ -361,7 +368,7 @@ function normalize(g, centerXY = true) {
 }
 
 async function loadAssets() {
-  const [usb, stand, bat, esp, mod, oled, face] = await Promise.all([
+  const [usb, stand, bat, esp, mod, oled, face, oledWin, oledCover] = await Promise.all([
     loadSTL('../stl_files/usb_c_hole.stl'),
     loadSTL('../stl_files/keyboard_switch_stand.stl'),
     loadSTL('../stl_files/520Mah_battery.stl'),
@@ -369,6 +376,8 @@ async function loadAssets() {
     loadSTL('../stl_files/battery_charging_module.stl'),
     loadSTL('../stl_files/oled_0.49inch.stl'),
     loadSTL('../dimsum/obj_2_sup 2.0 face.stl'),
+    loadSTL('../my_designs/window_for_oled0.49.stl'),
+    loadSTL('../my_designs/window_cover_for_oled0.49.stl'),
   ]);
   // USB 구멍 툴: 정규화 → 중심 정렬 → 나팔 입구가 +X를 향하게 (길이 9, 사용 시 벽두께에 맞춰 x 스케일)
   normalize(usb, false);
@@ -385,6 +394,15 @@ async function loadAssets() {
   cut.scale(1.035, 1.035, 1.0);
   cut.translate(0, 0, -0.25);
   ASSETS.standCut = cut;
+
+  // 외장 OLED 창 부품(별도 출력): xy 중심·z0 정규화 후 -90° 회전 → 로컬 +y가 바깥(텅 쪽)
+  // 원본: 폭 17.5 × 깊이 6(텅 2mm는 바깥면) × 높이 22 (텅 8 + 프레임 14)
+  normalize(oledWin);
+  oledWin.rotateZ(-Math.PI / 2);
+  ASSETS.oledWin = oledWin;
+  normalize(oledCover);
+  oledCover.rotateZ(-Math.PI / 2);
+  ASSETS.oledCover = oledCover;
 
   ASSETS.bat = normalize(bat);
   ASSETS.esp = normalize(esp, false);   // min corner 기준 (USB는 -x 끝)
@@ -490,7 +508,13 @@ function buildFloor2() {
 
   // OLED 소켓 타워 — 2층 높이와 무관하게 항상 OLED가 다 들어가는 높이.
   // 2층 벽보다 높으면 3층 뚜껑의 노치(cutout)에 끼워짐 → 조립 키 역할.
-  if (P.oledSide !== 'none') {
+  if (P.oledSide !== 'none' && oledSpec().ext) {
+    // 외장 창 방식(사진 참조): 벽 림에서 아래로 11.2mm, 림까지 완전 개방된 관통 노치.
+    // 창 부품(폭 17.5)이 이 노치(폭 18)에 통째로 박히고 — 텅+프레임이 그 구간의 벽이 됨.
+    const { m, dHalf } = oledFrame();
+    b = sub(b, boxBrush(18, P.wall + 3, 11.6, 0, dHalf - P.wall / 2, P.f2H - 11.2, 0, m));
+  }
+  if (P.oledSide !== 'none' && !oledSpec().ext) {
     const spec = oledSpec();
     const { m, dHalf, seatY } = oledFrame();
     // 곡면 벽이면 모듈이 곡률 안쪽 평면(seatY)에 앉음 → 타워가 그만큼 깊어짐
@@ -568,12 +592,13 @@ function buildFloor3() {
 
   b = bottomJointCut(b);
 
-  // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
+  // OLED 타워/외장 창 노치: 2층에서 솟은 부분이 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
     const { m, dHalf, seatY } = oledFrame();
     const cutTop = Math.min(oledTowerTop() - P.f2H + 0.8, P.f3H + effBossH() + 1);
     if (cutTop > 0) {
-      const cutD = (dHalf - seatY) + oledSpec().t + 3.0;
+      // 외장 창: 프레임 깊이 6 (안쪽 3, 텅면 바깥) + 여유
+      const cutD = oledSpec().ext ? 7.5 : (dHalf - seatY) + oledSpec().t + 3.0;
       b = sub(b, boxBrush(oledTowerW() + 0.8, cutD, cutTop + 0.1,
                           0, dHalf + 0.5 - cutD / 2, -0.1, 0, m));
     }
@@ -615,17 +640,33 @@ function placeGhosts() {
   G[1].add(ghostMesh(mg, MATS.mod, T(mc.x, mc.y, F2_PLATE)));
   if (P.oledSide !== 'none') {
     const spec = oledSpec();
-    const { m, seatY } = oledFrame();
-    let og;
-    if (P.oledType === '096') {   // 0.96"은 STL이 없어 간단 박스 고스트
-      og = new THREE.BoxGeometry(spec.w, spec.t, spec.hgt);
-      og.translate(0, seatY - spec.t / 2 - 0.15, 4.2 + spec.hgt / 2);
+    const { m, dHalf, seatY } = oledFrame();
+    if (spec.ext) {
+      // 외장 창(빨강) + 커버(회색) + OLED — 별도 출력/조립 부품
+      const wg2 = ASSETS.oledWin.clone();
+      wg2.translate(0, dHalf - 3, P.f2H - 11);
+      wg2.applyMatrix4(m);
+      G[1].add(ghostMesh(wg2, MATS.win));
+      const cg = ASSETS.oledCover.clone();
+      cg.translate(0, dHalf - 8.5, P.f2H - 5);
+      cg.applyMatrix4(m);
+      G[1].add(ghostMesh(cg, MATS.cover));
+      const og = ASSETS.oled.clone();
+      og.translate(-spec.w / 2, dHalf - 5.6, P.f2H - 3);
+      og.applyMatrix4(m);
+      G[1].add(ghostMesh(og, MATS.oled));
     } else {
-      og = ASSETS.oled.clone();
-      og.translate(-spec.w / 2, seatY - spec.t - 0.15, 4.2);
+      let og;
+      if (P.oledType === '096') {   // 0.96"은 STL이 없어 간단 박스 고스트
+        og = new THREE.BoxGeometry(spec.w, spec.t, spec.hgt);
+        og.translate(0, seatY - spec.t / 2 - 0.15, 4.2 + spec.hgt / 2);
+      } else {
+        og = ASSETS.oled.clone();
+        og.translate(-spec.w / 2, seatY - spec.t - 0.15, 4.2);
+      }
+      og.applyMatrix4(m);
+      G[1].add(ghostMesh(og, MATS.oled));
     }
-    og.applyMatrix4(m);
-    G[1].add(ghostMesh(og, MATS.oled));
   }
   // 3층: 스탠드 + 딤섬 캐릭터
   const standZ = P.f3H + effBossH() - P.standSink - STAND_FLARE_Z;
@@ -803,11 +844,13 @@ function updateWires() {
     // --- ESP32 → OLED (I2C: 3V3, GND, GPIO8=SDA, GPIO9=SCL) ---
     if (P.oledSide !== 'none') {
       const spec = oledSpec();
-      const { m, seatY } = oledFrame();
-      const pinZ = 4.2 + (P.oledType === '096' ? spec.hgt - 2.5 : 11.5);   // 핀 행 높이 (실측 도면)
+      const { m, dHalf, seatY } = oledFrame();
+      // 핀 행 높이/깊이: 외장 창은 림 위 프레임 안쪽, 내장은 실측 도면 기준
+      const pinZ = spec.ext ? P.f2H + 4 : 4.2 + (P.oledType === '096' ? spec.hgt - 2.5 : 11.5);
+      const pinY = spec.ext ? dHalf - 6.5 : seatY - spec.t - 0.6;
       const oledPin = (i) => {   // GND,VCC,SCL,SDA 순서 (2.54 피치)
         const lx = -3.81 + i * 2.54;
-        const v = new THREE.Vector3(lx, seatY - spec.t - 0.6, 0).applyMatrix4(m);
+        const v = new THREE.Vector3(lx, pinY, 0).applyMatrix4(m);
         return [v.x, v.y, z2b + pinZ];
       };
       const oGND = oledPin(0), oVCC = oledPin(1), oSCL = oledPin(2), oSDA = oledPin(3);

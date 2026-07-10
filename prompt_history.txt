@@ -1,0 +1,4 @@
+OLED 종류를 0.49 바깥쪽 탑재 부분을 추가해줘. 그러면, 지금처럼 안쪽에 oled가 들어가는게 아니라, 원형 끝
+  부분에 @my_designs/window_for_oled0.49.stl 가 파여서 박혀있는 형태야. 완성본 내가 만든거 사진참조:
+  @my_designs/rounded.png  그리고 그 oled를 반대쪽에서 닫을때 @my_designs/window_cover_for_oled0.49.stl 로
+  닫을거야. 별도 출력 부분인 부품
