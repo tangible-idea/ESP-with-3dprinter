@@ -6,6 +6,14 @@ import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import ManifoldModule from './vendor/manifold.js';
+import manifoldWasmUrl from './vendor/manifold.wasm?url';
+import usbHoleUrl from '../stl_files/usb_c_hole.stl?url';
+import switchStandUrl from '../stl_files/keyboard_switch_stand.stl?url';
+import batteryUrl from '../stl_files/520Mah_battery.stl?url';
+import esp32Url from '../stl_files/esp32_c3_supermini.stl?url';
+import chargeModuleUrl from '../stl_files/battery_charging_module.stl?url';
+import oledUrl from '../stl_files/oled_0.49inch.stl?url';
+import faceUrl from '../dimsum/obj_2_sup 2.0 face.stl?url';
 
 // ------------------------------------------------------------------
 // 부품 실측 상수 (mm)
@@ -39,7 +47,7 @@ const P = {
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
-  espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049',
+  espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
 };
 
@@ -53,7 +61,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink',
-                 'espX','espY','modY','wireX','wireY'];
+                 'espX','espY','modY','oledProud','wireX','wireY'];
 let rebuildTimer = null;
 function queueRebuild() {
   saveParams();
@@ -347,7 +355,7 @@ const meshBrush = (geo, matrix) => toMan(geo, matrix);
 const loader = new STLLoader();
 const ASSETS = {};
 function loadSTL(url) {
-  return new Promise((res, rej) => loader.load(encodeURI(url), g => {
+  return new Promise((res, rej) => loader.load(url, g => {
     g.deleteAttribute('uv'); g.computeVertexNormals(); res(g);
   }, undefined, rej));
 }
@@ -362,13 +370,13 @@ function normalize(g, centerXY = true) {
 
 async function loadAssets() {
   const [usb, stand, bat, esp, mod, oled, face] = await Promise.all([
-    loadSTL('../stl_files/usb_c_hole.stl'),
-    loadSTL('../stl_files/keyboard_switch_stand.stl'),
-    loadSTL('../stl_files/520Mah_battery.stl'),
-    loadSTL('../stl_files/esp32_c3_supermini.stl'),
-    loadSTL('../stl_files/battery_charging_module.stl'),
-    loadSTL('../stl_files/oled_0.49inch.stl'),
-    loadSTL('../dimsum/obj_2_sup 2.0 face.stl'),
+    loadSTL(usbHoleUrl),
+    loadSTL(switchStandUrl),
+    loadSTL(batteryUrl),
+    loadSTL(esp32Url),
+    loadSTL(chargeModuleUrl),
+    loadSTL(oledUrl),
+    loadSTL(faceUrl),
   ]);
   // USB 구멍 툴: 정규화 → 중심 정렬 → 나팔 입구가 +X를 향하게 (길이 9, 사용 시 벽두께에 맞춰 x 스케일)
   normalize(usb, false);
@@ -396,12 +404,14 @@ async function loadAssets() {
 // ------------------------------------------------------------------
 // 층 빌더
 // ------------------------------------------------------------------
-function decoBands(body, zList) {
+function decoBands(body, zList, protect = null) {
   if (!P.bands) return body;
   for (const z of zList) {
     const s = rrShape(P.W + 0.1, effD() + 0.1, effR());
     s.holes.push(basePath(0.6));
-    body = sub(body, extrude(s, 1.2, z - 0.6));
+    let ring = extrude(s, 1.2, z - 0.6);
+    if (protect) ring = sub(ring, protect());   // 돌출 포드 등 보호 영역은 홈 안 팜
+    body = sub(body, ring);
   }
   return body;
 }
@@ -459,8 +469,10 @@ function oledFrame() {
   const ang = side === 'N' ? 0 : side === 'W' ? Math.PI / 2 : Math.PI;
   const m = new THREE.Matrix4().makeRotationZ(ang);
   // 모듈 앞면 안착 평면: 모듈 폭 모서리가 곡면 벽에 닿는 깊이 (직선 벽이면 = 벽 안쪽면)
-  const seatY = surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, P.wall);
-  return { dHalf, acrossHalf, m, innerFace: dHalf - P.wall, seatY };
+  // 돌출(proud) 시 포드 외곽면과 함께 안착면도 바깥으로 밀려남
+  const proud = P.oledProud;
+  const seatY = surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, P.wall) + proud;
+  return { dHalf, acrossHalf, m, innerFace: dHalf - P.wall, seatY, proud, outHalf: dHalf + proud };
 }
 
 function buildFloor2() {
@@ -492,22 +504,23 @@ function buildFloor2() {
   // 2층 벽보다 높으면 3층 뚜껑의 노치(cutout)에 끼워짐 → 조립 키 역할.
   if (P.oledSide !== 'none') {
     const spec = oledSpec();
-    const { m, dHalf, seatY } = oledFrame();
+    const { m, seatY, proud, outHalf } = oledFrame();
     // 곡면 벽이면 모듈이 곡률 안쪽 평면(seatY)에 앉음 → 타워가 그만큼 깊어짐
     const towerBack = seatY - spec.t - 2.0;
-    const towerD = dHalf - towerBack;
+    const towerD = outHalf - towerBack;
     const tTop = oledTowerTop();
     let tower = boxBrush(oledTowerW(), towerD, tTop - F2_PLATE,
-                         0, dHalf - towerD / 2, F2_PLATE, 0, m);
-    tower = inter(tower, extrude(baseShape(0), tTop, 0));  // 외곽 곡면 따라 자르기
+                         0, outHalf - towerD / 2, F2_PLATE, 0, m);
+    // 외곽 곡면 따라 자르기 — 돌출 시 외곽을 proud만큼 바깥 offset한 곡선(네모/원형 공통)을 따름
+    tower = inter(tower, extrude(baseShape(-proud), tTop, 0));
     b = add(b, tower);
     // 뒤에서 장착: OLED 전체가 내부에서 통째로 들어가는 포켓.
     // 뒷면은 완전 개방(뒷벽 관통), 앞은 seatY 평면 + 디스플레이 창이 잡아줌. 위는 막힘.
-    const pocketD = spec.t + 2.2;   // 뒷벽까지 완전 관통
+    const pocketD = spec.t + 2.2 + proud;   // 뒷벽까지 완전 관통 (돌출 시 삽입 터널 연장)
     b = sub(b, boxBrush(spec.w + 0.5, pocketD, spec.hgt + OLED_HCLR,
                         0, seatY - pocketD / 2, 4.2, 0, m));
     // 디스플레이 창 (seatY 평면에서 외벽까지 관통 — 곡면이면 깊은 터널)
-    const winDepth = (dHalf - seatY) + P.wall + 2;
+    const winDepth = (outHalf - seatY) + P.wall + 2;
     const wg = new THREE.ExtrudeGeometry(rrShape(spec.winW, spec.winH, 1.5), { depth: winDepth, bevelEnabled: false, curveSegments: 12 });
     wg.deleteAttribute('uv');
     wg.rotateX(-Math.PI / 2);
@@ -546,9 +559,16 @@ function buildFloor2() {
   const wd = P.wireRot === 90 ? 14 : 5;
   b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
 
-  // 바닥 rabbet + 장식
+  // 바닥 rabbet + 장식 — 돌출 포드 구간은 장식 홈이 포드 내부를 뚫지 않게 보호
   b = bottomJointCut(b);
-  b = decoBands(b, [P.f2H * 0.3, P.f2H * 0.66]);
+  const podProtect = (P.oledSide !== 'none' && P.oledProud > 0) ? () => {
+    const spec = oledSpec();
+    const { m, seatY, outHalf } = oledFrame();
+    const backY = seatY - spec.t - 2.0;
+    return boxBrush(oledTowerW(), outHalf - backY + 0.4, oledTowerTop(),
+                    0, (outHalf + backY) / 2 + 0.2, 0, 0, m);
+  } : null;
+  b = decoBands(b, [P.f2H * 0.3, P.f2H * 0.66], podProtect);
   return b;
 }
 
@@ -570,12 +590,12 @@ function buildFloor3() {
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
-    const { m, dHalf, seatY } = oledFrame();
+    const { m, seatY, outHalf } = oledFrame();
     const cutTop = Math.min(oledTowerTop() - P.f2H + 0.8, P.f3H + effBossH() + 1);
     if (cutTop > 0) {
-      const cutD = (dHalf - seatY) + oledSpec().t + 3.0;
+      const cutD = (outHalf - seatY) + oledSpec().t + 3.0;
       b = sub(b, boxBrush(oledTowerW() + 0.8, cutD, cutTop + 0.1,
-                          0, dHalf + 0.5 - cutD / 2, -0.1, 0, m));
+                          0, outHalf + 0.5 - cutD / 2, -0.1, 0, m));
     }
   }
 
@@ -1012,9 +1032,9 @@ document.getElementById('ex3').addEventListener('click', () => exportFloor(2, 'f
 // ------------------------------------------------------------------
 Promise.all([
   loadAssets(),
-  ManifoldModule().then(w => { w.setup(); M = w; }),
+  ManifoldModule({ locateFile: () => manifoldWasmUrl }).then(w => { w.setup(); M = w; }),
 ]).then(rebuild).catch(e => {
   document.getElementById('warnings').textContent =
-    '⚠ 초기화 실패: ' + e + '\n프로젝트 루트에서 `python3 -m http.server` 로 실행했는지 확인하세요.';
+    '⚠ 초기화 실패: ' + e + '\n`npm run dev` 로 실행했는지 확인하세요.';
   console.error(e);
 });

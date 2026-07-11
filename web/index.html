@@ -112,12 +112,13 @@
           <option value="none">없음</option>
         </select>
       </div>
+      <div class="row"><label>OLED 돌출</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
       <div class="row"><label>배선구멍 X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
       <div class="row"><label>배선구멍 Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12"><span class="val" id="wireYv"></span></div>
       <div class="row"><label>배선구멍 방향</label>
         <select id="wireRot"><option value="0" selected>가로 (14×5)</option><option value="90">세로 (5×14)</option></select>
       </div>
-      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. 충전모듈 USB는 항상 오른쪽(동쪽) 벽.</div>
+      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽.</div>
     </div>
   </details>
 
@@ -177,19 +178,6 @@
 <div id="viewer"></div>
 <div id="status">모델 생성 중…</div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "./vendor/three.module.js",
-    "three-mesh-bvh": "./vendor/three-mesh-bvh.module.js",
-    "three-bvh-csg": "./vendor/three-bvh-csg.module.js",
-    "three/addons/controls/OrbitControls.js": "./vendor/OrbitControls.js",
-    "three/addons/loaders/STLLoader.js": "./vendor/STLLoader.js",
-    "three/addons/exporters/STLExporter.js": "./vendor/STLExporter.js",
-    "three/addons/utils/BufferGeometryUtils.js": "./vendor/BufferGeometryUtils.js"
-  }
-}
-</script>
-<script type="module" src="./app.js?v=31"></script>
+<script type="module" src="./app.js"></script>
 </body>
 </html>
