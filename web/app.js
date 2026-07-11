@@ -495,6 +495,21 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
   return { w: l + POCKET_CLR, d: w + POCKET_CLR };
 }
 
+// 2.5층(띄움): 보드를 뒤집어(USB·부품면 아래) 받침선에 얹음 — USB 실루엣이 홈에 꽂혀 고정
+const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이 (셸 위 1mm를 립이 덮음)
+const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
+function espLiftGeo(inflate = false) {
+  const g = ASSETS.esp.clone();
+  g.rotateY(Math.PI);                              // 뒤집기 — USB·부품면이 아래
+  if (P.espRot === 90) g.rotateZ(Math.PI / 2);
+  normalize(g);                                    // xy 중심, 바닥 z=0 (= USB 쉘 밑면)
+  if (inflate) {
+    g.scale(1.04, 1.04, 1.03);
+    g.translate(0, 0, -0.15);
+  }
+  return g;
+}
+
 // 세움 ESP32 지오메트리: 실물 메시를 수직으로 세움.
 // inflate=절삭용 — USB 커넥터 모양 포함 실루엣 그대로 홈이 파여 꽂아서 고정
 function espStandGeo(inflate = false) {
@@ -580,6 +595,10 @@ function buildFloor2() {
     let beam = rot90
       ? boxBrush(beamW, span, topZ + shoulderH - F2_PLATE, P.espX, 0, F2_PLATE)
       : boxBrush(span, beamW, topZ + shoulderH - F2_PLATE, 0, P.espY, F2_PLATE);
+    // USB 앵커 블록: 셸(9×9)이 받침선보다 넓어서 그 자리만 넓힘
+    beam = add(beam, rot90
+      ? boxBrush(13, 11, topZ - F2_PLATE, P.espX, P.espY + USB_C_OFF, F2_PLATE, 1)
+      : boxBrush(11, 13, topZ - F2_PLATE, P.espX + USB_C_OFF, P.espY, F2_PLATE, 1));
     beam = inter(beam, extrude(baseShape(0), topZ + shoulderH, 0));   // 벽 곡면 따라 자르고 벽과 융합
     b = add(b, beam);
     // 홈: 보드 길이(24)만큼만 턱을 파내서 끼움
@@ -587,6 +606,16 @@ function buildFloor2() {
     b = sub(b, rot90
       ? boxBrush(beamW + 2, slotL, shoulderH + 1, P.espX, P.espY, topZ)
       : boxBrush(slotL, beamW + 2, shoulderH + 1, P.espX, P.espY, topZ));
+    // 보드는 뒤집어(USB 아래) 안착 — USB/부품 밑면 실루엣을 실물 메시로 절삭 → 꽂아서 고정
+    b = sub(b, meshBrush(espLiftGeo(true),
+                         new THREE.Matrix4().makeTranslation(P.espX, P.espY, topZ - LIFT_SINK)));
+    // 스냅 립: USB 홈 위 가장자리를 0.4mm씩 살짝 덮음 → 눌러 넣으면 셸이 찰칵 걸림
+    const lipIn = 4.3, lipW = 1.3, lipH = 0.9, lipL = 5;
+    for (const s of [-1, 1]) {
+      b = add(b, rot90
+        ? boxBrush(lipW, lipL, lipH, P.espX + s * (lipIn + lipW / 2), P.espY + USB_C_OFF, topZ - lipH)
+        : boxBrush(lipL, lipW, lipH, P.espX + USB_C_OFF, P.espY + s * (lipIn + lipW / 2), topZ - lipH));
+    }
   }
   const mc = modCenter();
   // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
@@ -751,11 +780,14 @@ function placeGhosts() {
   // 2층
   if (espStand()) {
     G[1].add(ghostMesh(espStandGeo(), MATS.esp, T(P.espX, P.espY, espBaseZ())));
+  } else if (P.espLift > 0) {
+    // 2.5층: 뒤집힌 보드가 받침선 홈에 안착 (USB 실루엣 매립)
+    G[1].add(ghostMesh(espLiftGeo(), MATS.esp, T(P.espX, P.espY, F2_PLATE + P.espLift - LIFT_SINK)));
   } else {
     const rot = P.espRot === 90 ? Math.PI / 2 : 0;
     const eg = ASSETS.esp.clone();
     eg.translate(-ESP.l / 2, -ESP.w / 2, 0);   // 중심 정렬 후 회전
-    G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE + P.espLift, rot)));
+    G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE, rot)));
   }
   const mg = ASSETS.mod.clone();
   mg.rotateZ(Math.PI);                        // USB를 +X로
@@ -952,7 +984,8 @@ function updateWires() {
         return P.espRot === 'u90' ? [P.espX, P.espY + dy, zP] : [P.espX + dy, P.espY, zP];
       }
       const [rx, ry] = P.espRot === 90 ? [-dy, dx] : [dx, dy];
-      return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + P.espLift + ESP.h];
+      const lift = P.espLift > 0 ? P.espLift - LIFT_SINK : 0;   // 2.5층: 뒤집혀 매립된 만큼 보정
+      return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + lift + ESP.h];
     };
     const pin5V = espPin(...ESP_PINS['5V']), pinGND = espPin(...ESP_PINS.GND), pin3V3 = espPin(...ESP_PINS['3V3']);
     const pinSDA = espPin(...(ESP_PINS[P.sdaGpio] || ESP_PINS[8]));
@@ -1145,7 +1178,7 @@ function updateInfo(ms, fit) {
     else if (P.espLift < MOD.h + 0.8)
       warn.push(`⚠ ESP32 띄움(${P.espLift})이 충전모듈 높이(${MOD.h})보다 낮습니다 — ${(MOD.h + 1).toFixed(0)} 이상으로 올리세요`);
   }
-  if (espLifted && F2_PLATE + P.espLift + ESP.h > P.f2H + P.f3H - F3_PLATE - 0.3)
+  if (espLifted && F2_PLATE + P.espLift - LIFT_SINK + ESP.h > P.f2H + P.f3H - F3_PLATE - 0.3)
     warn.push('⚠ 띄운 ESP32가 3층 상판에 닿습니다 — 띄움을 줄이거나 층 높이를 키우세요');
   if (espLifted) {
     const beamRect = P.espRot === 90
@@ -1179,7 +1212,7 @@ function updateInfo(ms, fit) {
     warn.push('⚠ 세운 배터리가 스위치 홀더 컵에 부딪힙니다 — 배터리 X를 옮기거나 층 높이를 키우세요');
   const espTopLocal = espStand()
     ? espBaseZ() + (espUsbDown() ? ESP.l : ESP.w)
-    : F2_PLATE + P.espLift + ESP.h;
+    : F2_PLATE + (P.espLift > 0 ? P.espLift - LIFT_SINK : 0) + ESP.h;
   if ((espStand() || espLifted) && rectsOverlap(eRect, cupRect) &&
       espTopLocal > P.f2H + cupBotZ - 0.3)
     warn.push('⚠ ESP32가 스위치 홀더 컵에 부딪힙니다 — 위치를 옮기거나 층 높이를 키우세요');
