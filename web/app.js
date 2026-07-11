@@ -23,11 +23,12 @@ const ESP = { l: 24, w: 18, h: 4.2 };
 const MOD = { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 }; // USB가 x끝에서 1mm 돌출
 // OLED 종류별 실측 (win: 디스플레이 창, winC: 모듈 바닥 기준 창 중심 높이)
 const OLED_TYPES = {
-  '049': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 9.9 },
+  '049': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 8.9 },
   '096': { w: 26, hgt: 26, t: 3.5, winW: 23.2, winH: 12.4, winC: 12.0,
            pegs: { pitch: 22, d: 1.8, len: 2.0 } },   // 모서리 4홀(22×22)용 위치결정 핀
 };
-const OLED_HCLR = 0.4;   // OLED 세로(높이) 삽입 여유
+const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
+const OLED_FACE_T = 1.2; // OLED 앞(바깥) 벽 두께 — 케이스 벽보다 얇게
 const oledSpec = () => OLED_TYPES[P.oledType] || OLED_TYPES['049'];
 const effBossH = () => P.bossOn ? P.bossH : 0;   // 스위치 보스(둔덕) 끄면 상판에 바로 매립
 const oledTowerW = () => oledSpec().w + 3;                             // 좌우 레일 1.25씩
@@ -468,10 +469,11 @@ function oledFrame() {
   const acrossHalf = (side === 'W') ? effD() / 2 : P.W / 2;
   const ang = side === 'N' ? 0 : side === 'W' ? Math.PI / 2 : Math.PI;
   const m = new THREE.Matrix4().makeRotationZ(ang);
-  // 모듈 앞면 안착 평면: 모듈 폭 모서리가 곡면 벽에 닿는 깊이 (직선 벽이면 = 벽 안쪽면)
+  // 모듈 앞면 안착 평면: 모듈 폭 모서리가 곡면 벽에 닿는 깊이.
+  // 앞벽은 케이스 벽보다 얇은 OLED_FACE_T 기준 → 디스플레이가 바깥에 더 가깝게
   // 돌출(proud) 시 포드 외곽면과 함께 안착면도 바깥으로 밀려남
   const proud = P.oledProud;
-  const seatY = surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, P.wall) + proud;
+  const seatY = surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, OLED_FACE_T) + proud;
   return { dHalf, acrossHalf, m, innerFace: dHalf - P.wall, seatY, proud, outHalf: dHalf + proud };
 }
 
