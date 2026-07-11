@@ -48,7 +48,7 @@ const SW = {
   H: 17.9,           // 스위치 전체 높이 (고스트/캐릭터 배치용)
   pinLen: 3.1,       // 몸통 바닥 아래 핀/기둥 돌출 길이 (구멍에 꽂힘)
   // 바닥 구멍 [x, y, Ø]: 중앙 기둥 1 + 구리선 4 (핀 2 + 다리 2, 스위치 180° 장착 기준)
-  holes: [[0, 0, 4.3], [5.0, 0, 3.0], [-5.0, 0, 3.0], [3.8, -2.7, 3.0], [-2.7, -5.2, 3.0]],
+  holes: [[0, 0, 4.3], [5.0, 0, 1.8], [-5.0, 0, 1.8], [3.8, -2.7, 1.8], [-2.7, -5.2, 1.8]],
 };
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 아래층 턱 높이/폭
@@ -720,7 +720,8 @@ function buildFloor3() {
   b = sub(b, boxBrush(SW.body, SW.body, P.standSink + SW.seatH + 2, 0, 0, seatZ, 1));
   // 바닥 구멍: 중앙 기둥 1 + 구리선 4, 아래로 갈수록 넓어지는 깔때기 (배선 삽입 유도)
   for (const [hx, hy, hd] of SW.holes) {
-    const cyl = new THREE.CylinderGeometry(hd / 2, hd / 2 + 1.0, SW.floorT + 1.2, 24);
+    const flare = hd > 4 ? 1.0 : 0.6;   // 깔때기: 작은 구리선 구멍은 플레어도 작게
+    const cyl = new THREE.CylinderGeometry(hd / 2, hd / 2 + flare, SW.floorT + 1.2, 24);
     cyl.rotateX(Math.PI / 2);   // 축을 z로
     cyl.translate(hx, hy, seatZ - SW.floorT / 2 - 0.05);
     cyl.deleteAttribute('uv');
