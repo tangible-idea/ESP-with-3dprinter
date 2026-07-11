@@ -28,7 +28,7 @@ const OLED_TYPES = {
            pegs: { pitch: 22, d: 1.8, len: 2.0 } },   // 모서리 4홀(22×22)용 위치결정 핀
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
-const OLED_FACE_T = 1.2; // OLED 앞(바깥) 벽 두께 — 케이스 벽보다 얇게
+const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
 const oledSpec = () => OLED_TYPES[P.oledType] || OLED_TYPES['049'];
 const effBossH = () => P.bossOn ? P.bossH : 0;   // 스위치 보스(둔덕) 끄면 상판에 바로 매립
 const oledTowerW = () => oledSpec().w + 3;                             // 좌우 레일 1.25씩
