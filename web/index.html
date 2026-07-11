@@ -98,6 +98,13 @@
         <select id="espRot"><option value="0" selected>가로 (24×18)</option><option value="90">세로 (18×24)</option></select>
       </div>
       <div class="row"><label>충전모듈 Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
+      <div class="row"><label>배터리</label>
+        <select id="batType">
+          <option value="520" selected>520mAh (눕혀서 1층)</option>
+          <option value="650">650mAh (세워서 2층, 8×40×20)</option>
+        </select>
+      </div>
+      <div class="row"><label>배터리 X (650)</label><input type="range" id="batX" min="-20" max="20" step="0.5" value="-8"><span class="val" id="batXv"></span></div>
       <div class="row"><label>OLED 종류</label>
         <select id="oledType">
           <option value="049" selected>0.49" (15×16)</option>

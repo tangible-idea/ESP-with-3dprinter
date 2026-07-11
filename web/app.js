@@ -18,7 +18,8 @@ import faceUrl from '../dimsum/obj_2_sup 2.0 face.stl?url';
 // ------------------------------------------------------------------
 // 부품 실측 상수 (mm)
 // ------------------------------------------------------------------
-const BAT = { w: 36.5, d: 28.5, h: 4.3, clr: 0.7 };
+const BAT = { w: 36.5, d: 28.5, h: 4.3, clr: 0.7 };            // 520mAh 눕혀서 1층
+const BAT650 = { x: 8, y: 40, z: 20, clr: 0.5 };                // 650mAh 세워서 2층 소켓
 const ESP = { l: 24, w: 18, h: 4.2 };
 const MOD = { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 }; // USB가 x끝에서 1mm 돌출
 // OLED 종류별 실측 (win: 디스플레이 창, winC: 모듈 바닥 기준 창 중심 높이)
@@ -49,6 +50,7 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
   espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
+  batType: '520', batX: -8,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
 };
 
@@ -62,7 +64,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink',
-                 'espX','espY','modY','oledProud','wireX','wireY'];
+                 'espX','espY','modY','oledProud','batX','wireX','wireY'];
 let rebuildTimer = null;
 function queueRebuild() {
   saveParams();
@@ -126,6 +128,13 @@ document.getElementById('wireRot').value = String(P.wireRot);
 document.getElementById('oledSide').value = P.oledSide;
 document.getElementById('oledType').value = P.oledType;
 document.getElementById('oledType').addEventListener('change', e => { P.oledType = e.target.value; queueRebuild(); });
+document.getElementById('batType').value = P.batType;
+document.getElementById('batX').disabled = P.batType !== '650';
+document.getElementById('batType').addEventListener('change', e => {
+  P.batType = e.target.value;
+  document.getElementById('batX').disabled = P.batType !== '650';
+  queueRebuild();
+});
 document.getElementById('bands').checked = P.bands;
 document.getElementById('jointV').checked = P.jointV;
 document.getElementById('jointV').addEventListener('change', e => { P.jointV = e.target.checked; queueRebuild(); });
@@ -158,6 +167,8 @@ function syncControls() {
   document.getElementById('wireRot').value = String(P.wireRot);
   document.getElementById('oledSide').value = P.oledSide;
   document.getElementById('oledType').value = P.oledType;
+  document.getElementById('batType').value = P.batType;
+  document.getElementById('batX').disabled = P.batType !== '650';
   document.getElementById('bands').checked = P.bands;
   document.getElementById('jointV').checked = P.jointV;
   document.getElementById('bossOn').checked = P.bossOn;
@@ -433,9 +444,9 @@ function buildFloor1() {
   let b = extrude(baseShape(0), F1_PLATE);                       // 바닥판
   b = add(b, ringBrush(0, P.wall, P.f1H - F1_PLATE, F1_PLATE));  // 벽
   b = add(b, topRidge(P.f1H));   // 상단 턱
-  // 배터리 고정 테두리
+  // 배터리 고정 테두리 (520 눕힘 전용 — 650은 2층에 세워 꽂음)
   const bw = BAT.w + BAT.clr, bd = BAT.d + BAT.clr;
-  if (innerHalfW() * 2 > bw + 1 && innerHalfD() * 2 > bd + 1) {
+  if (P.batType === '520' && innerHalfW() * 2 > bw + 1 && innerHalfD() * 2 > bd + 1) {
     const rim = baseShape(P.wall);
     rim.holes.push(rrPath(THREE.Path, bw, bd, 2));
     b = add(b, extrude(rim, 1.2, F1_PLATE));
@@ -504,6 +515,12 @@ function buildFloor2() {
   // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
   b = sub(b, boxBrush(MOD.l + POCKET_CLR + 1, MOD.w + POCKET_CLR, F2_PLATFORM + 2,
                       mc.x - 0.5, mc.y, F2_PLATE, 0.4));
+
+  // 650 배터리 소켓 홈: 플랫폼을 관통해 바닥판 위에 세워서 꽂음 (8×40 세로 슬롯)
+  if (P.batType === '650') {
+    b = sub(b, boxBrush(BAT650.x + BAT650.clr, BAT650.y + BAT650.clr, F2_PLATFORM + 2,
+                        P.batX, 0, F2_PLATE, 1.5));
+  }
 
   // OLED 소켓 타워 — 2층 높이와 무관하게 항상 OLED가 다 들어가는 높이.
   // 2층 벽보다 높으면 3층 뚜껑의 노치(cutout)에 끼워짐 → 조립 키 역할.
@@ -628,8 +645,14 @@ const T = (x, y, z, rotZ = 0) => {
 };
 
 function placeGhosts() {
-  // 1층: 배터리
-  G[0].add(ghostMesh(ASSETS.bat, MATS.bat, T(0, 0, F1_PLATE)));
+  // 배터리: 520 눕혀서 1층 / 650 세워서 2층 소켓
+  if (P.batType === '650') {
+    const bg = new THREE.BoxGeometry(BAT650.x, BAT650.y, BAT650.z);
+    bg.translate(0, 0, BAT650.z / 2);
+    G[1].add(ghostMesh(bg, MATS.bat, T(P.batX, 0, F2_PLATE)));
+  } else {
+    G[0].add(ghostMesh(ASSETS.bat, MATS.bat, T(0, 0, F1_PLATE)));
+  }
   // 2층
   const rot = P.espRot === 90 ? Math.PI / 2 : 0;
   const eg = ASSETS.esp.clone();
@@ -793,21 +816,29 @@ function updateWires() {
     const z1b = G[0].position.z, z2b = G[1].position.z;
     const mc = modCenter();
 
-    // --- 배터리 (1층) → 충전모듈 B+/B− : 2층 바닥 배선구멍 경유 ---
-    const batTop = z1b + F1_PLATE + BAT.h;
-    const tabX = (P.wireX >= 0 ? 1 : -1) * (BAT.w / 2 - 4);   // 배선구멍 쪽 끝에 탭
+    // --- 배터리 → 충전모듈 B+/B− : 520은 1층에서 배선구멍 경유, 650은 2층 안에서 직접 ---
     const modW = mc.x - MOD.l / 2;                            // 모듈 서쪽(USB 반대) 끝
     const bz = z2b + F2_PLATE + 2;                            // 모듈 패드 높이
     const holeTop = z2b + F2_PLATE + F2_PLATFORM + 1.5;
     for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, '배터리 +', 'B+'],
                                      [-1, WIRE_COLORS.minus, '배터리 −', 'B−']]) {
-      addWire([
-        [tabX, sy * 5, batTop],
-        [P.wireX + sy * 1.2, P.wireY, z2b - 2],
-        [P.wireX + sy * 1.2, P.wireY, holeTop],
-        [modW + 1.2, mc.y + sy * 4.5, bz + 2],
-        [modW + 1.2, mc.y + sy * 4.5, bz],
-      ], col, l1, l2);
+      if (P.batType === '650') {
+        addWire([
+          [P.batX + sy * 2, sy * 4, z2b + F2_PLATE + BAT650.z],
+          [modW + 1.2, mc.y + sy * 4.5, bz + 4],
+          [modW + 1.2, mc.y + sy * 4.5, bz],
+        ], col, l1, l2);
+      } else {
+        const batTop = z1b + F1_PLATE + BAT.h;
+        const tabX = (P.wireX >= 0 ? 1 : -1) * (BAT.w / 2 - 4);   // 배선구멍 쪽 끝에 탭
+        addWire([
+          [tabX, sy * 5, batTop],
+          [P.wireX + sy * 1.2, P.wireY, z2b - 2],
+          [P.wireX + sy * 1.2, P.wireY, holeTop],
+          [modW + 1.2, mc.y + sy * 4.5, bz + 2],
+          [modW + 1.2, mc.y + sy * 4.5, bz],
+        ], col, l1, l2);
+      }
     }
 
     // --- ESP32 핀 (pinout: USB쪽부터 북열 5V,G,3V3 / 남열 5,6,7,8=SDA,9=SCL) ---
@@ -979,11 +1010,21 @@ function updateInfo(ms, fit) {
     `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함) · CSG ${ms.toFixed(0)}ms${fitTxt}`;
   const warn = [];
   if (fit && !fit.ok) warn.push('⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요');
-  if (!insideInner(BAT.w / 2 + 0.4, BAT.d / 2 + 0.4)) warn.push('⚠ 배터리(36.5×28.5)가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요');
+  if (P.batType === '520' && !insideInner(BAT.w / 2 + 0.4, BAT.d / 2 + 0.4)) warn.push('⚠ 배터리(36.5×28.5)가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요');
   const ef = espFoot();
   const eRect = { x: P.espX, y: P.espY, w: ef.w, d: ef.d };
   const mc = modCenter();
   const mRect = { x: mc.x, y: mc.y, w: MOD.l + POCKET_CLR, d: MOD.w + POCKET_CLR };
+  const bRect650 = P.batType === '650'
+    ? { x: P.batX, y: 0, w: BAT650.x + BAT650.clr, d: BAT650.y + BAT650.clr } : null;
+  if (bRect650) {
+    if (!insideInner(Math.abs(P.batX) + bRect650.w / 2, bRect650.d / 2))
+      warn.push('⚠ 650 배터리(8×40 세로)가 2층에 안 들어갑니다 — 세로 D를 키우거나 배터리 X를 옮기세요');
+    if (rectsOverlap(bRect650, eRect)) warn.push('⚠ 650 배터리가 ESP32와 겹칩니다');
+    if (rectsOverlap(bRect650, mRect)) warn.push('⚠ 650 배터리가 충전모듈과 겹칩니다');
+    if (F2_PLATE + BAT650.z > P.f2H + P.f3H - F3_PLATE - 0.3)
+      warn.push('⚠ 650 배터리(높이 20)가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요');
+  }
   if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
   if (P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
   if (P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
@@ -998,12 +1039,13 @@ function updateInfo(ms, fit) {
       : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (effD() / 2 - tD / 2), w: tW, d: tD };
     if (rectsOverlap(eRect, tower)) warn.push('⚠ ESP32가 OLED 타워와 겹칩니다');
     if (rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
+    if (bRect650 && rectsOverlap(bRect650, tower)) warn.push('⚠ 650 배터리가 OLED 타워와 겹칩니다');
     if (oledTowerTop() - P.f2H > P.f3H - F3_PLATE - 0.3)
       warn.push('⚠ OLED 타워가 3층 상판을 뚫습니다 — 2층 또는 3층 높이를 키우세요');
     if (of.seatY < oledSpec().t + 4)
       warn.push('⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요');
   }
-  if (P.f1H < F1_PLATE + BAT.h + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
+  if (P.batType === '520' && P.f1H < F1_PLATE + BAT.h + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
   if (P.standSink > effBossH() + F3_PLATE - 0.8)
     warn.push('⚠ 스탠드 매립이 너무 깊습니다 — 보스를 켜거나 매립을 줄이세요 (상판 관통)');
   document.getElementById('warnings').textContent = warn.join('\n');
