@@ -145,7 +145,11 @@ document.getElementById('bossOn').addEventListener('change', e => {
   document.getElementById('bossH').disabled = !P.bossOn;
   queueRebuild();
 });
-document.getElementById('espRot').addEventListener('change', e => { P.espRot = +e.target.value; queueRebuild(); });
+document.getElementById('espRot').addEventListener('change', e => {
+  const v = e.target.value;
+  P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90' = 세움
+  queueRebuild();
+});
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
@@ -455,10 +459,41 @@ function buildFloor1() {
   return b;
 }
 
-function espFoot() {  // ESP32 footprint (회전 반영)
+const espStand = () => ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
+const espUsbDown = () => P.espRot === 'u0' || P.espRot === 'u90';   // USB 끝이 바닥
+const espThinX = () => P.espRot === 's90' || P.espRot === 'u90';    // 두께 방향이 x축
+// USB아래: 커넥터 끝이 바닥판에 1mm 박혀 고정 앵커 역할
+const espBaseZ = () => espUsbDown() ? F2_PLATE - 1.0 : F2_PLATE;
+
+function espFoot() {  // ESP32 footprint (회전/세움 반영)
+  if (espStand()) {
+    const t = ESP.h + 1.6;   // 두께 + USB 커넥터 돌출 여유
+    const along = (espUsbDown() ? ESP.w : ESP.l) + POCKET_CLR;
+    return espThinX() ? { w: t, d: along } : { w: along, d: t };
+  }
   const l = P.espRot === 90 ? ESP.w : ESP.l;
   const w = P.espRot === 90 ? ESP.l : ESP.w;
   return { w: l + POCKET_CLR, d: w + POCKET_CLR };
+}
+
+// 세움 ESP32 지오메트리: 실물 메시를 수직으로 세움.
+// inflate=절삭용 — USB 커넥터 모양 포함 실루엣 그대로 홈이 파여 꽂아서 고정
+function espStandGeo(inflate = false) {
+  const g = ASSETS.esp.clone();
+  if (espUsbDown()) {
+    g.rotateY(-Math.PI / 2);                       // 길이(24)를 수직으로, USB 끝이 바닥
+    if (P.espRot === 'u90') g.rotateZ(Math.PI / 2);
+  } else {
+    g.rotateX(Math.PI / 2);                        // 폭(18)을 수직으로
+    if (P.espRot === 's90') g.rotateZ(Math.PI / 2);
+  }
+  normalize(g);                                    // xy 중심, 바닥 z=0
+  if (inflate) {
+    const sT = 1.10, sL = 1.02;                    // 끼움(두께) 방향 위주 팽창
+    g.scale(espThinX() ? sT : sL, espThinX() ? sL : sT, 1.02);
+    g.translate(0, 0, -0.3);                       // 바닥판에 살짝 매립 → 박편 방지
+  }
+  return g;
 }
 // 원형 모드: 동쪽 벽의 플랫 USB 패드 (반폭 9) 외면 x 좌표
 const flatPadX = () => Math.sqrt(Math.max((P.W / 2) ** 2 - 81, 1));
@@ -509,7 +544,10 @@ function buildFloor2() {
 
   // 포켓
   const ef = espFoot();
-  const espPocket = () => boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5);
+  // 세움: 실물 메시(USB 모양 포함)를 팽창시켜 그대로 절삭 → 꽂아서 고정
+  const espPocket = () => espStand()
+    ? meshBrush(espStandGeo(true), new THREE.Matrix4().makeTranslation(P.espX, P.espY, espBaseZ()))
+    : boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5);
   b = sub(b, espPocket());
   const mc = modCenter();
   // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
@@ -654,10 +692,14 @@ function placeGhosts() {
     G[0].add(ghostMesh(ASSETS.bat, MATS.bat, T(0, 0, F1_PLATE)));
   }
   // 2층
-  const rot = P.espRot === 90 ? Math.PI / 2 : 0;
-  const eg = ASSETS.esp.clone();
-  eg.translate(-ESP.l / 2, -ESP.w / 2, 0);   // 중심 정렬 후 회전
-  G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE, rot)));
+  if (espStand()) {
+    G[1].add(ghostMesh(espStandGeo(), MATS.esp, T(P.espX, P.espY, espBaseZ())));
+  } else {
+    const rot = P.espRot === 90 ? Math.PI / 2 : 0;
+    const eg = ASSETS.esp.clone();
+    eg.translate(-ESP.l / 2, -ESP.w / 2, 0);   // 중심 정렬 후 회전
+    G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE, rot)));
+  }
   const mg = ASSETS.mod.clone();
   mg.rotateZ(Math.PI);                        // USB를 +X로
   mg.translate(MOD.l / 2, MOD.w / 2, 0);      // 중심 (0,0) 정렬
@@ -842,9 +884,15 @@ function updateWires() {
     }
 
     // --- ESP32 핀 (pinout: USB쪽부터 북열 5V,G,3V3 / 남열 5,6,7,8=SDA,9=SCL) ---
-    const rot = P.espRot === 90;
     const espPin = (dx, dy) => {
-      const [rx, ry] = rot ? [-dy, dx] : [dx, dy];
+      // 세움: 보드 평면이 수직 → 폭(dy) 또는 길이(dx) 방향이 높이가 됨
+      if (P.espRot === 's0')  return [P.espX + dx, P.espY, z2b + F2_PLATE + ESP.w / 2 + dy];
+      if (P.espRot === 's90') return [P.espX, P.espY + dx, z2b + F2_PLATE + ESP.w / 2 + dy];
+      if (espUsbDown()) {   // USB(−dx 끝)가 바닥 → 길이 방향이 수직
+        const zP = z2b + espBaseZ() + ESP.l / 2 + dx;
+        return P.espRot === 'u90' ? [P.espX, P.espY + dy, zP] : [P.espX + dy, P.espY, zP];
+      }
+      const [rx, ry] = P.espRot === 90 ? [-dy, dx] : [dx, dy];
       return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + ESP.h];
     };
     const pin5V = espPin(...ESP_PINS['5V']), pinGND = espPin(...ESP_PINS.GND), pin3V3 = espPin(...ESP_PINS['3V3']);
@@ -1026,6 +1074,8 @@ function updateInfo(ms, fit) {
       warn.push('⚠ 650 배터리(높이 20)가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요');
   }
   if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
+  if (espStand() && espBaseZ() + (espUsbDown() ? ESP.l : ESP.w) > P.f2H + P.f3H - F3_PLATE - 0.3)
+    warn.push(`⚠ 세운 ESP32(높이 ${espUsbDown() ? ESP.l : ESP.w})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`);
   if (P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
   if (P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
   if (rectsOverlap(eRect, mRect)) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다');

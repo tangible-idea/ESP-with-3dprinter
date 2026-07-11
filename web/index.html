@@ -95,7 +95,14 @@
       <div class="row"><label>ESP32 X</label><input type="range" id="espX" min="-18" max="18" step="0.5" value="0"><span class="val" id="espXv"></span></div>
       <div class="row"><label>ESP32 Y</label><input type="range" id="espY" min="-14" max="14" step="0.5" value="8"><span class="val" id="espYv"></span></div>
       <div class="row"><label>ESP32 회전</label>
-        <select id="espRot"><option value="0" selected>가로 (24×18)</option><option value="90">세로 (18×24)</option></select>
+        <select id="espRot">
+          <option value="0" selected>가로 (24×18)</option>
+          <option value="90">세로 (18×24)</option>
+          <option value="s0">세움-가로 (24×5, 높이 18)</option>
+          <option value="s90">세움-세로 (5×24, 높이 18)</option>
+          <option value="u0">세움-USB아래 (18×5, 높이 24)</option>
+          <option value="u90">세움-USB아래-세로 (5×18, 높이 24)</option>
+        </select>
       </div>
       <div class="row"><label>충전모듈 Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
       <div class="row"><label>배터리</label>
