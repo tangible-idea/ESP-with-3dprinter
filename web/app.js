@@ -8,7 +8,7 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import ManifoldModule from './vendor/manifold.js';
 import manifoldWasmUrl from './vendor/manifold.wasm?url';
 import usbHoleUrl from '../stl_files/usb_c_hole.stl?url';
-import switchStandUrl from '../stl_files/keyboard_switch_stand.stl?url';
+import switchMxUrl from '../stl_files/switch_mx.stl?url';
 import batteryUrl from '../stl_files/520Mah_battery.stl?url';
 import esp32Url from '../stl_files/esp32_c3_supermini.stl?url';
 import chargeModuleUrl from '../stl_files/battery_charging_module.stl?url';
@@ -39,8 +39,17 @@ const oledSpec = () => OLED_TYPES[P.oledType] || OLED_TYPES['049'];
 const effBossH = () => P.bossOn ? P.bossH : 0;   // 스위치 보스(둔덕) 끄면 상판에 바로 매립
 const oledTowerW = () => oledSpec().w + 3;                             // 좌우 레일 1.25씩
 const oledTowerTop = () => 4.2 + oledSpec().hgt + OLED_HCLR + 1.2;     // 턱 4.2 + 모듈 + 여유 + 천장 1.2
-const STAND_FLARE_Z = 5.4;   // keyboard_switch_stand.stl: 몸통(플레어) 시작 높이
-const STAND_H = 14.0;
+// MX 스위치 홀더 (Mechanical Key Holder V3 실측 기반)
+const SW = {
+  body: 14.3,        // 스위치 몸통 포켓 한 변 (14 + 여유)
+  seatH: 5.5,        // 몸통 바닥 → 플랜지 아래면 높이
+  floorT: 3.0,       // 홀더 바닥(구멍 뚫리는 판) 두께
+  cup: 20,           // 홀더 컵 바깥 한 변
+  H: 17.9,           // 스위치 전체 높이 (고스트/캐릭터 배치용)
+  pinLen: 3.1,       // 몸통 바닥 아래 핀/기둥 돌출 길이 (구멍에 꽂힘)
+  // 바닥 구멍 [x, y, Ø]: 중앙 기둥 1 + 구리선 4 (핀 2 + 다리 2, 스위치 180° 장착 기준)
+  holes: [[0, 0, 4.3], [5.0, 0, 3.0], [-5.0, 0, 3.0], [3.8, -2.7, 3.0], [-2.7, -5.2, 3.0]],
+};
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 아래층 턱 높이/폭
 const RABBET = { out: 0.7, d: 1.8 };  // 위층 바닥 단차 (외곽 inset 기준)
@@ -54,7 +63,7 @@ const P = {
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
-  espX: 0, espY: 8, espRot: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
+  espX: 0, espY: 8, espRot: 0, espLift: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   batType: '520', batPose: 'flat', batX: -8,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
 };
@@ -71,7 +80,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink',
-                 'espX','espY','modY','oledProud','batX','wireX','wireY'];
+                 'espX','espY','espLift','modY','oledProud','batX','wireX','wireY'];
 let rebuildTimer = null;
 function queueRebuild() {
   saveParams();
@@ -156,9 +165,11 @@ document.getElementById('bossOn').addEventListener('change', e => {
 });
 document.getElementById('espRot').addEventListener('change', e => {
   const v = e.target.value;
-  P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90' = 세움
+  P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90'/'u0'/'u90' = 세움
+  document.getElementById('espLift').disabled = espStand();   // 띄움은 눕힘 전용
   queueRebuild();
 });
+document.getElementById('espLift').disabled = ['s0','s90','u0','u90'].includes(P.espRot);
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
@@ -177,6 +188,7 @@ function syncControls() {
   }
   document.getElementById('shape').value = P.shape;
   document.getElementById('espRot').value = String(P.espRot);
+  document.getElementById('espLift').disabled = espStand();
   document.getElementById('wireRot').value = String(P.wireRot);
   document.getElementById('oledSide').value = P.oledSide;
   document.getElementById('oledType').value = P.oledType;
@@ -395,9 +407,9 @@ function normalize(g, centerXY = true) {
 }
 
 async function loadAssets() {
-  const [usb, stand, bat, esp, mod, oled, face] = await Promise.all([
+  const [usb, sw, bat, esp, mod, oled, face] = await Promise.all([
     loadSTL(usbHoleUrl),
-    loadSTL(switchStandUrl),
+    loadSTL(switchMxUrl),
     loadSTL(batteryUrl),
     loadSTL(esp32Url),
     loadSTL(chargeModuleUrl),
@@ -412,13 +424,8 @@ async function loadAssets() {
   usb.rotateZ(Math.PI);
   ASSETS.usb = usb;
 
-  // 스탠드: xy 중심, z0 = 다리 바닥. 절삭용은 xy 3.5% + z 살짝 팽창
-  normalize(stand);
-  ASSETS.stand = stand;
-  const cut = stand.clone();
-  cut.scale(1.035, 1.035, 1.0);
-  cut.translate(0, 0, -0.25);
-  ASSETS.standCut = cut;
+  // MX 스위치: xy 중심, z0 = 핀 끝 → 몸통 바닥이 z0이 되도록 핀 길이만큼 내림 없이 그대로
+  ASSETS.switch = normalize(sw);
 
   ASSETS.bat = normalize(bat);
   ASSETS.esp = normalize(esp, false);   // min corner 기준 (USB는 -x 끝)
@@ -556,11 +563,31 @@ function buildFloor2() {
 
   // 포켓
   const ef = espFoot();
+  const espLifted = !espStand() && P.espLift > 0;   // 2.5층: 레일 홈에 끼워 공중 배치
   // 세움: 실물 메시(USB 모양 포함)를 팽창시켜 그대로 절삭 → 꽂아서 고정
   const espPocket = () => espStand()
     ? meshBrush(espStandGeo(true), new THREE.Matrix4().makeTranslation(P.espX, P.espY, espBaseZ()))
     : boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5);
-  b = sub(b, espPocket());
+  if (!espLifted) b = sub(b, espPocket());
+
+  // 2.5층 받침 선(빔): 벽에서 벽까지 한 줄로 가로지르고, 보드 자리만 24mm 홈을 파냄 —
+  // 보드가 홈에 안착해 공중에 뜨고(양끝 턱이 잡음), 옆 공간 아래로 충전모듈이 지나감
+  if (espLifted) {
+    const beamW = 8, shoulderH = 2.5;               // 선 폭 / 홈 양끝 턱 높이
+    const topZ = F2_PLATE + P.espLift;              // 홈 바닥 = 보드 바닥
+    const rot90 = P.espRot === 90;
+    const span = P.W + effD();                      // 넉넉히 → 외곽으로 잘림
+    let beam = rot90
+      ? boxBrush(beamW, span, topZ + shoulderH - F2_PLATE, P.espX, 0, F2_PLATE)
+      : boxBrush(span, beamW, topZ + shoulderH - F2_PLATE, 0, P.espY, F2_PLATE);
+    beam = inter(beam, extrude(baseShape(0), topZ + shoulderH, 0));   // 벽 곡면 따라 자르고 벽과 융합
+    b = add(b, beam);
+    // 홈: 보드 길이(24)만큼만 턱을 파내서 끼움
+    const slotL = ESP.l + POCKET_CLR;
+    b = sub(b, rot90
+      ? boxBrush(beamW + 2, slotL, shoulderH + 1, P.espX, P.espY, topZ)
+      : boxBrush(slotL, beamW + 2, shoulderH + 1, P.espX, P.espY, topZ));
+  }
   const mc = modCenter();
   // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
   b = sub(b, boxBrush(MOD.l + POCKET_CLR + 1, MOD.w + POCKET_CLR, F2_PLATFORM + 2,
@@ -613,7 +640,7 @@ function buildFloor2() {
       }
     }
     // ESP32 포켓 우선: 타워 add로 메워진 부분을 다시 파내 ESP32 홈을 확보
-    b = sub(b, espPocket());
+    if (!espLifted) b = sub(b, espPocket());
   }
 
   // USB-C 구멍 (충전모듈 USB 정면) — 원형이면 플랫 패드 관통, 네모면 동쪽 벽 관통
@@ -655,11 +682,21 @@ function buildFloor3() {
   if (effBossH() > 0.1) {
     b = add(b, boxBrush(21, 23, effBossH(), 0, 0, P.f3H, 5));
   }
-  // 스탠드 실물 메시로 절삭 → 자연스럽게 매립
-  const standZ = bossTop - P.standSink - STAND_FLARE_Z;
-  b = sub(b, meshBrush(ASSETS.standCut, new THREE.Matrix4().makeTranslation(0, 0, standZ)));
-  // 중앙 배선 통로 (상판 관통)
-  b = sub(b, boxBrush(7, 7, P.f3H + effBossH() + 1, 0, 0, P.f3H - F3_PLATE - 0.5, 0.8));
+  // MX 스위치 홀더 (Key Holder V3 방식): 몸통 포켓 + 바닥에 중앙 1 + 구리선 4 구멍
+  const seatZ = bossTop - P.standSink - SW.seatH;   // 스위치 몸통 바닥 안착면
+  const cupBottom = seatZ - SW.floorT;
+  // 컵 몸체: 보스/상판 아래로 매달리는 홀더 (기존 재료와 합쳐짐)
+  b = add(b, boxBrush(SW.cup, SW.cup, bossTop - cupBottom, 0, 0, cupBottom, 3));
+  // 몸통 포켓: 위로 개방 (보스 관통)
+  b = sub(b, boxBrush(SW.body, SW.body, P.standSink + SW.seatH + 2, 0, 0, seatZ, 1));
+  // 바닥 구멍: 중앙 기둥 1 + 구리선 4, 아래로 갈수록 넓어지는 깔때기 (배선 삽입 유도)
+  for (const [hx, hy, hd] of SW.holes) {
+    const cyl = new THREE.CylinderGeometry(hd / 2, hd / 2 + 1.0, SW.floorT + 1.2, 24);
+    cyl.rotateX(Math.PI / 2);   // 축을 z로
+    cyl.translate(hx, hy, seatZ - SW.floorT / 2 - 0.05);
+    cyl.deleteAttribute('uv');
+    b = sub(b, toMan(cyl));
+  }
 
   b = bottomJointCut(b);
 
@@ -718,7 +755,7 @@ function placeGhosts() {
     const rot = P.espRot === 90 ? Math.PI / 2 : 0;
     const eg = ASSETS.esp.clone();
     eg.translate(-ESP.l / 2, -ESP.w / 2, 0);   // 중심 정렬 후 회전
-    G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE, rot)));
+    G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE + P.espLift, rot)));
   }
   const mg = ASSETS.mod.clone();
   mg.rotateZ(Math.PI);                        // USB를 +X로
@@ -739,10 +776,12 @@ function placeGhosts() {
     og.applyMatrix4(m);
     G[1].add(ghostMesh(og, MATS.oled));
   }
-  // 3층: 스탠드 + 딤섬 캐릭터
-  const standZ = P.f3H + effBossH() - P.standSink - STAND_FLARE_Z;
-  G[2].add(ghostMesh(ASSETS.stand, MATS.stand, T(0, 0, standZ)));
-  G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, standZ + STAND_H + 2)));
+  // 3층: MX 스위치(실물) + 딤섬 캐릭터
+  const seatZ3 = P.f3H + effBossH() - P.standSink - SW.seatH;
+  const sg = ASSETS.switch.clone();
+  sg.rotateZ(Math.PI);   // 핀 배치를 홀더 구멍(180° 장착 기준)에 정렬
+  G[2].add(ghostMesh(sg, MATS.stand, T(0, 0, seatZ3 - SW.pinLen)));
+  G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, seatZ3 + (SW.H - SW.pinLen) + 1)));
 }
 
 // ------------------------------------------------------------------
@@ -913,7 +952,7 @@ function updateWires() {
         return P.espRot === 'u90' ? [P.espX, P.espY + dy, zP] : [P.espX + dy, P.espY, zP];
       }
       const [rx, ry] = P.espRot === 90 ? [-dy, dx] : [dx, dy];
-      return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + ESP.h];
+      return [P.espX + rx, P.espY + ry, z2b + F2_PLATE + P.espLift + ESP.h];
     };
     const pin5V = espPin(...ESP_PINS['5V']), pinGND = espPin(...ESP_PINS.GND), pin3V3 = espPin(...ESP_PINS['3V3']);
     const pinSDA = espPin(...(ESP_PINS[P.sdaGpio] || ESP_PINS[8]));
@@ -944,18 +983,19 @@ function updateWires() {
       addWire([pinSCL, mid(pinSCL, oSCL), oSCL], WIRE_COLORS.scl, 'G' + P.sclGpio, 'SCL', 'scl');
     }
 
-    // --- 스위치 (3층 스탠드) → ESP32: 두 가닥, 하나는 GPIO 하나는 GND (극성 무관) ---
+    // --- 스위치 (MX, 3층 홀더) → ESP32: 금속 핀 2개에 구리선, 홀더 바닥 구멍 통과 ---
     // GPIO 번호는 보라 전선/라벨 우클릭으로 변경 (P.swGpio)
     {
       const z3b = G[2].position.z;
-      const swZ = z3b + P.f3H + effBossH() - P.standSink + 1.5;   // 스위치 핀 (스탠드 안착부)
-      const chanZ = z3b + P.f3H - F3_PLATE - 3;                   // 상판 중앙 통로(7×7) 아래
+      const seatZ3 = z3b + P.f3H + effBossH() - P.standSink - SW.seatH;   // 홀더 안착면
+      const below = seatZ3 - SW.floorT - 2;                               // 구멍 아래로 나온 지점
       const pinSw = espPin(...(ESP_PINS[P.swGpio] || ESP_PINS[4]));
-      const dropMid = (sx, dst) =>
-        [(sx + dst[0]) / 2, dst[1] / 2, (chanZ + dst[2]) / 2];
-      addWire([[-1.4, 0, swZ], [-1.4, 0, chanZ], dropMid(-1.4, pinSw), pinSw],
+      const dropMid = (p, dst) =>
+        [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (below + dst[2]) / 2];
+      const pinA = [3.8, -2.7], pinB = [-2.7, -5.2];   // 홀더 구리선 구멍 = 스위치 핀 위치
+      addWire([[...pinA, seatZ3 + 1], [...pinA, below], dropMid(pinA, pinSw), pinSw],
               WIRE_COLORS.gpio, '스위치', 'G' + P.swGpio, 'gpio');
-      addWire([[1.4, 0, swZ], [1.4, 0, chanZ], dropMid(1.4, pinGND), pinGND],
+      addWire([[...pinB, seatZ3 + 1], [...pinB, below], dropMid(pinB, pinGND), pinGND],
               WIRE_COLORS.minus, null, null);
     }
   } catch (e) { /* 초기화 전 호출 등은 무시 */ }
@@ -1099,7 +1139,20 @@ function updateInfo(ms, fit) {
     warn.push(`⚠ 세운 ESP32(높이 ${espUsbDown() ? ESP.l : ESP.w})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`);
   if (P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
   if (P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
-  if (rectsOverlap(eRect, mRect)) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다');
+  const espLifted = !espStand() && P.espLift > 0;
+  if (rectsOverlap(eRect, mRect)) {
+    if (!espLifted) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다 — 띄움(2.5층)을 올리면 공존 가능');
+    else if (P.espLift < MOD.h + 0.8)
+      warn.push(`⚠ ESP32 띄움(${P.espLift})이 충전모듈 높이(${MOD.h})보다 낮습니다 — ${(MOD.h + 1).toFixed(0)} 이상으로 올리세요`);
+  }
+  if (espLifted && F2_PLATE + P.espLift + ESP.h > P.f2H + P.f3H - F3_PLATE - 0.3)
+    warn.push('⚠ 띄운 ESP32가 3층 상판에 닿습니다 — 띄움을 줄이거나 층 높이를 키우세요');
+  if (espLifted) {
+    const beamRect = P.espRot === 90
+      ? { x: P.espX, y: 0, w: 8, d: effD() } : { x: 0, y: P.espY, w: P.W, d: 8 };
+    if (rectsOverlap(beamRect, mRect)) warn.push('⚠ 2.5층 받침 선이 충전모듈 자리를 가로지릅니다 — ESP32 위치를 옮기세요');
+    if (bRect650 && rectsOverlap(beamRect, bRect650)) warn.push('⚠ 2.5층 받침 선이 세운 배터리 자리를 가로지릅니다 — 위치를 조정하세요');
+  }
   if (P.oledSide !== 'none') {
     const of = oledFrame();
     // OLED 타워 footprint (월드 좌표)
@@ -1117,8 +1170,19 @@ function updateInfo(ms, fit) {
       warn.push('⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요');
   }
   if (!batStand() && P.f1H < F1_PLATE + batSpec().T + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
-  if (P.standSink > effBossH() + F3_PLATE - 0.8)
-    warn.push('⚠ 스탠드 매립이 너무 깊습니다 — 보스를 켜거나 매립을 줄이세요 (상판 관통)');
+  // 스위치 홀더 컵 하단 (3층 로컬 z)
+  const cupBotZ = P.f3H + effBossH() - P.standSink - SW.seatH - SW.floorT;
+  if (cupBotZ < 0.5)
+    warn.push('⚠ 스위치 홀더가 뚜껑 아래로 뚫고 나갑니다 — 매립을 줄이거나 3층/보스를 키우세요');
+  const cupRect = { x: 0, y: 0, w: SW.cup, d: SW.cup };
+  if (bRect650 && rectsOverlap(bRect650, cupRect) && F2_PLATE + batSpec().W > P.f2H + cupBotZ - 0.3)
+    warn.push('⚠ 세운 배터리가 스위치 홀더 컵에 부딪힙니다 — 배터리 X를 옮기거나 층 높이를 키우세요');
+  const espTopLocal = espStand()
+    ? espBaseZ() + (espUsbDown() ? ESP.l : ESP.w)
+    : F2_PLATE + P.espLift + ESP.h;
+  if ((espStand() || espLifted) && rectsOverlap(eRect, cupRect) &&
+      espTopLocal > P.f2H + cupBotZ - 0.3)
+    warn.push('⚠ ESP32가 스위치 홀더 컵에 부딪힙니다 — 위치를 옮기거나 층 높이를 키우세요');
   document.getElementById('warnings').textContent = warn.join('\n');
 }
 
