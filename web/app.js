@@ -471,9 +471,12 @@ function oledFrame() {
   const m = new THREE.Matrix4().makeRotationZ(ang);
   // 모듈 앞면 안착 평면: 모듈 폭 모서리가 곡면 벽에 닿는 깊이.
   // 앞벽은 케이스 벽보다 얇은 OLED_FACE_T 기준 → 디스플레이가 바깥에 더 가깝게
-  // 돌출(proud) 시 포드 외곽면과 함께 안착면도 바깥으로 밀려남
+  // 돌출(proud) 시 포드 외곽면과 함께 안착면도 바깥으로 밀려남.
+  // 원형 모드: 포드가 네모 모드처럼 평평한 앞면 박스 (플랫 USB 패드와 같은 디자인)
   const proud = P.oledProud;
-  const seatY = surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, OLED_FACE_T) + proud;
+  const seatY = (P.shape === 'circle')
+    ? dHalf - OLED_FACE_T + proud
+    : surfAt(oledSpec().w / 2 + 0.4, acrossHalf, dHalf, OLED_FACE_T) + proud;
   return { dHalf, acrossHalf, m, innerFace: dHalf - P.wall, seatY, proud, outHalf: dHalf + proud };
 }
 
@@ -513,8 +516,9 @@ function buildFloor2() {
     const tTop = oledTowerTop();
     let tower = boxBrush(oledTowerW(), towerD, tTop - F2_PLATE,
                          0, outHalf - towerD / 2, F2_PLATE, 0, m);
-    // 외곽 곡면 따라 자르기 — 돌출 시 외곽을 proud만큼 바깥 offset한 곡선(네모/원형 공통)을 따름
-    tower = inter(tower, extrude(baseShape(-proud), tTop, 0));
+    // 네모: 외곽 곡선(돌출 시 proud만큼 offset) 따라 자르기.
+    // 원형: 자르지 않고 평평한 앞면 박스 그대로 → 네모 모드와 같은 포드 모양
+    if (P.shape !== 'circle') tower = inter(tower, extrude(baseShape(-proud), tTop, 0));
     b = add(b, tower);
     // 뒤에서 장착: OLED 전체가 내부에서 통째로 들어가는 포켓.
     // 뒷면은 완전 개방(뒷벽 관통), 앞은 seatY 평면 + 디스플레이 창이 잡아줌. 위는 막힘.
@@ -563,7 +567,8 @@ function buildFloor2() {
 
   // 바닥 rabbet + 장식 — 돌출 포드 구간은 장식 홈이 포드 내부를 뚫지 않게 보호
   b = bottomJointCut(b);
-  const podProtect = (P.oledSide !== 'none' && P.oledProud > 0) ? () => {
+  // 돌출 > 0 또는 원형(평면 포드가 곡면 밖으로 나옴)이면 포드 보호 필요
+  const podProtect = (P.oledSide !== 'none' && (P.oledProud > 0 || P.shape === 'circle')) ? () => {
     const spec = oledSpec();
     const { m, seatY, outHalf } = oledFrame();
     const backY = seatY - spec.t - 2.0;
