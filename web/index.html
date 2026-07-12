@@ -110,6 +110,7 @@
         <select id="batType">
           <option value="520" selected>520mAh (36.5×28.5×4.3)</option>
           <option value="650">650mAh (40×20×8)</option>
+          <option value="none">배터리 없음 (ESP32 USB 직결)</option>
         </select>
       </div>
       <div class="row"><label>배터리 배치</label>
@@ -139,7 +140,7 @@
       <div class="row"><label>배선구멍 방향</label>
         <select id="wireRot"><option value="0" selected>가로 (14×5)</option><option value="90">세로 (5×14)</option></select>
       </div>
-      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽.</div>
+      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절.</div>
     </div>
   </details>
 

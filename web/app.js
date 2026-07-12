@@ -24,8 +24,10 @@ const BAT_TYPES = {
   '650': { L: 40,   W: 20,   T: 8,   clr: 0.5 },
 };
 const batSpec = () => BAT_TYPES[P.batType] || BAT_TYPES['520'];
-const batStand = () => P.batPose === 'stand';
-const ESP = { l: 24, w: 18, h: 4.2 };
+const noBat = () => P.batType === 'none';   // 배터리 없음: 충전모듈도 빠지고 ESP32가 USB 직결
+const batStand = () => !noBat() && P.batPose === 'stand';
+const espStand = () => !noBat() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
+const ESP = { l: 24, w: 18, h: 4.2, usbZ: 2.6 };   // usbZ = USB 셸 z중심 (실측 1.0~4.2)
 const MOD = { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 }; // USB가 x끝에서 1mm 돌출
 // OLED 종류별 실측 (win: 디스플레이 창, winC: 모듈 바닥 기준 창 중심 높이)
 const OLED_TYPES = {
@@ -123,7 +125,20 @@ function applyShapeUI() {
   const circ = P.shape === 'circle';
   document.getElementById('D').disabled = circ;
   document.getElementById('R').disabled = circ;
-  document.getElementById('modY').disabled = circ;   // 원형: 충전모듈은 항상 중앙 고정
+  applyBatUI();   // modY 등은 배터리 모드와 함께 결정
+}
+// 배터리 없음: 배터리·충전모듈 컨트롤 잠금, ESP32는 동쪽 벽 자동 도킹(X/회전/띄움 잠금)
+function applyBatUI() {
+  const nb = noBat();
+  const circ = P.shape === 'circle';
+  document.getElementById('batPose').disabled = nb;
+  document.getElementById('batX').disabled = !batStand();
+  document.getElementById('espX').disabled = nb;
+  document.getElementById('espY').disabled = nb && circ;   // 원형 도킹은 항상 중앙
+  document.getElementById('espRot').disabled = nb;
+  document.getElementById('espLift').disabled = nb || espStand();
+  document.getElementById('modY').disabled = nb || circ;   // 원형: 충전모듈은 항상 중앙 고정
+  for (const id of ['wireX', 'wireY', 'wireRot']) document.getElementById(id).disabled = nb;
 }
 document.getElementById('shape').value = P.shape;
 applyShapeUI();
@@ -146,11 +161,22 @@ document.getElementById('oledType').value = P.oledType;
 document.getElementById('oledType').addEventListener('change', e => { P.oledType = e.target.value; queueRebuild(); });
 document.getElementById('batType').value = P.batType;
 document.getElementById('batPose').value = P.batPose;
-document.getElementById('batX').disabled = !batStand();
-document.getElementById('batType').addEventListener('change', e => { P.batType = e.target.value; queueRebuild(); });
+document.getElementById('batType').addEventListener('change', e => {
+  P.batType = e.target.value;
+  // 배터리 없음 진입 시: 도킹 Y가 벽 곡면 밖이면 수납 가능 범위로 자동 클램프
+  if (noBat()) {
+    const maxY = Math.max(0, innerHalfD() - (ESP.w + POCKET_CLR) / 2 - 1);
+    if (Math.abs(P.espY) > maxY) {
+      P.espY = Math.round(Math.sign(P.espY) * maxY * 2) / 2;
+      syncControls();
+    }
+  }
+  applyBatUI();
+  queueRebuild();
+});
 document.getElementById('batPose').addEventListener('change', e => {
   P.batPose = e.target.value;
-  document.getElementById('batX').disabled = !batStand();
+  applyBatUI();
   queueRebuild();
 });
 document.getElementById('bands').checked = P.bands;
@@ -166,10 +192,9 @@ document.getElementById('bossOn').addEventListener('change', e => {
 document.getElementById('espRot').addEventListener('change', e => {
   const v = e.target.value;
   P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90'/'u0'/'u90' = 세움
-  document.getElementById('espLift').disabled = espStand();   // 띄움은 눕힘 전용
+  applyBatUI();   // 띄움은 눕힘 전용
   queueRebuild();
 });
-document.getElementById('espLift').disabled = ['s0','s90','u0','u90'].includes(P.espRot);
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
@@ -188,13 +213,11 @@ function syncControls() {
   }
   document.getElementById('shape').value = P.shape;
   document.getElementById('espRot').value = String(P.espRot);
-  document.getElementById('espLift').disabled = espStand();
   document.getElementById('wireRot').value = String(P.wireRot);
   document.getElementById('oledSide').value = P.oledSide;
   document.getElementById('oledType').value = P.oledType;
   document.getElementById('batType').value = P.batType;
   document.getElementById('batPose').value = P.batPose;
-  document.getElementById('batX').disabled = !batStand();
   document.getElementById('bands').checked = P.bands;
   document.getElementById('jointV').checked = P.jointV;
   document.getElementById('bossOn').checked = P.bossOn;
@@ -469,7 +492,7 @@ function buildFloor1() {
   // insideInner: 테두리 구멍 모서리가 원형/둥근 외곽 밖으로 나가면 CSG가 깨지므로 곡률 기준 검사
   const bs = batSpec();
   const bw = bs.L + bs.clr, bd = bs.W + bs.clr;
-  if (!batStand() && insideInner(bw / 2 + 0.6, bd / 2 + 0.6)) {
+  if (!noBat() && !batStand() && insideInner(bw / 2 + 0.6, bd / 2 + 0.6)) {
     const rim = baseShape(P.wall);
     rim.holes.push(rrPath(THREE.Path, bw, bd, 2));
     b = add(b, extrude(rim, 1.2, F1_PLATE));
@@ -478,7 +501,6 @@ function buildFloor1() {
   return b;
 }
 
-const espStand = () => ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
 const espUsbDown = () => P.espRot === 'u0' || P.espRot === 'u90';   // USB 끝이 바닥
 const espThinX = () => P.espRot === 's90' || P.espRot === 'u90';    // 두께 방향이 x축
 // USB아래: 커넥터 끝이 바닥판에 1mm 박혀 고정 앵커 역할
@@ -542,6 +564,15 @@ function modCenter() {
   const edgeX = surfAt(Math.abs(P.modY) + MOD.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
   return { x: edgeX - 0.2 - MOD.l / 2, y: P.modY, edgeX };
 }
+// 배터리 없음: ESP32가 충전모듈 자리(동쪽 벽)에 도킹 — USB가 벽 구멍으로 직결 (180° 회전)
+function espDock() {
+  if (P.shape === 'circle') {
+    const edgeX = flatPadX() - 2.5;
+    return { x: edgeX - 0.2 - ESP.l / 2, y: 0, edgeX };
+  }
+  const edgeX = surfAt(Math.abs(P.espY) + ESP.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
+  return { x: edgeX - 0.2 - ESP.l / 2, y: P.espY, edgeX };
+}
 function oledFrame() {
   // OLED 그룹 로컬(+Y벽) → 월드 변환
   const side = P.oledSide;
@@ -578,9 +609,13 @@ function buildFloor2() {
 
   // 포켓
   const ef = espFoot();
-  const espLifted = !espStand() && P.espLift > 0;   // 2.5층: 레일 홈에 끼워 공중 배치
+  const espLifted = !noBat() && !espStand() && P.espLift > 0;   // 2.5층: 레일 홈에 끼워 공중 배치
   // 세움: 실물 메시(USB 모양 포함)를 팽창시켜 그대로 절삭 → 꽂아서 고정
-  const espPocket = () => espStand()
+  // 배터리 없음: 충전모듈 자리에 도킹 (USB 끝이 벽 안쪽면에 붙음)
+  const espPocket = () => noBat()
+    ? boxBrush(ESP.l + POCKET_CLR, ESP.w + POCKET_CLR, F2_PLATFORM + 2,
+               espDock().x, espDock().y, F2_PLATE, 1.5)
+    : espStand()
     ? meshBrush(espStandGeo(true), new THREE.Matrix4().makeTranslation(P.espX, P.espY, espBaseZ()))
     : boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE, 1.5);
   if (!espLifted) b = sub(b, espPocket());
@@ -617,10 +652,12 @@ function buildFloor2() {
         : boxBrush(lipL, lipW, lipH, P.espX + USB_C_OFF, P.espY + s * (lipIn + lipW / 2), topZ - lipH));
     }
   }
-  const mc = modCenter();
   // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
-  b = sub(b, boxBrush(MOD.l + POCKET_CLR + 1, MOD.w + POCKET_CLR, F2_PLATFORM + 2,
-                      mc.x - 0.5, mc.y, F2_PLATE, 0.4));
+  if (!noBat()) {
+    const mc = modCenter();
+    b = sub(b, boxBrush(MOD.l + POCKET_CLR + 1, MOD.w + POCKET_CLR, F2_PLATFORM + 2,
+                        mc.x - 0.5, mc.y, F2_PLATE, 0.4));
+  }
 
   // 세움 배터리 소켓 홈: 플랫폼을 관통해 바닥판 위에 세워서 꽂음 (두께×길이 세로 슬롯)
   if (batStand()) {
@@ -672,22 +709,26 @@ function buildFloor2() {
     if (!espLifted) b = sub(b, espPocket());
   }
 
-  // USB-C 구멍 (충전모듈 USB 정면) — 원형이면 플랫 패드 관통, 네모면 동쪽 벽 관통
+  // USB-C 구멍 — 배터리 없음이면 ESP32 USB 정면, 아니면 충전모듈 USB 정면 (원형이면 플랫 패드 관통)
   {
+    const dk = noBat() ? espDock() : modCenter();
+    const usbZ = noBat() ? ESP.usbZ : MOD.usbZ;
     const outerX = P.shape === 'circle'
       ? flatPadX()
-      : surfAt(Math.abs(mc.y) + 5.5, effD() / 2, P.W / 2, 0);
-    const L = Math.max(5.4, outerX + 0.4 - (mc.edgeX - 1.5));   // 원본 툴 길이 9 기준
+      : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
+    const L = Math.max(5.4, outerX + 0.4 - (dk.edgeX - 1.5));   // 원본 툴 길이 9 기준
     const usbM = new THREE.Matrix4()
-      .makeTranslation(outerX + 0.4 - L / 2, mc.y, F2_PLATE + MOD.usbZ)
+      .makeTranslation(outerX + 0.4 - L / 2, dk.y, F2_PLATE + usbZ)
       .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 1));
     b = sub(b, meshBrush(ASSETS.usb, usbM));
   }
 
   // 배터리 배선 구멍 (긴 슬롯 — +/− 두 가닥이 함께 통과, 가로/세로 회전 가능)
-  const ww = P.wireRot === 90 ? 5 : 14;
-  const wd = P.wireRot === 90 ? 14 : 5;
-  b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
+  if (!noBat()) {
+    const ww = P.wireRot === 90 ? 5 : 14;
+    const wd = P.wireRot === 90 ? 14 : 5;
+    b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
+  }
 
   // 바닥 rabbet + 장식 — 돌출 포드 구간은 장식 홈이 포드 내부를 뚫지 않게 보호
   b = bottomJointCut(b);
@@ -763,8 +804,8 @@ const T = (x, y, z, rotZ = 0) => {
 };
 
 function placeGhosts() {
-  // 배터리: 눕혀서 1층 / 세워서 2층 소켓
-  {
+  // 배터리: 눕혀서 1층 / 세워서 2층 소켓 (배터리 없음이면 생략)
+  if (!noBat()) {
     const bs = batSpec();
     if (batStand()) {
       const bg = new THREE.BoxGeometry(bs.T, bs.L, bs.W);
@@ -779,7 +820,14 @@ function placeGhosts() {
     }
   }
   // 2층
-  if (espStand()) {
+  if (noBat()) {
+    // 도킹: 충전모듈처럼 USB를 +X(동쪽 벽 구멍)로 돌려 안착
+    const dk = espDock();
+    const eg = ASSETS.esp.clone();
+    eg.rotateZ(Math.PI);
+    eg.translate(ESP.l / 2, ESP.w / 2, 0);      // 중심 (0,0) 정렬
+    G[1].add(ghostMesh(eg, MATS.esp, T(dk.x, dk.y, F2_PLATE)));
+  } else if (espStand()) {
     G[1].add(ghostMesh(espStandGeo(), MATS.esp, T(P.espX, P.espY, espBaseZ())));
   } else if (P.espLift > 0) {
     // 2.5층: 뒤집힌 보드가 받침선 홈에 안착 (USB 실루엣 매립)
@@ -790,11 +838,13 @@ function placeGhosts() {
     eg.translate(-ESP.l / 2, -ESP.w / 2, 0);   // 중심 정렬 후 회전
     G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PLATE, rot)));
   }
-  const mg = ASSETS.mod.clone();
-  mg.rotateZ(Math.PI);                        // USB를 +X로
-  mg.translate(MOD.l / 2, MOD.w / 2, 0);      // 중심 (0,0) 정렬
-  const mc = modCenter();
-  G[1].add(ghostMesh(mg, MATS.mod, T(mc.x, mc.y, F2_PLATE)));
+  if (!noBat()) {
+    const mg = ASSETS.mod.clone();
+    mg.rotateZ(Math.PI);                        // USB를 +X로
+    mg.translate(MOD.l / 2, MOD.w / 2, 0);      // 중심 (0,0) 정렬
+    const mc = modCenter();
+    G[1].add(ghostMesh(mg, MATS.mod, T(mc.x, mc.y, F2_PLATE)));
+  }
   if (P.oledSide !== 'none') {
     const spec = oledSpec();
     const { m, seatY } = oledFrame();
@@ -948,14 +998,14 @@ function updateWires() {
   if (!wiresOn) return;
   try {
     const z1b = G[0].position.z, z2b = G[1].position.z;
-    const mc = modCenter();
+    const mc = noBat() ? null : modCenter();
 
     // --- 배터리 → 충전모듈 B+/B− : 520은 1층에서 배선구멍 경유, 650은 2층 안에서 직접 ---
-    const modW = mc.x - MOD.l / 2;                            // 모듈 서쪽(USB 반대) 끝
+    const modW = mc ? mc.x - MOD.l / 2 : 0;                   // 모듈 서쪽(USB 반대) 끝
     const bz = z2b + F2_PLATE + 2;                            // 모듈 패드 높이
     const holeTop = z2b + F2_PLATE + F2_PLATFORM + 1.5;
-    for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, '배터리 +', 'B+'],
-                                     [-1, WIRE_COLORS.minus, '배터리 −', 'B−']]) {
+    if (mc) for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, '배터리 +', 'B+'],
+                                             [-1, WIRE_COLORS.minus, '배터리 −', 'B−']]) {
       if (batStand()) {
         addWire([
           [P.batX + sy * 2, sy * 4, z2b + F2_PLATE + batSpec().W],
@@ -977,6 +1027,10 @@ function updateWires() {
 
     // --- ESP32 핀 (pinout: USB쪽부터 북열 5V,G,3V3 / 남열 5,6,7,8=SDA,9=SCL) ---
     const espPin = (dx, dy) => {
+      if (noBat()) {   // 도킹: 180° 회전(USB가 +X) → 핀 로컬좌표 반전
+        const dk = espDock();
+        return [dk.x - dx, dk.y - dy, z2b + F2_PLATE + ESP.h];
+      }
       // 세움: 보드 평면이 수직 → 폭(dy) 또는 길이(dx) 방향이 높이가 됨
       if (P.espRot === 's0')  return [P.espX + dx, P.espY, z2b + F2_PLATE + ESP.w / 2 + dy];
       if (P.espRot === 's90') return [P.espX, P.espY + dx, z2b + F2_PLATE + ESP.w / 2 + dy];
@@ -992,12 +1046,14 @@ function updateWires() {
     const pinSDA = espPin(...(ESP_PINS[P.sdaGpio] || ESP_PINS[8]));
     const pinSCL = espPin(...(ESP_PINS[P.sclGpio] || ESP_PINS[9]));
 
-    // --- 충전모듈 OUT+/OUT− → ESP32 5V/GND ---
+    // --- 충전모듈 OUT+/OUT− → ESP32 5V/GND (배터리 없음이면 USB 직결이라 생략) ---
     const arc = 6;   // 보드 위로 띄우는 높이
-    const outP = [modW + 3.5, mc.y + 6, bz], outM = [modW + 3.5, mc.y - 6, bz];
     const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.max(a[2], b[2]) + arc];
-    addWire([outP, mid(outP, pin5V), pin5V], WIRE_COLORS.plus, 'OUT+', '5V');
-    addWire([outM, mid(outM, pinGND), pinGND], WIRE_COLORS.minus, 'OUT−', 'GND');
+    if (mc) {
+      const outP = [modW + 3.5, mc.y + 6, bz], outM = [modW + 3.5, mc.y - 6, bz];
+      addWire([outP, mid(outP, pin5V), pin5V], WIRE_COLORS.plus, 'OUT+', '5V');
+      addWire([outM, mid(outM, pinGND), pinGND], WIRE_COLORS.minus, 'OUT−', 'GND');
+    }
 
     // --- ESP32 → OLED (I2C: 3V3, GND, GPIO8=SDA, GPIO9=SCL) ---
     if (P.oledSide !== 'none') {
@@ -1152,12 +1208,14 @@ function updateInfo(ms, fit) {
     `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함) · CSG ${ms.toFixed(0)}ms${fitTxt}`;
   const warn = [];
   if (fit && !fit.ok) warn.push('⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요');
-  if (!batStand() && !insideInner(batSpec().L / 2 + 0.4, batSpec().W / 2 + 0.4))
+  if (!noBat() && !batStand() && !insideInner(batSpec().L / 2 + 0.4, batSpec().W / 2 + 0.4))
     warn.push(`⚠ 배터리(${batSpec().L}×${batSpec().W})가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요`);
   const ef = espFoot();
-  const eRect = { x: P.espX, y: P.espY, w: ef.w, d: ef.d };
+  const eRect = noBat()
+    ? { x: espDock().x, y: espDock().y, w: ESP.l + POCKET_CLR, d: ESP.w + POCKET_CLR }
+    : { x: P.espX, y: P.espY, w: ef.w, d: ef.d };
   const mc = modCenter();
-  const mRect = { x: mc.x, y: mc.y, w: MOD.l + POCKET_CLR, d: MOD.w + POCKET_CLR };
+  const mRect = noBat() ? null : { x: mc.x, y: mc.y, w: MOD.l + POCKET_CLR, d: MOD.w + POCKET_CLR };
   const bRect650 = batStand()
     ? { x: P.batX, y: 0, w: batSpec().T + batSpec().clr, d: batSpec().L + batSpec().clr } : null;
   if (bRect650) {
@@ -1168,13 +1226,19 @@ function updateInfo(ms, fit) {
     if (F2_PLATE + batSpec().W > P.f2H + P.f3H - F3_PLATE - 0.3)
       warn.push(`⚠ 세운 배터리(높이 ${batSpec().W})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`);
   }
-  if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
+  if (noBat()) {
+    // 도킹 모드: 동쪽 벽에 붙는 건 정상 — Y 방향과 가로 수납만 검사
+    if (P.shape !== 'circle' && Math.abs(P.espY) + (ESP.w + POCKET_CLR) / 2 > innerHalfD() - 1)
+      warn.push('⚠ ESP32가 위/아래 벽과 겹칩니다 — ESP32 Y를 중앙 쪽으로 옮기세요');
+    if (eRect.x - eRect.w / 2 < -innerHalfW() + 0.5)
+      warn.push(`⚠ ESP32(길이 ${ESP.l})가 가로로 안 들어갑니다 — W를 키우세요`);
+  } else if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
   if (espStand() && espBaseZ() + (espUsbDown() ? ESP.l : ESP.w) > P.f2H + P.f3H - F3_PLATE - 0.3)
     warn.push(`⚠ 세운 ESP32(높이 ${espUsbDown() ? ESP.l : ESP.w})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`);
-  if (P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
-  if (P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
-  const espLifted = !espStand() && P.espLift > 0;
-  if (rectsOverlap(eRect, mRect)) {
+  if (!noBat() && P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
+  if (!noBat() && P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
+  const espLifted = !noBat() && !espStand() && P.espLift > 0;
+  if (mRect && rectsOverlap(eRect, mRect)) {
     if (!espLifted) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다 — 띄움(2.5층)을 올리면 공존 가능');
     else if (P.espLift < MOD.h + 0.8)
       warn.push(`⚠ ESP32 띄움(${P.espLift})이 충전모듈 높이(${MOD.h})보다 낮습니다 — ${(MOD.h + 1).toFixed(0)} 이상으로 올리세요`);
@@ -1184,7 +1248,7 @@ function updateInfo(ms, fit) {
   if (espLifted) {
     const beamRect = P.espRot === 90
       ? { x: P.espX, y: 0, w: 8, d: effD() } : { x: 0, y: P.espY, w: P.W, d: 8 };
-    if (rectsOverlap(beamRect, mRect)) warn.push('⚠ 2.5층 받침 선이 충전모듈 자리를 가로지릅니다 — ESP32 위치를 옮기세요');
+    if (mRect && rectsOverlap(beamRect, mRect)) warn.push('⚠ 2.5층 받침 선이 충전모듈 자리를 가로지릅니다 — ESP32 위치를 옮기세요');
     if (bRect650 && rectsOverlap(beamRect, bRect650)) warn.push('⚠ 2.5층 받침 선이 세운 배터리 자리를 가로지릅니다 — 위치를 조정하세요');
   }
   if (P.oledSide !== 'none') {
@@ -1196,14 +1260,14 @@ function updateInfo(ms, fit) {
       ? { x: -(P.W / 2 - tD / 2), y: 0, w: tD, d: tW }
       : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (effD() / 2 - tD / 2), w: tW, d: tD };
     if (rectsOverlap(eRect, tower)) warn.push('⚠ ESP32가 OLED 타워와 겹칩니다');
-    if (rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
+    if (mRect && rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
     if (bRect650 && rectsOverlap(bRect650, tower)) warn.push('⚠ 650 배터리가 OLED 타워와 겹칩니다');
     if (oledTowerTop() - P.f2H > P.f3H - F3_PLATE - 0.3)
       warn.push('⚠ OLED 타워가 3층 상판을 뚫습니다 — 2층 또는 3층 높이를 키우세요');
     if (of.seatY < oledSpec().t + 4)
       warn.push('⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요');
   }
-  if (!batStand() && P.f1H < F1_PLATE + batSpec().T + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
+  if (!noBat() && !batStand() && P.f1H < F1_PLATE + batSpec().T + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
   // 스위치 홀더 컵 하단 (3층 로컬 z)
   const cupBotZ = P.f3H + effBossH() - P.standSink - SW.seatH - SW.floorT;
   if (cupBotZ < 0.5)
