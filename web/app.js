@@ -59,6 +59,14 @@ const SW = {
 // 출력하므로 방향을 미러: 홈이 3층 상판에(출력 시 바닥面), 턱이 뚜껑 밑면에(출력 시 바닥) → 둘 다 서포트 프리
 const LID = { r: 20.5, bandW: 2.3, h: 14.22, innerH: 10.9 };
 const FACE_H = 21.6;   // 딤섬 캐릭터(obj_2_sup face) 실측 높이
+// LED 종류: d=몸통 Ø, fl=플랜지 Ø, cyl=원통부 높이, domeR=돔 반경.
+// 구멍 Ø = d+0.2, 플랜지가 상판 밑면에 정지 → 돌출 = cyl+domeR−3.2 (3mm≈1.2 / 4mm≈2.6 / 5mm≈4.5)
+const LED_TYPES = {
+  '3': { d: 3, fl: 3.85, cyl: 2.9, domeR: 1.5 },
+  '4': { d: 4, fl: 4.8,  cyl: 3.8, domeR: 2.0 },
+  '5': { d: 5, fl: 5.8,  cyl: 5.2, domeR: 2.5 },
+};
+const ledSpec = () => LED_TYPES[P.ledType] || LED_TYPES['3'];
 // 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
 // f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
 //       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
@@ -81,7 +89,7 @@ const P = {
   batType: '520', batPose: 'flat', batX: -8,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
   lidOn: true, lidH: 6,
-  ledOn: true, ledX: 0, ledY: -14.5, ledGpio: 3,
+  ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 3,
   bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
 };
 
@@ -211,15 +219,17 @@ document.getElementById('lidOn').addEventListener('change', e => {
   queueRebuild();
 });
 const applyLedUI = () => {
-  for (const id of ['ledX', 'ledY']) document.getElementById(id).disabled = !P.ledOn;
+  for (const id of ['ledType', 'ledX', 'ledY']) document.getElementById(id).disabled = !P.ledOn;
 };
 document.getElementById('ledOn').checked = P.ledOn;
+document.getElementById('ledType').value = P.ledType;
 applyLedUI();
 document.getElementById('ledOn').addEventListener('change', e => {
   P.ledOn = e.target.checked;
   applyLedUI();
   queueRebuild();
 });
+document.getElementById('ledType').addEventListener('change', e => { P.ledType = e.target.value; queueRebuild(); });
 const applyBzUI = () => {
   for (const id of ['bzMount', 'bzX', 'bzY']) document.getElementById(id).disabled = !P.bzOn;
 };
@@ -267,6 +277,7 @@ function syncControls() {
   document.getElementById('lidOn').checked = P.lidOn;
   document.getElementById('lidH').disabled = !P.lidOn;
   document.getElementById('ledOn').checked = P.ledOn;
+  document.getElementById('ledType').value = P.ledType;
   applyLedUI();
   document.getElementById('bzOn').checked = P.bzOn;
   document.getElementById('bzMount').value = P.bzMount;
@@ -839,10 +850,11 @@ function buildFloor3() {
     b = sub(b, toMan(cyl));
   }
 
-  // 3mm LED 구멍: 몸통 Ø3.2 관통 — 아래에서 꽂으면 플랜지(Ø3.85)가 상판 밑면에 정지,
-  // 돔 끝이 상판 위로 ~1.2mm만 돌출. 다리는 2층 ESP32로 (LED+는 저항 150~220Ω 권장)
+  // LED 구멍 (3/4/5mm): 몸통+0.2 관통 — 아래에서 꽂으면 플랜지가 상판 밑면에 정지,
+  // 돔 끝만 상판 위로 돌출. 다리는 2층 ESP32로 (LED+는 저항 150~220Ω 권장)
   if (P.ledOn) {
-    const cyl = new THREE.CylinderGeometry(1.6, 1.6, F3_PLATE + effBossH() + 1, 24);
+    const r = ledSpec().d / 2 + 0.1;
+    const cyl = new THREE.CylinderGeometry(r, r, F3_PLATE + effBossH() + 1, 24);
     cyl.rotateX(Math.PI / 2);
     cyl.translate(P.ledX, P.ledY, P.f3H - F3_PLATE + (F3_PLATE + effBossH() + 1) / 2 - 0.5);
     cyl.deleteAttribute('uv');
@@ -1021,14 +1033,15 @@ function placeGhosts() {
   G[2].add(ghostMesh(sg, MATS.stand, T(0, 0, seatZ3 - SW.pinLen)));
   // 캐릭터: 바닥 공동(17.9각×10.7)이 스위치를 통째로 덮고 보스/컵 윗면에 얹힘
   G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, P.f3H + effBossH())));
-  // 3mm LED: 플랜지가 상판 밑면에 정지 → 몸통 2.9 + 돔 = 끝이 상판 위 ~1.2mm
+  // LED (3/4/5mm): 플랜지가 상판 밑면에 정지 → 원통부 + 돔 끝만 상판 위로 돌출
   if (P.ledOn) {
+    const s = ledSpec();
     const zB = P.f3H - F3_PLATE;
-    const body = new THREE.CylinderGeometry(1.5, 1.5, 2.9, 20);
-    body.rotateX(Math.PI / 2); body.translate(P.ledX, P.ledY, zB + 1.45);
-    const dome = new THREE.SphereGeometry(1.5, 20, 12);
-    dome.translate(P.ledX, P.ledY, zB + 2.9);
-    const flange = new THREE.CylinderGeometry(1.93, 1.93, 1.0, 20);
+    const body = new THREE.CylinderGeometry(s.d / 2, s.d / 2, s.cyl, 20);
+    body.rotateX(Math.PI / 2); body.translate(P.ledX, P.ledY, zB + s.cyl / 2);
+    const dome = new THREE.SphereGeometry(s.domeR, 20, 12);
+    dome.translate(P.ledX, P.ledY, zB + s.cyl);
+    const flange = new THREE.CylinderGeometry(s.fl / 2, s.fl / 2, 1.0, 20);
     flange.rotateX(Math.PI / 2); flange.translate(P.ledX, P.ledY, zB - 0.5);
     for (const g of [body, dome, flange]) g.deleteAttribute('uv');
     G[2].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, dome, flange]), MATS.led));
@@ -1523,12 +1536,13 @@ function updateInfo(ms, fit) {
   if (P.lidOn && LID.r * 2 > Math.min(P.W, effD()) + 0.1)
     warn.push(`⚠ 4층(Ø${LID.r * 2})이 케이스 외곽보다 넓어 밖으로 걸칩니다 — W를 41 이상으로`);
   if (P.ledOn) {
-    if (!insideInner(Math.abs(P.ledX) + 2, Math.abs(P.ledY) + 2))
+    const lfr = ledSpec().fl / 2 + 0.1;   // 플랜지 반경 + 여유
+    if (!insideInner(Math.abs(P.ledX) + lfr, Math.abs(P.ledY) + lfr))
       warn.push('⚠ LED가 3층 벽/외곽과 겹칩니다 — X/Y를 안쪽으로 옮기세요');
-    const ox = (P.bossOn ? 10.5 : SW.cup / 2) + 1.9, oy = (P.bossOn ? 11.5 : SW.cup / 2) + 1.9;
+    const ox = (P.bossOn ? 10.5 : SW.cup / 2) + lfr, oy = (P.bossOn ? 11.5 : SW.cup / 2) + lfr;
     if (Math.abs(P.ledX) < ox && Math.abs(P.ledY) < oy)
       warn.push('⚠ LED가 스위치 보스/홀더와 겹칩니다 — 밖으로 옮기세요');
-    if (P.lidOn && Math.hypot(P.ledX, P.ledY) + 1.93 > LID.r - LID.bandW - 0.6)
+    if (P.lidOn && Math.hypot(P.ledX, P.ledY) + lfr > LID.r - LID.bandW - 0.6)
       warn.push('⚠ LED가 4층 결합 홈/밴드와 겹칩니다 — 중심 쪽으로 옮기세요');
   }
   if (P.lidOn && P.lidH + LID.innerH < charTopOverLid() + 0.3)
@@ -1555,7 +1569,7 @@ function updateInfo(ms, fit) {
     if (P.bzMount === 'f3') {
       if (rectsOverlap(bzR, cupRect))
         warn.push('⚠ 부저가 스위치 홀더 컵과 겹칩니다 — 자리가 없으면 부저 장착을 2층 바닥으로 바꾸세요');
-      if (P.ledOn && Math.hypot(P.ledX - P.bzX, P.ledY - P.bzY) < BZ.d / 2 + BZ.clr + 2.2)
+      if (P.ledOn && Math.hypot(P.ledX - P.bzX, P.ledY - P.bzY) < BZ.d / 2 + BZ.clr + ledSpec().fl / 2 + 0.3)
         warn.push('⚠ 부저가 LED와 겹칩니다');
       if (P.f3H - F3_PLATE < BZ.h)
         warn.push(`⚠ 부저(8.3)가 3층보다 두꺼워 아래로 ${(BZ.h - P.f3H + F3_PLATE).toFixed(1)}mm 튀어나옵니다 — 2층 부품과 겹치지 않는지 확인하세요`);

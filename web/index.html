@@ -152,7 +152,14 @@
       <div class="row"><label>스위치 Boss</label><input type="checkbox" id="bossOn" checked></div>
       <div class="row"><label>Boss 높이</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
       <div class="row"><label>스위치 매립 깊이</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
-      <div class="row"><label>LED (3mm)</label><input type="checkbox" id="ledOn" checked></div>
+      <div class="row"><label>LED</label><input type="checkbox" id="ledOn" checked></div>
+      <div class="row"><label>LED 크기</label>
+        <select id="ledType">
+          <option value="3" selected>3mm (구멍 Ø3.2, 돌출 ~1.2)</option>
+          <option value="4">4mm (구멍 Ø4.2, 돌출 ~2.6)</option>
+          <option value="5">5mm (구멍 Ø5.2, 돌출 ~4.5)</option>
+        </select>
+      </div>
       <div class="row"><label>LED X</label><input type="range" id="ledX" min="-18" max="18" step="0.5" value="0"><span class="val" id="ledXv"></span></div>
       <div class="row"><label>LED Y</label><input type="range" id="ledY" min="-18" max="18" step="0.5" value="-14.5"><span class="val" id="ledYv"></span></div>
       <div class="row"><label>부저 (Ø12 피에조)</label><input type="checkbox" id="bzOn" checked></div>
@@ -165,7 +172,7 @@
       </div>
       <div class="row"><label>부저 X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
       <div class="row"><label>부저 Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
-      <div class="hint">MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED는 3층 상판의 Ø3.2 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 ~1.2mm 돌출, 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.</div>
+      <div class="hint">MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm)는 3층 상판의 몸통+0.2 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.</div>
     </div>
   </details>
 
