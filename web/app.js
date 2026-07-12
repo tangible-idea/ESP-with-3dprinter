@@ -790,17 +790,11 @@ function buildFloor2() {
                         P.bzX, P.bzY - (BZ.d / 2 + BZ.clr + BZ.wall / 2 + 0.4), zP - BZ.sink));
   }
 
-  // 피에조 부저 눕힘 (2층 바닥): 반원 크래들(sideSink 파묻힘) + 감싸는 가이드 블록.
-  // 핀은 +X 끝면 — 전선은 블록 벽(4mm) 위로 넘어감
+  // 피에조 부저 눕힘 (2층 바닥): ESP32 포켓처럼 플랫폼에 반원 홈만 파냄 (sideSink 파묻힘, 축 = X)
   if (P.bzOn && P.bzMount === 'f2s') {
-    const zP = F2_PLATE + F2_PLATFORM;
-    const zc = zP - BZ.sideSink + BZ.d / 2;   // 눕힌 축 높이
-    let blk = boxBrush(BZ.h + 0.5 + 2 * BZ.wall, BZ.d + 0.5 + 2 * BZ.wall, BZ.ring,
-                       P.bzX, P.bzY, zP, 1.5);
-    blk = inter(blk, extrude(baseShape(0), zP + BZ.ring + 1, 0));
-    b = add(b, blk);
+    const zc = F2_PLATE + F2_PLATFORM - BZ.sideSink + BZ.d / 2;   // 눕힌 축 높이
     const c = new THREE.CylinderGeometry(BZ.d / 2 + BZ.clr, BZ.d / 2 + BZ.clr, BZ.h + 0.5, 48);
-    c.rotateZ(Math.PI / 2);   // 축 = X
+    c.rotateZ(Math.PI / 2);
     c.translate(P.bzX, P.bzY, zc);
     c.deleteAttribute('uv');
     b = sub(b, toMan(c));
