@@ -158,13 +158,14 @@
       <div class="row"><label>부저 (Ø12 피에조)</label><input type="checkbox" id="bzOn" checked></div>
       <div class="row"><label>부저 장착</label>
         <select id="bzMount">
-          <option value="f2" selected>2층 바닥 (리세스 + 링)</option>
+          <option value="f2" selected>2층 바닥 세움 (리세스 + 링)</option>
+          <option value="f2s">2층 바닥 눕힘 (반원 크래들)</option>
           <option value="f3">3층 천장 (슬리브 매달림)</option>
         </select>
       </div>
       <div class="row"><label>부저 X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
       <div class="row"><label>부저 Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
-      <div class="hint">MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED는 3층 상판의 Ø3.2 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 ~1.2mm 돌출, 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 핑크 전선 우클릭으로 핀 변경.</div>
+      <div class="hint">MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED는 3층 상판의 Ø3.2 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 ~1.2mm 돌출, 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 반원 크래들에 2.5 파묻히고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.</div>
     </div>
   </details>
 

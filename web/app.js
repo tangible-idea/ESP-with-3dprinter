@@ -60,7 +60,9 @@ const SW = {
 const LID = { r: 20.5, bandW: 2.3, h: 14.22, innerH: 10.9 };
 const FACE_H = 21.6;   // 딤섬 캐릭터(obj_2_sup face) 실측 높이
 // 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
-const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, ring: 4 };
+// f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
+//       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
+const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, sideSink: 2.5, ring: 4 };
 // 캐릭터는 바닥에 17.9각 공동(깊이 10.7)이 있어 스위치를 통째로 덮고 보스 윗면에 얹힘
 const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
@@ -788,6 +790,22 @@ function buildFloor2() {
                         P.bzX, P.bzY - (BZ.d / 2 + BZ.clr + BZ.wall / 2 + 0.4), zP - BZ.sink));
   }
 
+  // 피에조 부저 눕힘 (2층 바닥): 반원 크래들(sideSink 파묻힘) + 감싸는 가이드 블록.
+  // 핀은 +X 끝면 — 전선은 블록 벽(4mm) 위로 넘어감
+  if (P.bzOn && P.bzMount === 'f2s') {
+    const zP = F2_PLATE + F2_PLATFORM;
+    const zc = zP - BZ.sideSink + BZ.d / 2;   // 눕힌 축 높이
+    let blk = boxBrush(BZ.h + 0.5 + 2 * BZ.wall, BZ.d + 0.5 + 2 * BZ.wall, BZ.ring,
+                       P.bzX, P.bzY, zP, 1.5);
+    blk = inter(blk, extrude(baseShape(0), zP + BZ.ring + 1, 0));
+    b = add(b, blk);
+    const c = new THREE.CylinderGeometry(BZ.d / 2 + BZ.clr, BZ.d / 2 + BZ.clr, BZ.h + 0.5, 48);
+    c.rotateZ(Math.PI / 2);   // 축 = X
+    c.translate(P.bzX, P.bzY, zc);
+    c.deleteAttribute('uv');
+    b = sub(b, toMan(c));
+  }
+
   // 바닥 rabbet + 장식 — 돌출 포드 구간은 장식 홈이 포드 내부를 뚫지 않게 보호
   b = bottomJointCut(b);
   // 돌출 > 0 또는 원형(평면 포드가 곡면 밖으로 나옴)이면 포드 보호 필요
@@ -835,6 +853,18 @@ function buildFloor3() {
     cyl.translate(P.ledX, P.ledY, P.f3H - F3_PLATE + (F3_PLATE + effBossH() + 1) / 2 - 0.5);
     cyl.deleteAttribute('uv');
     b = sub(b, toMan(cyl));
+  }
+
+  // 눕힌 부저(2층)의 상단이 2층 높이를 넘으면 3층의 겹치는 부분(홀더 컵·상판)도 같은 자리만큼 파냄
+  if (P.bzOn && P.bzMount === 'f2s') {
+    const zcW = F2_PLATE + F2_PLATFORM - BZ.sideSink + BZ.d / 2;   // 2층 로컬 축 높이
+    if (zcW + BZ.d / 2 + BZ.clr > P.f2H) {
+      const c = new THREE.CylinderGeometry(BZ.d / 2 + BZ.clr, BZ.d / 2 + BZ.clr, BZ.h + 0.6, 48);
+      c.rotateZ(Math.PI / 2);
+      c.translate(P.bzX, P.bzY, zcW - P.f2H);   // 3층 로컬로 변환
+      c.deleteAttribute('uv');
+      b = sub(b, toMan(c));
+    }
   }
 
   // 피에조 부저 소켓 (3층 천장): 상판 밑면에서 내려오는 슬리브 — 상판은 뚫지 않음.
@@ -1009,16 +1039,26 @@ function placeGhosts() {
     for (const g of [body, dome, flange]) g.deleteAttribute('uv');
     G[2].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, dome, flange]), MATS.led));
   }
-  // 피에조 부저 (Ø12×8.3): f3 = 3층 천장에 매달림 / f2 = 2층 바닥 리세스에 안착
+  // 피에조 부저 (Ø12×8.3): f3 = 3층 천장에 매달림 / f2 = 2층 바닥 리세스 / f2s = 2층 바닥 눕힘
   if (P.bzOn) {
-    const f3m = P.bzMount === 'f3';
-    const zc = f3m ? P.f3H - F3_PLATE - BZ.h / 2
-                   : F2_PLATE + F2_PLATFORM - BZ.sink + BZ.h / 2;
+    const f3m = P.bzMount === 'f3', side = P.bzMount === 'f2s';
     const body = new THREE.CylinderGeometry(BZ.d / 2, BZ.d / 2, BZ.h, 28);
-    body.rotateX(Math.PI / 2); body.translate(P.bzX, P.bzY, zc);
     const hole = new THREE.CylinderGeometry(1.5, 1.5, 0.5, 16);   // 소리 구멍 (보이는 면에)
-    hole.rotateX(Math.PI / 2);
-    hole.translate(P.bzX, P.bzY, zc + (f3m ? -BZ.h / 2 - 0.2 : BZ.h / 2 + 0.2));
+    let zc;
+    if (side) {
+      zc = F2_PLATE + F2_PLATFORM - BZ.sideSink + BZ.d / 2;
+      body.rotateZ(Math.PI / 2);   // 축 = X (눕힘)
+      hole.rotateZ(Math.PI / 2);
+      hole.translate(-BZ.h / 2 - 0.3, 0, 0);   // 소리구멍 면 = −X 끝
+    } else {
+      zc = f3m ? P.f3H - F3_PLATE - BZ.h / 2
+               : F2_PLATE + F2_PLATFORM - BZ.sink + BZ.h / 2;
+      body.rotateX(Math.PI / 2);
+      hole.rotateX(Math.PI / 2);
+      hole.translate(0, 0, f3m ? -BZ.h / 2 - 0.2 : BZ.h / 2 + 0.2);
+    }
+    body.translate(P.bzX, P.bzY, zc);
+    hole.translate(P.bzX, P.bzY, zc);
     for (const g of [body, hole]) g.deleteAttribute('uv');
     G[f3m ? 2 : 1].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, hole]), MATS.bz));
   }
@@ -1283,12 +1323,19 @@ function updateWires() {
 
     // --- 피에조 부저 → ESP32: GPIO(PWM 톤) + GND ---
     if (P.bzOn) {
-      const zLeg = P.bzMount === 'f3'
-        ? G[2].position.z + P.f3H - F3_PLATE - BZ.h - 1
-        : z2b + F2_PLATE + F2_PLATFORM - BZ.sink + 1;
       const pinBz = espPin(...(ESP_PINS[P.bzGpio] || ESP_PINS[2]));
       const dm = (p, dst) => [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (p[2] + dst[2]) / 2 + 3];
-      const lA = [P.bzX - 3.25, P.bzY, zLeg], lB = [P.bzX + 3.25, P.bzY, zLeg];
+      let lA, lB;
+      if (P.bzMount === 'f2s') {   // 눕힘: 핀이 +X 끝면에 세로로
+        const zc = z2b + F2_PLATE + F2_PLATFORM - BZ.sideSink + BZ.d / 2;
+        const ex = P.bzX + BZ.h / 2 + 1;
+        lA = [ex, P.bzY, zc + 3.25]; lB = [ex, P.bzY, zc - 3.25];
+      } else {
+        const zLeg = P.bzMount === 'f3'
+          ? G[2].position.z + P.f3H - F3_PLATE - BZ.h - 1
+          : z2b + F2_PLATE + F2_PLATFORM - BZ.sink + 1;
+        lA = [P.bzX - 3.25, P.bzY, zLeg]; lB = [P.bzX + 3.25, P.bzY, zLeg];
+      }
       addWire([lA, dm(lA, pinBz), pinBz], WIRE_COLORS.bz, '부저+', 'G' + P.bzGpio, 'bz');
       addWire([lB, dm(lB, pinGND), pinGND], WIRE_COLORS.minus, '부저−', null);
     }
@@ -1502,11 +1549,14 @@ function updateInfo(ms, fit) {
       espTopLocal > P.f2H + cupBotZ - 0.3)
     warn.push('⚠ ESP32가 스위치 홀더 컵에 부딪힙니다 — 위치를 옮기거나 층 높이를 키우세요');
   if (P.bzOn) {
-    const bzR = { x: P.bzX, y: P.bzY, w: BZ.d + 2 * BZ.clr, d: BZ.d + 2 * BZ.clr };
-    const bzEdge = Math.hypot(P.bzX, P.bzY) + BZ.d / 2 + BZ.clr;
+    const side = P.bzMount === 'f2s';
+    const hx2 = side ? (BZ.h + 0.5) / 2 : BZ.d / 2 + BZ.clr;
+    const hy2 = BZ.d / 2 + BZ.clr;
+    const bzR = { x: P.bzX, y: P.bzY, w: hx2 * 2, d: hy2 * 2 };
     const wallHit = P.shape === 'circle'
-      ? bzEdge > P.W / 2 - P.wall + 0.1
-      : !insideInner(Math.abs(P.bzX) + BZ.d / 2, Math.abs(P.bzY) + BZ.d / 2);
+      ? (side ? Math.hypot(Math.abs(P.bzX) + hx2, Math.abs(P.bzY) + hy2)
+              : Math.hypot(P.bzX, P.bzY) + hx2) > P.W / 2 - P.wall + 0.1
+      : !insideInner(Math.abs(P.bzX) + hx2, Math.abs(P.bzY) + hy2);
     if (wallHit) warn.push('⚠ 부저가 벽과 겹칩니다 — 안쪽으로 옮기세요');
     if (P.bzMount === 'f3') {
       if (rectsOverlap(bzR, cupRect))
@@ -1518,11 +1568,22 @@ function updateInfo(ms, fit) {
     } else {
       if (rectsOverlap(bzR, eRect)) warn.push('⚠ 부저가 ESP32와 겹칩니다');
       if (mRect && rectsOverlap(bzR, mRect)) warn.push('⚠ 부저가 충전모듈과 겹칩니다');
-      const bzTop = F2_PLATE + F2_PLATFORM - BZ.sink + BZ.h;
-      if (rectsOverlap(bzR, cupRect) && bzTop > P.f2H + cupBotZ - 0.2)
-        warn.push('⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요');
-      else if (bzTop > P.f2H + P.f3H - F3_PLATE - 0.3)
-        warn.push('⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요');
+      const bzTop = F2_PLATE + F2_PLATFORM + (side ? BZ.d - BZ.sideSink : BZ.h - BZ.sink);
+      if (side) {
+        // 3층 파임은 자동 — 관통·스위치 포켓 침범만 경고
+        if (bzTop > P.f2H + P.f3H - 0.3)
+          warn.push('⚠ 눕힌 부저가 3층 상판을 뚫고 나옵니다 — 층 높이를 키우세요');
+        if (bzTop > P.f2H + cupBotZ &&
+            rectsOverlap(bzR, { x: 0, y: 0, w: SW.body + 2, d: SW.body + 2 }))
+          warn.push('⚠ 눕힌 부저 파임이 스위치 포켓까지 침범합니다 — X/Y를 옮기세요');
+        else if (bzTop > P.f2H + cupBotZ && rectsOverlap(bzR, cupRect))
+          warn.push('⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)');
+      } else {
+        if (rectsOverlap(bzR, cupRect) && bzTop > P.f2H + cupBotZ - 0.2)
+          warn.push('⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요');
+        else if (bzTop > P.f2H + P.f3H - F3_PLATE - 0.3)
+          warn.push('⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요');
+      }
     }
   }
   document.getElementById('warnings').textContent = warn.join('\n');
