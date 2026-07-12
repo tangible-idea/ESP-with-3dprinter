@@ -62,9 +62,8 @@ const FACE_H = 21.6;   // 딤섬 캐릭터(obj_2_sup face) 실측 높이
 // 캐릭터는 바닥에 17.9각 공동(깊이 10.7)이 있어 스위치를 통째로 덮고 보스 윗면에 얹힘
 const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
-const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 아래층 턱 높이/폭
-const RABBET = { out: 0.7, d: 1.8 };  // 위층 바닥 단차 (외곽 inset 기준)
-// 턱 바깥면 inset = RABBET.out + P.fitClr → 결합 유격을 슬라이더로 조절
+const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 결합 턱 높이/폭 (사각 단면)
+const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — 턱 바깥면 inset = RABBET.out + fitClr
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
@@ -72,7 +71,7 @@ const POCKET_CLR = 0.4;
 // ------------------------------------------------------------------
 const P = {
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
-  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, jointV: true,
+  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
   espX: 0, espY: 8, espRot: 0, espLift: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   batType: '520', batPose: 'flat', batX: -8,
@@ -190,8 +189,6 @@ document.getElementById('batPose').addEventListener('change', e => {
   queueRebuild();
 });
 document.getElementById('bands').checked = P.bands;
-document.getElementById('jointV').checked = P.jointV;
-document.getElementById('jointV').addEventListener('change', e => { P.jointV = e.target.checked; queueRebuild(); });
 document.getElementById('bossOn').checked = P.bossOn;
 document.getElementById('bossH').disabled = !P.bossOn;
 document.getElementById('bossOn').addEventListener('change', e => {
@@ -236,7 +233,6 @@ function syncControls() {
   document.getElementById('batType').value = P.batType;
   document.getElementById('batPose').value = P.batPose;
   document.getElementById('bands').checked = P.bands;
-  document.getElementById('jointV').checked = P.jointV;
   document.getElementById('bossOn').checked = P.bossOn;
   document.getElementById('bossH').disabled = !P.bossOn;
   document.getElementById('lidOn').checked = P.lidOn;
@@ -407,36 +403,14 @@ function cylBrush(r, h, z0, seg = 96) {   // 원기둥 (뚜껑 스커트/안착 
   g.deleteAttribute('uv');
   return toMan(g);
 }
-// 결합부 프로파일 — 기존(사각) / V형(계단식 58°, 홈 천장이 없어 서포트 불필요)
-const V = { c: 1.8, hw: 1.2, d: 1.8, step: 0.3 };   // 중심 inset, 밑변 반폭, 깊이, 계단 높이
-
+// 결합부 — 사각 단면 턱·홈 (턱 1.2×1.5가 홈 1.8 깊이에 꽂힘, fitClr로 유격 조절)
 function topRidge(z) {   // 아래층 상단 턱
-  if (!P.jointV) {
-    const o = RABBET.out + P.fitClr;
-    return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
-  }
-  // V형: 계단식 삼각 단면 (5단, 높이 1.5 — 홈보다 0.3 낮아 꼭대기 여유)
-  let r = null;
-  for (let k = 0; k < 5; k++) {
-    const hw = V.hw * (1 - (V.step * k) / V.d) - P.fitClr;
-    if (hw <= 0.05) break;
-    const ring = ringBrush(V.c - hw, Math.min(V.c + hw, P.wall), V.step + 0.02,
-                           z + V.step * k);
-    r = r ? add(r, ring) : ring;
-  }
-  return r;
+  const o = RABBET.out + P.fitClr;
+  return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
 }
 
-function bottomJointCut(b) {   // 위층 바닥 결합부 컷
-  if (!P.jointV) {
-    return sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
-  }
-  // V형 홈: 계단마다 0.2mm씩 좁아져 최대 평면 오버행이 0.2mm → 서포트 프리
-  for (let k = 0; k < 6; k++) {
-    const hw = V.hw * (1 - (V.step * k) / V.d);
-    b = sub(b, ringBrush(V.c - hw, V.c + hw, V.step + 0.04, V.step * k - 0.02));
-  }
-  return b;
+function bottomJointCut(b) {   // 위층 바닥 홈
+  return sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
 }
 const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r; };
 const add = (a, b) => csgOp(a, b, 'add');
@@ -820,57 +794,33 @@ function buildFloor3() {
   }
 
   // 딤섬 뚜껑 결합 홈: 층간 bottomJointCut과 동일 프로파일을 원(Ø41) 기준으로 상판에 컷 (위로 개방).
-  // flip3 출력 시 홈이 바닥면을 향해 서포트 프리. 보스(최대 r≈13.5)·컵과 간섭 없음(홈 r17.5~19.9).
-  if (P.lidOn && lidRingFits()) b = lidJointGroove(b);
+  // flip3 출력 시 홈이 바닥면을 향해 서포트 프리. 보스(최대 r≈13.5)·컵과 간섭 없음(홈 r17.6~19.8).
+  if (P.lidOn) b = lidJointGroove(b);
 
   b = decoBands(b, [P.f3H * 0.4]);
   return b;
 }
 
-// 4층 결합 홈 링이 3층 상판 안에 들어가는지 — 홈 바깥 r≈19.9 기준 (림 Ø41이 약간 걸쳐도 홈은 유효).
-// 원형 Ø45 이상이면 충분, 네모는 W/D에 따라
-function lidRingFits() {
-  const rr = LID.r - (V.c - V.hw) + 0.2;   // 홈 바깥 반경 + 살 0.2
-  return rr <= Math.min(innerHalfW(), innerHalfD()) + 0.1 && insideInner(rr / Math.SQRT2, rr / Math.SQRT2);
-}
-
 // 원형 링 (뚜껑 결합부용): rOut~rIn 도넛
 const cylRing = (rOut, rIn, h, z0) => sub(cylBrush(rOut, h, z0), cylBrush(rIn, h + 0.2, z0 - 0.1));
 
-// 3층 상판의 뚜껑 홈: bottomJointCut과 동일 프로파일, 원(Ø41) 기준·위로 개방 미러
+// 3층 상판의 뚜껑 홈: bottomJointCut과 동일한 사각 프로파일, 원(Ø41) 기준·위로 개방 미러.
+// Ø41 케이스면 홈이 벽 상단을 지나며 바깥 살 0.7이 남음 — 층간 결합부와 동일한 형태.
+// 재료가 없는 곳은 no-op이라 케이스 크기와 무관하게 항상 컷.
 function lidJointGroove(b) {
-  if (!P.jointV) {
-    return sub(b, cylRing(LID.r - RABBET.out, LID.r - LID.bandW - 0.6, RABBET.d + 0.05,
-                          P.f3H - RABBET.d));
-  }
-  for (let k = 0; k < 6; k++) {
-    const hw = V.hw * (1 - (V.step * k) / V.d);
-    b = sub(b, cylRing(LID.r - (V.c - hw), LID.r - (V.c + hw), V.step + 0.04,
-                       P.f3H - V.step * (k + 1) - 0.02));
-  }
-  return b;
+  return sub(b, cylRing(LID.r - RABBET.out, LID.r - LID.bandW - 0.6, RABBET.d + 0.05,
+                        P.f3H - RABBET.d));
 }
 
-// 뚜껑 밑면의 결합 턱: topRidge와 동일 프로파일, 아래로 내림 미러 (z0~RIDGE_H, 림 밑면 = RIDGE_H)
+// 뚜껑 밑면의 결합 턱: topRidge와 동일한 사각 프로파일, 아래로 내림 미러 (z0~RIDGE_H, 림 밑면 = RIDGE_H)
 function lidJointRidge() {
-  if (!P.jointV) {
-    const o = RABBET.out + P.fitClr;
-    return cylRing(LID.r - o, LID.r - o - RIDGE_W, RIDGE_H, 0);
-  }
-  let r = null;
-  for (let k = 0; k < 5; k++) {
-    const hw = V.hw * (1 - (V.step * k) / V.d) - P.fitClr;
-    if (hw <= 0.05) break;
-    const ring = cylRing(LID.r - (V.c - hw), LID.r - Math.min(V.c + hw, LID.bandW),
-                         V.step + 0.02, RIDGE_H - V.step * (k + 1));
-    r = r ? add(r, ring) : ring;
-  }
-  return r;
+  const o = RABBET.out + P.fitClr;
+  return cylRing(LID.r - o, LID.r - o - RIDGE_W, RIDGE_H, 0);
 }
 
 // 딤섬 뚜껑: 결합 턱(z0~1.5) + 스트레이트 밴드(높이 lidH, 벽 2.3) + bun_lid 디자인 원본.
-// 림(z1.5)이 3층 상판 위에 얹히고 턱이 홈에 꽂힘(층간 결합과 동일, 여유 0.3).
-// 돔 위로 그대로 출력 — 턱이 계단식이라 서포트 프리
+// 림(z1.5)이 3층 상판 위에 얹히고 턱이 홈에 꽂힘(층간 결합과 동일, 깊이 여유 0.3).
+// 돔 위로 그대로 출력 — 턱이 바닥부터 쌓이고 림 오버행은 0.8mm 이내
 function buildLid() {
   let b = sub(cylBrush(LID.r, P.lidH + 0.1, RIDGE_H),                          // 밴드
               cylBrush(LID.r - LID.bandW, P.lidH + 0.4, RIDGE_H - 0.15));
@@ -1399,10 +1349,8 @@ function updateInfo(ms, fit) {
   const cupBotZ = P.f3H + effBossH() - P.standSink - SW.seatH - SW.floorT;
   if (cupBotZ < 0.5)
     warn.push('⚠ 스위치 홀더가 뚜껑 아래로 뚫고 나갑니다 — 매립을 줄이거나 3층/보스를 키우세요');
-  if (P.lidOn && !lidRingFits())
-    warn.push('⚠ 3층 상판이 좁아 4층 결합 홈을 팔 수 없습니다 (홈 생략됨) — 원형 Ø45 이상으로 키우세요');
   if (P.lidOn && LID.r * 2 > Math.min(P.W, effD()) + 0.1)
-    warn.push(`⚠ 4층(Ø${LID.r * 2})이 케이스 외곽보다 넓어 밖으로 걸칩니다`);
+    warn.push(`⚠ 4층(Ø${LID.r * 2})이 케이스 외곽보다 넓어 밖으로 걸칩니다 — W를 41 이상으로`);
   if (P.lidOn && P.lidH + LID.innerH < charTopOverLid() + 0.3)
     warn.push(`⚠ 4층이 딤섬 캐릭터에 닿습니다 — 밴드 높이를 ${Math.max(0, charTopOverLid() + 0.5 - LID.innerH).toFixed(1)} 이상으로 (또는 캐릭터 없이 사용)`);
   const cupRect = { x: 0, y: 0, w: SW.cup, d: SW.cup };
