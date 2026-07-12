@@ -59,6 +59,8 @@ const SW = {
 // 출력하므로 방향을 미러: 홈이 3층 상판에(출력 시 바닥面), 턱이 뚜껑 밑면에(출력 시 바닥) → 둘 다 서포트 프리
 const LID = { r: 20.5, bandW: 2.3, h: 14.22, innerH: 10.9 };
 const FACE_H = 21.6;   // 딤섬 캐릭터(obj_2_sup face) 실측 높이
+// 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
+const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, ring: 4 };
 // 캐릭터는 바닥에 17.9각 공동(깊이 10.7)이 있어 스위치를 통째로 덮고 보스 윗면에 얹힘
 const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
@@ -78,6 +80,7 @@ const P = {
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
   lidOn: true, lidH: 6,
   ledOn: true, ledX: 0, ledY: -14.5, ledGpio: 3,
+  bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
 };
 
 // 저장된 설정 복원 (localStorage)
@@ -93,7 +96,7 @@ const saveParams = () => {
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink',
                  'espX','espY','espLift','modY','oledProud','batX','wireX','wireY','lidH',
-                 'ledX','ledY'];
+                 'ledX','ledY','bzX','bzY'];
 let rebuildTimer = null;
 function queueRebuild() {
   saveParams();
@@ -215,6 +218,18 @@ document.getElementById('ledOn').addEventListener('change', e => {
   applyLedUI();
   queueRebuild();
 });
+const applyBzUI = () => {
+  for (const id of ['bzMount', 'bzX', 'bzY']) document.getElementById(id).disabled = !P.bzOn;
+};
+document.getElementById('bzOn').checked = P.bzOn;
+document.getElementById('bzMount').value = P.bzMount;
+applyBzUI();
+document.getElementById('bzOn').addEventListener('change', e => {
+  P.bzOn = e.target.checked;
+  applyBzUI();
+  queueRebuild();
+});
+document.getElementById('bzMount').addEventListener('change', e => { P.bzMount = e.target.value; queueRebuild(); });
 document.getElementById('espRot').addEventListener('change', e => {
   const v = e.target.value;
   P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90'/'u0'/'u90' = 세움
@@ -251,6 +266,9 @@ function syncControls() {
   document.getElementById('lidH').disabled = !P.lidOn;
   document.getElementById('ledOn').checked = P.ledOn;
   applyLedUI();
+  document.getElementById('bzOn').checked = P.bzOn;
+  document.getElementById('bzMount').value = P.bzMount;
+  applyBzUI();
   applyShapeUI();
 }
 
@@ -334,6 +352,7 @@ const MATS = {
   oled: partMat(0x1f9e86), stand: partMat(0x9061c2), face: partMat(0xf4d271),
   led: new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xffc36b,
     emissiveIntensity: 0.6, roughness: 0.25, transparent: true, opacity: 0.95 }),
+  bz: partMat(0x23272e),
 };
 
 // 층 그룹 (분해/조립용) — [0..2] = 1~3층, [3] = 딤섬 뚜껑
@@ -757,6 +776,18 @@ function buildFloor2() {
     b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
   }
 
+  // 피에조 부저 소켓 (2층 바닥): 플랫폼 리세스 1.8 + 가이드 링, 남쪽 링에 전선 노치
+  if (P.bzOn && P.bzMount === 'f2') {
+    const zP = F2_PLATE + F2_PLATFORM;
+    let ring = sub(bzTube(BZ.d / 2 + BZ.clr + BZ.wall, BZ.ring, zP),
+                   bzTube(BZ.d / 2 + BZ.clr, BZ.ring + 0.4, zP - 0.2));
+    ring = inter(ring, extrude(baseShape(0), zP + BZ.ring + 1, 0));   // 벽 곡면 따라 잘림
+    b = add(b, ring);
+    b = sub(b, bzTube(BZ.d / 2 + BZ.clr, BZ.sink + 0.05, zP - BZ.sink));
+    b = sub(b, boxBrush(4, 6, BZ.sink + BZ.ring + 0.2,
+                        P.bzX, P.bzY - (BZ.d / 2 + BZ.clr + BZ.wall / 2 + 0.4), zP - BZ.sink));
+  }
+
   // 바닥 rabbet + 장식 — 돌출 포드 구간은 장식 홈이 포드 내부를 뚫지 않게 보호
   b = bottomJointCut(b);
   // 돌출 > 0 또는 원형(평면 포드가 곡면 밖으로 나옴)이면 포드 보호 필요
@@ -806,6 +837,17 @@ function buildFloor3() {
     b = sub(b, toMan(cyl));
   }
 
+  // 피에조 부저 소켓 (3층 천장): 상판 밑면에서 내려오는 슬리브 — 상판은 뚫지 않음.
+  // 부저(8.3)가 3층 내부 높이보다 크면 아래로 튀어나와 2층 공간을 씀 (경고 표시)
+  if (P.bzOn && P.bzMount === 'f3') {
+    const zTop = P.f3H - F3_PLATE;
+    const d = Math.min(6, zTop - 0.2);
+    let ring = sub(bzTube(BZ.d / 2 + BZ.clr + BZ.wall, d, zTop - d),
+                   bzTube(BZ.d / 2 + BZ.clr, d + 0.2, zTop - d - 0.2));
+    ring = inter(ring, extrude(baseShape(0), P.f3H, 0));
+    b = add(b, ring);
+  }
+
   b = bottomJointCut(b);
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
@@ -829,6 +871,15 @@ function buildFloor3() {
 
 // 원형 링 (뚜껑 결합부용): rOut~rIn 도넛
 const cylRing = (rOut, rIn, h, z0) => sub(cylBrush(rOut, h, z0), cylBrush(rIn, h + 0.2, z0 - 0.1));
+
+// 부저 위치(bzX, bzY) 기준 원기둥
+function bzTube(r, h, z0) {
+  const c = new THREE.CylinderGeometry(r, r, h, 48);
+  c.rotateX(Math.PI / 2);
+  c.translate(P.bzX, P.bzY, z0 + h / 2);
+  c.deleteAttribute('uv');
+  return toMan(c);
+}
 
 // 3층 상판의 뚜껑 홈: bottomJointCut과 동일한 사각 프로파일, 원(Ø41) 기준·위로 개방 미러.
 // Ø41 케이스면 홈이 벽 상단을 지나며 바깥 살 0.7이 남음 — 층간 결합부와 동일한 형태.
@@ -958,6 +1009,19 @@ function placeGhosts() {
     for (const g of [body, dome, flange]) g.deleteAttribute('uv');
     G[2].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, dome, flange]), MATS.led));
   }
+  // 피에조 부저 (Ø12×8.3): f3 = 3층 천장에 매달림 / f2 = 2층 바닥 리세스에 안착
+  if (P.bzOn) {
+    const f3m = P.bzMount === 'f3';
+    const zc = f3m ? P.f3H - F3_PLATE - BZ.h / 2
+                   : F2_PLATE + F2_PLATFORM - BZ.sink + BZ.h / 2;
+    const body = new THREE.CylinderGeometry(BZ.d / 2, BZ.d / 2, BZ.h, 28);
+    body.rotateX(Math.PI / 2); body.translate(P.bzX, P.bzY, zc);
+    const hole = new THREE.CylinderGeometry(1.5, 1.5, 0.5, 16);   // 소리 구멍 (보이는 면에)
+    hole.rotateX(Math.PI / 2);
+    hole.translate(P.bzX, P.bzY, zc + (f3m ? -BZ.h / 2 - 0.2 : BZ.h / 2 + 0.2));
+    for (const g of [body, hole]) g.deleteAttribute('uv');
+    G[f3m ? 2 : 1].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, hole]), MATS.bz));
+  }
 }
 
 // ------------------------------------------------------------------
@@ -1049,7 +1113,7 @@ let wiresOn = true;
 const wireGroup = new THREE.Group();
 scene.add(wireGroup);
 const WIRE_COLORS = { plus: 0xd63c2f, minus: 0x333333, sda: 0x2e9e57, scl: 0xe0a13a,
-                      gpio: 0x8e44ad, led: 0x2b7de9 };
+                      gpio: 0x8e44ad, led: 0x2b7de9, bz: 0xc2589c };
 // ESP32-C3 supermini 핀 로컬 좌표 (USB가 -x 끝, 핀아웃 실측: 북열 5V,G,3V3,4,3,2,1,0 / 남열 5,6,7,8,9,10,20,21)
 const ESP_PINS = {
   '5V': [-9, 8], 'GND': [-6.5, 8], '3V3': [-4, 8],
@@ -1064,6 +1128,7 @@ const GPIO_ROLES = {
   sda:  { key: 'sdaGpio', name: 'OLED SDA' },
   scl:  { key: 'sclGpio', name: 'OLED SCL' },
   led:  { key: 'ledGpio', name: 'LED' },
+  bz:   { key: 'bzGpio', name: '부저' },
 };
 
 function wireLabel(text, colorHex, pos) {
@@ -1214,6 +1279,18 @@ function updateWires() {
       const legA = [P.ledX - 1.3, P.ledY, under], legB = [P.ledX + 1.3, P.ledY, under];
       addWire([legA, dm(legA, pinLed), pinLed], WIRE_COLORS.led, 'LED+', 'G' + P.ledGpio, 'led');
       addWire([legB, dm(legB, pinGND), pinGND], WIRE_COLORS.minus, 'LED−', null);
+    }
+
+    // --- 피에조 부저 → ESP32: GPIO(PWM 톤) + GND ---
+    if (P.bzOn) {
+      const zLeg = P.bzMount === 'f3'
+        ? G[2].position.z + P.f3H - F3_PLATE - BZ.h - 1
+        : z2b + F2_PLATE + F2_PLATFORM - BZ.sink + 1;
+      const pinBz = espPin(...(ESP_PINS[P.bzGpio] || ESP_PINS[2]));
+      const dm = (p, dst) => [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (p[2] + dst[2]) / 2 + 3];
+      const lA = [P.bzX - 3.25, P.bzY, zLeg], lB = [P.bzX + 3.25, P.bzY, zLeg];
+      addWire([lA, dm(lA, pinBz), pinBz], WIRE_COLORS.bz, '부저+', 'G' + P.bzGpio, 'bz');
+      addWire([lB, dm(lB, pinGND), pinGND], WIRE_COLORS.minus, '부저−', null);
     }
   } catch (e) { /* 초기화 전 호출 등은 무시 */ }
 }
@@ -1424,6 +1501,30 @@ function updateInfo(ms, fit) {
   if ((espStand() || espLifted) && rectsOverlap(eRect, cupRect) &&
       espTopLocal > P.f2H + cupBotZ - 0.3)
     warn.push('⚠ ESP32가 스위치 홀더 컵에 부딪힙니다 — 위치를 옮기거나 층 높이를 키우세요');
+  if (P.bzOn) {
+    const bzR = { x: P.bzX, y: P.bzY, w: BZ.d + 2 * BZ.clr, d: BZ.d + 2 * BZ.clr };
+    const bzEdge = Math.hypot(P.bzX, P.bzY) + BZ.d / 2 + BZ.clr;
+    const wallHit = P.shape === 'circle'
+      ? bzEdge > P.W / 2 - P.wall + 0.1
+      : !insideInner(Math.abs(P.bzX) + BZ.d / 2, Math.abs(P.bzY) + BZ.d / 2);
+    if (wallHit) warn.push('⚠ 부저가 벽과 겹칩니다 — 안쪽으로 옮기세요');
+    if (P.bzMount === 'f3') {
+      if (rectsOverlap(bzR, cupRect))
+        warn.push('⚠ 부저가 스위치 홀더 컵과 겹칩니다 — 자리가 없으면 부저 장착을 2층 바닥으로 바꾸세요');
+      if (P.ledOn && Math.hypot(P.ledX - P.bzX, P.ledY - P.bzY) < BZ.d / 2 + BZ.clr + 2.2)
+        warn.push('⚠ 부저가 LED와 겹칩니다');
+      if (P.f3H - F3_PLATE < BZ.h)
+        warn.push(`⚠ 부저(8.3)가 3층보다 두꺼워 아래로 ${(BZ.h - P.f3H + F3_PLATE).toFixed(1)}mm 튀어나옵니다 — 2층 부품과 겹치지 않는지 확인하세요`);
+    } else {
+      if (rectsOverlap(bzR, eRect)) warn.push('⚠ 부저가 ESP32와 겹칩니다');
+      if (mRect && rectsOverlap(bzR, mRect)) warn.push('⚠ 부저가 충전모듈과 겹칩니다');
+      const bzTop = F2_PLATE + F2_PLATFORM - BZ.sink + BZ.h;
+      if (rectsOverlap(bzR, cupRect) && bzTop > P.f2H + cupBotZ - 0.2)
+        warn.push('⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요');
+      else if (bzTop > P.f2H + P.f3H - F3_PLATE - 0.3)
+        warn.push('⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요');
+    }
+  }
   document.getElementById('warnings').textContent = warn.join('\n');
 }
 
