@@ -14,6 +14,7 @@ import esp32Url from '../stl_files/esp32_c3_supermini.stl?url';
 import chargeModuleUrl from '../stl_files/battery_charging_module.stl?url';
 import oledUrl from '../stl_files/oled_0.49inch.stl?url';
 import faceUrl from '../dimsum/obj_2_sup 2.0 face.stl?url';
+import bunLidUrl from '../my_designs/bun_lid_clean.stl?url';
 
 // ------------------------------------------------------------------
 // 부품 실측 상수 (mm)
@@ -52,6 +53,14 @@ const SW = {
   // 바닥 구멍 [x, y, Ø]: 중앙 기둥 1 + 구리선 4 (핀 2 + 다리 2, 스위치 180° 장착 기준)
   holes: [[0, 0, 4.3], [5.0, 0, 1.8], [-5.0, 0, 1.8], [3.8, -2.7, 1.8], [-2.7, -5.2, 1.8]],
 };
+// 딤섬 뚜껑 (my_designs/bun_lid_clean.stl 실측): Ø41, 높이 14.22, 내부 천장 z10.9(평평), 림 r19.5~20.5
+// 원본 디자인은 그대로 얹고, 아래에 스트레이트 밴드(높이 = lidH 슬라이더, 벽 2.3) + 결합 턱을 이어붙임.
+// 결합부 = 층간과 동일 프로파일(V형/사각, fitClr 적용)을 원(Ø41) 기준으로 — 단 3층은 뒤집어
+// 출력하므로 방향을 미러: 홈이 3층 상판에(출력 시 바닥面), 턱이 뚜껑 밑면에(출력 시 바닥) → 둘 다 서포트 프리
+const LID = { r: 20.5, bandW: 2.3, h: 14.22, innerH: 10.9 };
+const FACE_H = 21.6;   // 딤섬 캐릭터(obj_2_sup face) 실측 높이
+// 캐릭터는 바닥에 17.9각 공동(깊이 10.7)이 있어 스위치를 통째로 덮고 보스 윗면에 얹힘
+const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 아래층 턱 높이/폭
 const RABBET = { out: 0.7, d: 1.8 };  // 위층 바닥 단차 (외곽 inset 기준)
@@ -68,6 +77,7 @@ const P = {
   espX: 0, espY: 8, espRot: 0, espLift: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   batType: '520', batPose: 'flat', batX: -8,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
+  lidOn: true, lidH: 6,
 };
 
 // 저장된 설정 복원 (localStorage)
@@ -82,7 +92,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink',
-                 'espX','espY','espLift','modY','oledProud','batX','wireX','wireY'];
+                 'espX','espY','espLift','modY','oledProud','batX','wireX','wireY','lidH'];
 let rebuildTimer = null;
 function queueRebuild() {
   saveParams();
@@ -189,6 +199,13 @@ document.getElementById('bossOn').addEventListener('change', e => {
   document.getElementById('bossH').disabled = !P.bossOn;
   queueRebuild();
 });
+document.getElementById('lidOn').checked = P.lidOn;
+document.getElementById('lidH').disabled = !P.lidOn;
+document.getElementById('lidOn').addEventListener('change', e => {
+  P.lidOn = e.target.checked;
+  document.getElementById('lidH').disabled = !P.lidOn;
+  queueRebuild();
+});
 document.getElementById('espRot').addEventListener('change', e => {
   const v = e.target.value;
   P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90'/'u0'/'u90' = 세움
@@ -222,6 +239,8 @@ function syncControls() {
   document.getElementById('jointV').checked = P.jointV;
   document.getElementById('bossOn').checked = P.bossOn;
   document.getElementById('bossH').disabled = !P.bossOn;
+  document.getElementById('lidOn').checked = P.lidOn;
+  document.getElementById('lidH').disabled = !P.lidOn;
   applyShapeUI();
 }
 
@@ -305,25 +324,33 @@ const MATS = {
   oled: partMat(0x1f9e86), stand: partMat(0x9061c2), face: partMat(0xf4d271),
 };
 
-// 층 그룹 (분해/조립용)
-const G = [new THREE.Group(), new THREE.Group(), new THREE.Group()];
+// 층 그룹 (분해/조립용) — [0..2] = 1~3층, [3] = 딤섬 뚜껑
+const G = [new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group()];
 G.forEach(g => scene.add(g));
-let floorMeshes = [null, null, null];
-let exportGeos = [null, null, null];
+let floorMeshes = [null, null, null, null];
+let exportGeos = [null, null, null, null];
 
 // ------------------------------------------------------------------
 // 셰이프 헬퍼 (CSG: manifold WASM — 파이썬 생성기와 동일 엔진)
 // ------------------------------------------------------------------
 let M = null;   // manifold wasm 모듈 (초기화 후 할당)
 
-function toMan(geo, matrix) {
+// tol: 꼭짓점 용접 허용치 — 미세 디테일 메시(bun_lid)는 1e-5로 용접하면 서로 다른
+// 꼭짓점이 합쳐져 non-manifold가 되므로 1e-6을 넘겨야 함
+function toMan(geo, matrix, tol = 1e-5) {
   let g = geo;
   if (matrix) { g = geo.clone(); g.applyMatrix4(matrix); }
-  const merged = BufferGeometryUtils.mergeVertices(g, 1e-5);
+  const merged = BufferGeometryUtils.mergeVertices(g, tol);
+  const idx = merged.index.array;
+  const tris = [];   // 용접이 만든 퇴화 삼각형(같은 꼭짓점 반복) 제거
+  for (let i = 0; i < idx.length; i += 3) {
+    if (idx[i] !== idx[i + 1] && idx[i + 1] !== idx[i + 2] && idx[i] !== idx[i + 2])
+      tris.push(idx[i], idx[i + 1], idx[i + 2]);
+  }
   const mesh = new M.Mesh({
     numProp: 3,
     vertProperties: new Float32Array(merged.attributes.position.array),
-    triVerts: new Uint32Array(merged.index.array),
+    triVerts: new Uint32Array(tris),
   });
   mesh.merge();
   return new M.Manifold(mesh);
@@ -373,6 +400,13 @@ function boxBrush(w, d, h, cx, cy, z0, r = 0, matrix = null) {
   const s = r > 0 ? rrShape(w, d, r) : rrShape(w, d, 0.05);
   return toMan(extrudeGeo(s, h, z0, cx, cy), matrix);
 }
+function cylBrush(r, h, z0, seg = 96) {   // 원기둥 (뚜껑 스커트/안착 홈용 — 부드러운 원)
+  const g = new THREE.CylinderGeometry(r, r, h, seg);
+  g.rotateX(Math.PI / 2);
+  g.translate(0, 0, z0 + h / 2);
+  g.deleteAttribute('uv');
+  return toMan(g);
+}
 // 결합부 프로파일 — 기존(사각) / V형(계단식 58°, 홈 천장이 없어 서포트 불필요)
 const V = { c: 1.8, hw: 1.2, d: 1.8, step: 0.3 };   // 중심 inset, 밑변 반폭, 깊이, 계단 높이
 
@@ -408,7 +442,7 @@ const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r
 const add = (a, b) => csgOp(a, b, 'add');
 const sub = (a, b) => csgOp(a, b, 'subtract');
 const inter = (a, b) => csgOp(a, b, 'intersect');
-const meshBrush = (geo, matrix) => toMan(geo, matrix);
+const meshBrush = (geo, matrix, tol) => toMan(geo, matrix, tol);
 
 // ------------------------------------------------------------------
 // 외부 STL 로드 (usb 구멍, 스위치 스탠드, 고스트 부품들)
@@ -430,7 +464,7 @@ function normalize(g, centerXY = true) {
 }
 
 async function loadAssets() {
-  const [usb, sw, bat, esp, mod, oled, face] = await Promise.all([
+  const [usb, sw, bat, esp, mod, oled, face, bunLid] = await Promise.all([
     loadSTL(usbHoleUrl),
     loadSTL(switchMxUrl),
     loadSTL(batteryUrl),
@@ -438,6 +472,7 @@ async function loadAssets() {
     loadSTL(chargeModuleUrl),
     loadSTL(oledUrl),
     loadSTL(faceUrl),
+    loadSTL(bunLidUrl),
   ]);
   // USB 구멍 툴: 정규화 → 중심 정렬 → 나팔 입구가 +X를 향하게 (길이 9, 사용 시 벽두께에 맞춰 x 스케일)
   normalize(usb, false);
@@ -455,6 +490,7 @@ async function loadAssets() {
   ASSETS.mod = normalize(mod, false);
   ASSETS.oled = normalize(oled, false);
   ASSETS.face = normalize(face);
+  ASSETS.bunLid = normalize(bunLid);   // xy 중심, z0 바닥 (파이썬 전처리와 동일 규약)
 }
 
 // ------------------------------------------------------------------
@@ -717,9 +753,10 @@ function buildFloor2() {
       ? flatPadX()
       : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
     const L = Math.max(5.4, outerX + 0.4 - (dk.edgeX - 1.5));   // 원본 툴 길이 9 기준
+    // z 스케일: 툴 조임부 실측 3.8 → 3.5 (셸 3.2 + 0.3) — 보드가 포켓 바닥에 앉아 위쪽만 뜨는 것 교정
     const usbM = new THREE.Matrix4()
       .makeTranslation(outerX + 0.4 - L / 2, dk.y, F2_PLATE + usbZ)
-      .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 1));
+      .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 3.5 / 3.8));
     b = sub(b, meshBrush(ASSETS.usb, usbM));
   }
 
@@ -782,7 +819,74 @@ function buildFloor3() {
     }
   }
 
+  // 딤섬 뚜껑 결합 홈: 층간 bottomJointCut과 동일 프로파일을 원(Ø41) 기준으로 상판에 컷 (위로 개방).
+  // flip3 출력 시 홈이 바닥면을 향해 서포트 프리. 보스(최대 r≈13.5)·컵과 간섭 없음(홈 r17.5~19.9).
+  if (P.lidOn && lidRingFits()) b = lidJointGroove(b);
+
   b = decoBands(b, [P.f3H * 0.4]);
+  return b;
+}
+
+// 4층 결합 홈 링이 3층 상판 안에 들어가는지 — 홈 바깥 r≈19.9 기준 (림 Ø41이 약간 걸쳐도 홈은 유효).
+// 원형 Ø45 이상이면 충분, 네모는 W/D에 따라
+function lidRingFits() {
+  const rr = LID.r - (V.c - V.hw) + 0.2;   // 홈 바깥 반경 + 살 0.2
+  return rr <= Math.min(innerHalfW(), innerHalfD()) + 0.1 && insideInner(rr / Math.SQRT2, rr / Math.SQRT2);
+}
+
+// 원형 링 (뚜껑 결합부용): rOut~rIn 도넛
+const cylRing = (rOut, rIn, h, z0) => sub(cylBrush(rOut, h, z0), cylBrush(rIn, h + 0.2, z0 - 0.1));
+
+// 3층 상판의 뚜껑 홈: bottomJointCut과 동일 프로파일, 원(Ø41) 기준·위로 개방 미러
+function lidJointGroove(b) {
+  if (!P.jointV) {
+    return sub(b, cylRing(LID.r - RABBET.out, LID.r - LID.bandW - 0.6, RABBET.d + 0.05,
+                          P.f3H - RABBET.d));
+  }
+  for (let k = 0; k < 6; k++) {
+    const hw = V.hw * (1 - (V.step * k) / V.d);
+    b = sub(b, cylRing(LID.r - (V.c - hw), LID.r - (V.c + hw), V.step + 0.04,
+                       P.f3H - V.step * (k + 1) - 0.02));
+  }
+  return b;
+}
+
+// 뚜껑 밑면의 결합 턱: topRidge와 동일 프로파일, 아래로 내림 미러 (z0~RIDGE_H, 림 밑면 = RIDGE_H)
+function lidJointRidge() {
+  if (!P.jointV) {
+    const o = RABBET.out + P.fitClr;
+    return cylRing(LID.r - o, LID.r - o - RIDGE_W, RIDGE_H, 0);
+  }
+  let r = null;
+  for (let k = 0; k < 5; k++) {
+    const hw = V.hw * (1 - (V.step * k) / V.d) - P.fitClr;
+    if (hw <= 0.05) break;
+    const ring = cylRing(LID.r - (V.c - hw), LID.r - Math.min(V.c + hw, LID.bandW),
+                         V.step + 0.02, RIDGE_H - V.step * (k + 1));
+    r = r ? add(r, ring) : ring;
+  }
+  return r;
+}
+
+// 딤섬 뚜껑: 결합 턱(z0~1.5) + 스트레이트 밴드(높이 lidH, 벽 2.3) + bun_lid 디자인 원본.
+// 림(z1.5)이 3층 상판 위에 얹히고 턱이 홈에 꽂힘(층간 결합과 동일, 여유 0.3).
+// 돔 위로 그대로 출력 — 턱이 계단식이라 서포트 프리
+function buildLid() {
+  let b = sub(cylBrush(LID.r, P.lidH + 0.1, RIDGE_H),                          // 밴드
+              cylBrush(LID.r - LID.bandW, P.lidH + 0.4, RIDGE_H - 0.15));
+  b = add(b, lidJointRidge());                                                 // 결합 턱
+  b = add(b, meshBrush(ASSETS.bunLid,
+                       new THREE.Matrix4().makeTranslation(0, 0, RIDGE_H + P.lidH), 1e-6));
+  // OLED 타워가 3층을 넘어 뚜껑 높이까지 오면 뚜껑에도 같은 실루엣 노치 (3층 노치와 동일 여유 0.4/측)
+  if (P.oledSide !== 'none') {
+    const over = oledTowerTop() - (P.f2H + P.f3H - RIDGE_H);   // 뚜껑 local z 기준 침범 높이
+    if (over > -0.5) {
+      const { m, seatY, outHalf } = oledFrame();
+      const cutD = (outHalf - seatY) + oledSpec().t + 3.0;
+      b = sub(b, boxBrush(oledTowerW() + 0.8, cutD, over + 0.9,
+                          0, outHalf + 0.5 - cutD / 2, -0.1, 0, m));
+    }
+  }
   return b;
 }
 
@@ -864,7 +968,8 @@ function placeGhosts() {
   const sg = ASSETS.switch.clone();
   sg.rotateZ(Math.PI);   // 핀 배치를 홀더 구멍(180° 장착 기준)에 정렬
   G[2].add(ghostMesh(sg, MATS.stand, T(0, 0, seatZ3 - SW.pinLen)));
-  G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, seatZ3 + (SW.H - SW.pinLen) + 1)));
+  // 캐릭터: 바닥 공동(17.9각×10.7)이 스위치를 통째로 덮고 보스/컵 윗면에 얹힘
+  G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, P.f3H + effBossH())));
 }
 
 // ------------------------------------------------------------------
@@ -874,25 +979,39 @@ const status = document.getElementById('status');
 function rebuild() {
   status.classList.add('on');
   setTimeout(() => {
+    const buildErrs = [];
     try {
       const t0 = performance.now();
-      const builders = [buildFloor1, buildFloor2, buildFloor3];
-      for (let i = 0; i < 3; i++) {
+      const builders = [buildFloor1, buildFloor2, buildFloor3, buildLid];
+      const names = ['1층', '2층', '3층', '4층'];
+      for (let i = 0; i < 4; i++) {
         G[i].clear();
-        const man = builders[i]();
-        const geo = manToGeo(man);
-        man.delete();
-        exportGeos[i] = geo;
-        const mesh = new THREE.Mesh(geo, xray ? matCaseX : matCase);
-        floorMeshes[i] = mesh;
-        G[i].add(mesh);
+        if (i === 3 && !P.lidOn) { exportGeos[3] = null; floorMeshes[3] = null; continue; }
+        try {   // 한 층이 실패해도 나머지 층은 유지
+          const man = builders[i]();
+          const geo = manToGeo(man);
+          man.delete();
+          exportGeos[i] = geo;
+          const mesh = new THREE.Mesh(geo, xray ? matCaseX : matCase);
+          floorMeshes[i] = mesh;
+          G[i].add(mesh);
+        } catch (e) {
+          exportGeos[i] = null;
+          floorMeshes[i] = null;
+          buildErrs.push(`⚠ ${names[i]} 생성 오류: ${e.message || e}`);
+          console.error(names[i], e);
+        }
       }
       placeGhosts();
       applyExplode();
       updateInfo(performance.now() - t0, checkFit());
     } catch (e) {
-      document.getElementById('warnings').textContent = '⚠ 생성 오류: ' + e.message;
+      buildErrs.push('⚠ 생성 오류: ' + (e.message || e));
       console.error(e);
+    }
+    if (buildErrs.length) {
+      const w = document.getElementById('warnings');
+      w.textContent = buildErrs.join('\n') + (w.textContent ? '\n' + w.textContent : '');
     }
     status.classList.remove('on');
   }, 10);
@@ -909,8 +1028,13 @@ function checkFit() {
     const m3 = g(g(toMan(exportGeos[2])).translate([0, 0, P.f1H + P.f2H]));
     const i12 = vol(g(m1.intersect(m2)));
     const i23 = vol(g(m2.intersect(m3)));
+    let i34 = 0;
+    if (exportGeos[3]) {   // 뚜껑 ↔ 3층 (홈 안착 위치) — bun 디테일 때문에 1e-6 용접
+      const m4 = g(g(toMan(exportGeos[3], null, 1e-6)).translate([0, 0, P.f1H + P.f2H + P.f3H - RIDGE_H]));
+      i34 = vol(g(m3.intersect(m4)));
+    }
     garbage.forEach(x => x.delete());
-    return { i12, i23, ok: i12 < 0.5 && i23 < 0.5 };
+    return { i12, i23, i34, ok: i12 < 0.5 && i23 < 0.5 && i34 < 0.5 };
   } catch (e) { return null; }
 }
 
@@ -921,6 +1045,8 @@ function applyExplode() {
   G[0].position.z = 0;
   G[1].position.z = P.f1H + gap;
   G[2].position.z = P.f1H + P.f2H + gap * 2;
+  // 뚜껑: 림(local z=RIDGE_H)이 3층 상판 위에 안착, 턱이 홈에 꽂힘
+  G[3].position.z = P.f1H + P.f2H + P.f3H - RIDGE_H + gap * 3;
   updateWires();
 }
 document.getElementById('explode').addEventListener('input', () => {
@@ -1201,11 +1327,12 @@ function rectsOverlap(a, b) {
 function updateInfo(ms, fit) {
   const total = P.f1H + P.f2H + P.f3H + effBossH();
   const fitTxt = fit
-    ? (fit.ok ? ' · 조립 간섭 없음 ✓' : ` · 조립 간섭 ${fit.i12.toFixed(1)}/${fit.i23.toFixed(1)}mm³ ⚠`)
+    ? (fit.ok ? ' · 조립 간섭 없음 ✓' : ` · 조립 간섭 ${fit.i12.toFixed(1)}/${fit.i23.toFixed(1)}/${(fit.i34 || 0).toFixed(1)}mm³ ⚠`)
     : '';
   const sizeTxt = P.shape === 'circle' ? `Ø${P.W}` : `${P.W} × ${P.D}`;
+  const lidTxt = P.lidOn ? ` · 4층 Ø${LID.r * 2} × ${(RIDGE_H + P.lidH + LID.h).toFixed(1)}mm` : '';
   document.getElementById('dims').textContent =
-    `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함) · CSG ${ms.toFixed(0)}ms${fitTxt}`;
+    `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함)${lidTxt} · CSG ${ms.toFixed(0)}ms${fitTxt}`;
   const warn = [];
   if (fit && !fit.ok) warn.push('⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요');
   if (!noBat() && !batStand() && !insideInner(batSpec().L / 2 + 0.4, batSpec().W / 2 + 0.4))
@@ -1272,6 +1399,12 @@ function updateInfo(ms, fit) {
   const cupBotZ = P.f3H + effBossH() - P.standSink - SW.seatH - SW.floorT;
   if (cupBotZ < 0.5)
     warn.push('⚠ 스위치 홀더가 뚜껑 아래로 뚫고 나갑니다 — 매립을 줄이거나 3층/보스를 키우세요');
+  if (P.lidOn && !lidRingFits())
+    warn.push('⚠ 3층 상판이 좁아 4층 결합 홈을 팔 수 없습니다 (홈 생략됨) — 원형 Ø45 이상으로 키우세요');
+  if (P.lidOn && LID.r * 2 > Math.min(P.W, effD()) + 0.1)
+    warn.push(`⚠ 4층(Ø${LID.r * 2})이 케이스 외곽보다 넓어 밖으로 걸칩니다`);
+  if (P.lidOn && P.lidH + LID.innerH < charTopOverLid() + 0.3)
+    warn.push(`⚠ 4층이 딤섬 캐릭터에 닿습니다 — 밴드 높이를 ${Math.max(0, charTopOverLid() + 0.5 - LID.innerH).toFixed(1)} 이상으로 (또는 캐릭터 없이 사용)`);
   const cupRect = { x: 0, y: 0, w: SW.cup, d: SW.cup };
   if (bRect650 && rectsOverlap(bRect650, cupRect) && F2_PLATE + batSpec().W > P.f2H + cupBotZ - 0.3)
     warn.push('⚠ 세운 배터리가 스위치 홀더 컵에 부딪힙니다 — 배터리 X를 옮기거나 층 높이를 키우세요');
@@ -1310,6 +1443,7 @@ function exportFloor(i, name) {
 document.getElementById('ex1').addEventListener('click', () => exportFloor(0, 'floor1_battery.stl'));
 document.getElementById('ex2').addEventListener('click', () => exportFloor(1, 'floor2_esp32.stl'));
 document.getElementById('ex3').addEventListener('click', () => exportFloor(2, 'floor3_switch_lid.stl'));
+document.getElementById('ex4').addEventListener('click', () => exportFloor(3, 'floor4_bun_lid.stl'));
 
 // ------------------------------------------------------------------
 Promise.all([

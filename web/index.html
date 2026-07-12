@@ -85,7 +85,10 @@
     <div class="body">
       <div class="row"><label>1층 (배터리)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
       <div class="row"><label>2층 (보드)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="16"><span class="val" id="f2Hv"></span></div>
-      <div class="row"><label>3층 (뚜껑)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
+      <div class="row"><label>3층 (스위치)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
+      <div class="row"><label>4층 (딤섬 뚜껑)</label><input type="checkbox" id="lidOn" checked></div>
+      <div class="row"><label>4층 밴드 높이</label><input type="range" id="lidH" min="0" max="30" step="0.5" value="6"><span class="val" id="lidHv"></span></div>
+      <div class="hint">4층 = bun_lid 디자인(Ø41)이 그대로 올라간 딤섬 뚜껑. 밴드 높이로 전체 높이를 조절하고, 결합부는 1·2·3층과 동일 프로파일(V형/사각, 결합 유격 적용)로 홈이 3층 상판에, 턱이 4층 밑면에 미러되어 둘 다 서포트 프리입니다. 캐릭터(21.6)를 완전히 덮으려면 경고에 표시되는 밴드 높이가 필요합니다.</div>
     </div>
   </details>
 
@@ -175,6 +178,7 @@
         <button id="ex1">1층.stl</button>
         <button id="ex2">2층.stl</button>
         <button id="ex3">3층.stl</button>
+        <button id="ex4">4층.stl</button>
       </div>
       <div class="row" style="margin-top:8px"><label>3층 출력용 뒤집기</label><input type="checkbox" id="flip3" checked></div>
       <div class="hint">3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다</div>
