@@ -770,7 +770,7 @@ function buildFloor2() {
   // USB-C 구멍 — 배터리 없음이면 ESP32 USB 정면, 아니면 충전모듈 USB 정면 (원형이면 플랫 패드 관통)
   {
     const dk = noBat() ? espDock() : modCenter();
-    const usbZ = noBat() ? ESP.usbZ : MOD.usbZ;
+    const usbZ = noBat() ? ESP.usbZ + P.espZ : MOD.usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
     const outerX = P.shape === 'circle'
       ? flatPadX()
       : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
