@@ -90,7 +90,7 @@ const POCKET_CLR = 0.4;
 const P = {
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
-  f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5,
+  f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, steamOn: true,
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   batType: '520', batPose: 'flat', batX: -8,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
@@ -217,6 +217,11 @@ document.getElementById('bossOn').addEventListener('change', e => {
   document.getElementById('bossH').disabled = !P.bossOn;
   queueRebuild();
 });
+document.getElementById('steamOn').checked = P.steamOn;
+document.getElementById('steamOn').addEventListener('change', e => {
+  P.steamOn = e.target.checked;
+  queueRebuild();
+});
 document.getElementById('lidOn').checked = P.lidOn;
 document.getElementById('lidH').disabled = !P.lidOn;
 document.getElementById('lidOn').addEventListener('change', e => {
@@ -280,6 +285,7 @@ function syncControls() {
   document.getElementById('bands').checked = P.bands;
   document.getElementById('bossOn').checked = P.bossOn;
   document.getElementById('bossH').disabled = !P.bossOn;
+  document.getElementById('steamOn').checked = P.steamOn;
   document.getElementById('lidOn').checked = P.lidOn;
   document.getElementById('lidH').disabled = !P.lidOn;
   document.getElementById('ledOn').checked = P.ledOn;
@@ -909,6 +915,9 @@ function buildFloor3() {
     b = add(b, ring);
   }
 
+  // 딤섬 찜통 바닥: 상판에 대나무 슬랫 립 + 통풍 슬릿
+  if (P.steamOn) b = steamerFloor(b);
+
   b = bottomJointCut(b);
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
@@ -928,6 +937,49 @@ function buildFloor3() {
 
   b = decoBands(b, [P.f3H * 0.4]);
   return b;
+}
+
+// 3층 상판 찜통 바닥: 대나무 찜기 바닥처럼 평행 슬랫(상판 위 0.8 돌출 립)을 깔고,
+// 슬랫 사이 골에는 얕은 홈(관통 X — 속이 안 보이게)을 파서 음영 라인만 살린다.
+// 립은 스위치 포켓·LED만 피하고 보스 옆면에 융합, 홈은 컵/보스·LED·뚜껑 결합 홈·벽 림을 피한다.
+const STEAM = { ribW: 2.8, gap: 1.8, ribH: 0.8, grooveD: 1.0 };   // 슬랫 폭 / 골 폭 / 립 높이 / 골 홈 깊이
+function steamerFloor(b) {
+  const pitch = STEAM.ribW + STEAM.gap;
+  const half = Math.max(P.W, effD()) / 2;
+  const ledKeep = (margin, h, z0) => {
+    const s = ledSpec();
+    const r = s.fl / 2 + margin;
+    const c = new THREE.CylinderGeometry(r, r, h, 24);
+    c.rotateX(Math.PI / 2);
+    c.translate(P.ledX, P.ledY, z0 + h / 2);
+    c.deleteAttribute('uv');
+    return toMan(c);
+  };
+  // y0 오프셋에서 pitch 간격으로 y방향 스트립들을 합친 브러시
+  const strips = (w, h, z0, y0) => {
+    let m = null;
+    for (let y = y0; y <= half; y += pitch)
+      for (const s of (y === 0 ? [1] : [-1, 1])) {
+        const box = boxBrush(P.W + 4, w, h, 0, s * y, z0);
+        m = m ? add(m, box) : box;
+      }
+    return m;
+  };
+  // --- 슬랫 립: 상판 위 돌출, 벽/뚜껑 홈 안쪽으로 트림 ---
+  let ribs = strips(STEAM.ribW, STEAM.ribH, P.f3H, 0);
+  ribs = inter(ribs, extrude(baseShape(P.wall + 0.6), STEAM.ribH + 0.2, P.f3H - 0.1));
+  if (P.lidOn) ribs = inter(ribs, cylBrush(LID.r - LID.bandW - 1.0, STEAM.ribH + 0.2, P.f3H - 0.1));
+  ribs = sub(ribs, boxBrush(17, 17, STEAM.ribH + 0.4, 0, 0, P.f3H - 0.2));   // 스위치 포켓 + 귀퉁이 여유
+  if (P.ledOn) ribs = sub(ribs, ledKeep(1.0, STEAM.ribH + 0.4, P.f3H - 0.2));
+  b = add(b, ribs);
+  // --- 골 홈: 골 자리에 얕게만 파냄 (관통 X — 아래 1층분 살이 남아 속이 안 보임) ---
+  const z0 = P.f3H - STEAM.grooveD, h = STEAM.grooveD + 0.2;
+  let slits = strips(STEAM.gap - 0.2, h, z0, pitch / 2);
+  slits = inter(slits, extrude(baseShape(P.wall + 1.0), h + 0.2, z0 - 0.1));
+  if (P.lidOn) slits = inter(slits, cylBrush(LID.r - LID.bandW - 1.4, h + 0.2, z0 - 0.1));
+  slits = sub(slits, boxBrush(24, 26, h + 0.4, 0, 0, z0 - 0.2, 6));          // 컵/보스 보호
+  if (P.ledOn) slits = sub(slits, ledKeep(1.6, h + 0.4, z0 - 0.2));
+  return sub(b, slits);
 }
 
 // 원형 링 (뚜껑 결합부용): rOut~rIn 도넛
