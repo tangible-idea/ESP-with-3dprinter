@@ -50,6 +50,8 @@ const SW = {
   cup: 20,           // 홀더 컵 바깥 한 변
   H: 17.9,           // 스위치 전체 높이 (고스트/캐릭터 배치용)
   pinLen: 3.1,       // 몸통 바닥 아래 핀/기둥 돌출 길이 (구멍에 꽂힘)
+  cornerSq: 4,       // 포켓 네 귀퉁이 여유 사각형 한 변
+  cornerOut: 1.0,    // 귀퉁이 사각형이 포켓 밖으로 삐져나오는 양 (x/y 각각)
   // 바닥 구멍 [x, y, Ø]: 중앙 기둥 1 + 구리선 4 (핀 2 + 다리 2, 스위치 180° 장착 기준)
   holes: [[0, 0, 4.3], [5.0, 0, 1.8], [-5.0, 0, 1.8], [3.8, -2.7, 1.8], [-2.7, -5.2, 1.8]],
 };
@@ -848,6 +850,14 @@ function buildFloor3() {
   b = add(b, boxBrush(SW.cup, SW.cup, bossTop - cupBottom, 0, 0, cupBottom, 3));
   // 몸통 포켓: 위로 개방 (보스 관통)
   b = sub(b, boxBrush(SW.body, SW.body, P.standSink + SW.seatH + 2, 0, 0, seatZ, 1));
+  // 포켓 귀퉁이 여유: 네 귀퉁이에 4×4 사각형을 놓고 파냄 — 각 사각형이 포켓 밖으로
+  // x/y 각각 1mm씩만 삐져나와 몸통 모서리가 안 걸리게. 벽면 중앙 그립은 그대로 유지
+  {
+    const ch = P.standSink + SW.seatH + 2;
+    const cc = SW.body / 2 + SW.cornerOut - SW.cornerSq / 2;   // 귀퉁이 사각형 중심
+    for (const sx of [-1, 1]) for (const sy of [-1, 1])
+      b = sub(b, boxBrush(SW.cornerSq, SW.cornerSq, ch, sx * cc, sy * cc, seatZ));
+  }
   // 바닥 구멍: 중앙 기둥 1 + 구리선 4, 아래로 갈수록 넓어지는 깔때기 (배선 삽입 유도)
   for (const [hx, hy, hd] of SW.holes) {
     const flare = hd > 4 ? 1.0 : 0.6;   // 깔때기: 작은 구리선 구멍은 플레어도 작게
