@@ -61,10 +61,14 @@ const LID = { r: 20.5, bandW: 2.3, h: 14.22, innerH: 10.9 };
 const FACE_H = 21.6;   // 딤섬 캐릭터(obj_2_sup face) 실측 높이
 // LED 종류: d=몸통 Ø, fl=플랜지 Ø, cyl=원통부 높이, domeR=돔 반경.
 // 구멍 Ø = d+0.2, 플랜지가 상판 밑면에 정지 → 돌출 = cyl+domeR−3.2 (3mm≈1.2 / 4mm≈2.6 / 5mm≈4.5)
+// r25 = 2×5 사각 투톤 3핀 (데이터시트: 몸통 5×2, 깊이 7, 핀 피치 2.54, 핀2=공통 캐소드):
+//   플랜지 없음 — 구멍 2.2×5.2 관통, 몸통 바닥이 상판 밑면과 나란할 때까지 삽입 → 돌출 = 7−3.2 = 3.8
+//   fl은 경고(간섭 체크)용 유효 지름
 const LED_TYPES = {
-  '3': { d: 3, fl: 3.85, cyl: 2.9, domeR: 1.5 },
-  '4': { d: 4, fl: 4.8,  cyl: 3.8, domeR: 2.0 },
-  '5': { d: 5, fl: 5.8,  cyl: 5.2, domeR: 2.5 },
+  '3':   { d: 3, fl: 3.85, cyl: 2.9, domeR: 1.5 },
+  '4':   { d: 4, fl: 4.8,  cyl: 3.8, domeR: 2.0 },
+  '5':   { d: 5, fl: 5.8,  cyl: 5.2, domeR: 2.5 },
+  'r25': { rect: true, w: 5, t: 2, bodyH: 7, pitch: 2.54, fl: 5.6 },
 };
 const ledSpec = () => LED_TYPES[P.ledType] || LED_TYPES['3'];
 // 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
@@ -89,7 +93,7 @@ const P = {
   batType: '520', batPose: 'flat', batX: -8,
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
   lidOn: true, lidH: 6,
-  ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 3,
+  ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 3, led2Gpio: 5,
   bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
 };
 
@@ -365,6 +369,10 @@ const MATS = {
   oled: partMat(0x1f9e86), stand: partMat(0x9061c2), face: partMat(0xf4d271),
   led: new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xffc36b,
     emissiveIntensity: 0.6, roughness: 0.25, transparent: true, opacity: 0.95 }),
+  ledR: new THREE.MeshStandardMaterial({ color: 0xffe3dc, emissive: 0xe0523c,   // 투톤 빨강 반쪽
+    emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
+  ledG: new THREE.MeshStandardMaterial({ color: 0xdff3e2, emissive: 0x3ca35a,   // 투톤 초록 반쪽
+    emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
   bz: partMat(0x23272e),
 };
 
@@ -850,15 +858,22 @@ function buildFloor3() {
     b = sub(b, toMan(cyl));
   }
 
-  // LED 구멍 (3/4/5mm): 몸통+0.2 관통 — 아래에서 꽂으면 플랜지가 상판 밑면에 정지,
-  // 돔 끝만 상판 위로 돌출. 다리는 2층 ESP32로 (LED+는 저항 150~220Ω 권장)
+  // LED 구멍: 몸통+0.2 관통 — 원형은 아래에서 꽂으면 플랜지가 상판 밑면에 정지, 돔 끝만 돌출.
+  // 사각 투톤(r25)은 플랜지 없이 2.2×5.2 구멍에 마찰 끼움. 다리는 2층 ESP32로 (저항 150~220Ω 권장)
   if (P.ledOn) {
-    const r = ledSpec().d / 2 + 0.1;
-    const cyl = new THREE.CylinderGeometry(r, r, F3_PLATE + effBossH() + 1, 24);
-    cyl.rotateX(Math.PI / 2);
-    cyl.translate(P.ledX, P.ledY, P.f3H - F3_PLATE + (F3_PLATE + effBossH() + 1) / 2 - 0.5);
-    cyl.deleteAttribute('uv');
-    b = sub(b, toMan(cyl));
+    const s = ledSpec();
+    const len = F3_PLATE + effBossH() + 1;
+    let cut;
+    if (s.rect) {
+      cut = new THREE.BoxGeometry(s.w + 0.2, s.t + 0.2, len);   // 핀 열 = X 방향
+    } else {
+      const r = s.d / 2 + 0.1;
+      cut = new THREE.CylinderGeometry(r, r, len, 24);
+      cut.rotateX(Math.PI / 2);
+    }
+    cut.translate(P.ledX, P.ledY, P.f3H - F3_PLATE + len / 2 - 0.5);
+    cut.deleteAttribute('uv');
+    b = sub(b, toMan(cut));
   }
 
   // 눕힌 부저(2층)의 상단이 2층 높이를 넘으면 3층의 겹치는 부분(홀더 컵·상판)도 같은 자리만큼 파냄
@@ -1033,18 +1048,28 @@ function placeGhosts() {
   G[2].add(ghostMesh(sg, MATS.stand, T(0, 0, seatZ3 - SW.pinLen)));
   // 캐릭터: 바닥 공동(17.9각×10.7)이 스위치를 통째로 덮고 보스/컵 윗면에 얹힘
   G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, P.f3H + effBossH())));
-  // LED (3/4/5mm): 플랜지가 상판 밑면에 정지 → 원통부 + 돔 끝만 상판 위로 돌출
+  // LED: 원형(3/4/5mm)은 플랜지가 상판 밑면에 정지 → 원통부 + 돔 끝만 상판 위로 돌출.
+  // 사각 투톤(2×5×7)은 몸통 바닥이 상판 밑면과 나란 → 위로 3.8 돌출. 빨강/초록 반쪽으로 표시
   if (P.ledOn) {
     const s = ledSpec();
     const zB = P.f3H - F3_PLATE;
-    const body = new THREE.CylinderGeometry(s.d / 2, s.d / 2, s.cyl, 20);
-    body.rotateX(Math.PI / 2); body.translate(P.ledX, P.ledY, zB + s.cyl / 2);
-    const dome = new THREE.SphereGeometry(s.domeR, 20, 12);
-    dome.translate(P.ledX, P.ledY, zB + s.cyl);
-    const flange = new THREE.CylinderGeometry(s.fl / 2, s.fl / 2, 1.0, 20);
-    flange.rotateX(Math.PI / 2); flange.translate(P.ledX, P.ledY, zB - 0.5);
-    for (const g of [body, dome, flange]) g.deleteAttribute('uv');
-    G[2].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, dome, flange]), MATS.led));
+    if (s.rect) {
+      const half = () => new THREE.BoxGeometry(s.w / 2, s.t, s.bodyH);
+      const hR = half(); hR.translate(P.ledX - s.w / 4, P.ledY, zB + s.bodyH / 2);
+      const hG = half(); hG.translate(P.ledX + s.w / 4, P.ledY, zB + s.bodyH / 2);
+      for (const g of [hR, hG]) g.deleteAttribute('uv');
+      G[2].add(ghostMesh(hR, MATS.ledR));
+      G[2].add(ghostMesh(hG, MATS.ledG));
+    } else {
+      const body = new THREE.CylinderGeometry(s.d / 2, s.d / 2, s.cyl, 20);
+      body.rotateX(Math.PI / 2); body.translate(P.ledX, P.ledY, zB + s.cyl / 2);
+      const dome = new THREE.SphereGeometry(s.domeR, 20, 12);
+      dome.translate(P.ledX, P.ledY, zB + s.cyl);
+      const flange = new THREE.CylinderGeometry(s.fl / 2, s.fl / 2, 1.0, 20);
+      flange.rotateX(Math.PI / 2); flange.translate(P.ledX, P.ledY, zB - 0.5);
+      for (const g of [body, dome, flange]) g.deleteAttribute('uv');
+      G[2].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, dome, flange]), MATS.led));
+    }
   }
   // 피에조 부저 (Ø12×8.3): f3 = 3층 천장에 매달림 / f2 = 2층 바닥 리세스 / f2s = 2층 바닥 눕힘
   if (P.bzOn) {
@@ -1160,7 +1185,7 @@ let wiresOn = true;
 const wireGroup = new THREE.Group();
 scene.add(wireGroup);
 const WIRE_COLORS = { plus: 0xd63c2f, minus: 0x333333, sda: 0x2e9e57, scl: 0xe0a13a,
-                      gpio: 0x8e44ad, led: 0x2b7de9, bz: 0xc2589c };
+                      gpio: 0x8e44ad, led: 0x2b7de9, led2: 0x1fa87a, bz: 0xc2589c };
 // ESP32-C3 supermini 핀 로컬 좌표 (USB가 -x 끝, 핀아웃 실측: 북열 5V,G,3V3,4,3,2,1,0 / 남열 5,6,7,8,9,10,20,21)
 const ESP_PINS = {
   '5V': [-9, 8], 'GND': [-6.5, 8], '3V3': [-4, 8],
@@ -1175,6 +1200,7 @@ const GPIO_ROLES = {
   sda:  { key: 'sdaGpio', name: 'OLED SDA' },
   scl:  { key: 'sclGpio', name: 'OLED SCL' },
   led:  { key: 'ledGpio', name: 'LED' },
+  led2: { key: 'led2Gpio', name: 'LED 초록' },
   bz:   { key: 'bzGpio', name: '부저' },
 };
 
@@ -1317,15 +1343,27 @@ function updateWires() {
               WIRE_COLORS.minus, null, null);
     }
 
-    // --- 3mm LED (3층 상판 관통, 다리가 아래로) → ESP32: GPIO(저항 권장) + GND ---
+    // --- LED (3층 상판 관통, 다리가 아래로) → ESP32: GPIO(저항 권장) + GND ---
+    // 사각 투톤(r25)은 3핀: 1=빨강 애노드, 2=공통 캐소드(GND), 3=초록 애노드 (피치 2.54)
     if (P.ledOn) {
+      const s = ledSpec();
       const z3b = G[2].position.z;
-      const under = z3b + P.f3H - F3_PLATE - 1.2;   // 플랜지 바로 아래
+      const under = z3b + P.f3H - F3_PLATE - 1.2;   // 플랜지(몸통 바닥) 바로 아래
       const pinLed = espPin(...(ESP_PINS[P.ledGpio] || ESP_PINS[3]));
       const dm = (p, dst) => [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (p[2] + dst[2]) / 2];
-      const legA = [P.ledX - 1.3, P.ledY, under], legB = [P.ledX + 1.3, P.ledY, under];
-      addWire([legA, dm(legA, pinLed), pinLed], WIRE_COLORS.led, 'LED+', 'G' + P.ledGpio, 'led');
-      addWire([legB, dm(legB, pinGND), pinGND], WIRE_COLORS.minus, 'LED−', null);
+      if (s.rect) {
+        const pinLed2 = espPin(...(ESP_PINS[P.led2Gpio] || ESP_PINS[5]));
+        const legR = [P.ledX - s.pitch, P.ledY, under];
+        const legC = [P.ledX, P.ledY, under];
+        const legG = [P.ledX + s.pitch, P.ledY, under];
+        addWire([legR, dm(legR, pinLed), pinLed], WIRE_COLORS.led, 'LED R', 'G' + P.ledGpio, 'led');
+        addWire([legG, dm(legG, pinLed2), pinLed2], WIRE_COLORS.led2, 'LED G', 'G' + P.led2Gpio, 'led2');
+        addWire([legC, dm(legC, pinGND), pinGND], WIRE_COLORS.minus, 'LED−', null);
+      } else {
+        const legA = [P.ledX - 1.3, P.ledY, under], legB = [P.ledX + 1.3, P.ledY, under];
+        addWire([legA, dm(legA, pinLed), pinLed], WIRE_COLORS.led, 'LED+', 'G' + P.ledGpio, 'led');
+        addWire([legB, dm(legB, pinGND), pinGND], WIRE_COLORS.minus, 'LED−', null);
+      }
     }
 
     // --- 피에조 부저 → ESP32: GPIO(PWM 톤) + GND ---
@@ -1520,7 +1558,7 @@ function updateInfo(ms, fit) {
       : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (effD() / 2 - tD / 2), w: tW, d: tD };
     if (rectsOverlap(eRect, tower)) warn.push('⚠ ESP32가 OLED 타워와 겹칩니다');
     if (mRect && rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
-    if (P.ledOn && rectsOverlap({ x: P.ledX, y: P.ledY, w: 4, d: 4 }, tower))
+    if (P.ledOn && rectsOverlap({ x: P.ledX, y: P.ledY, w: ledSpec().fl, d: ledSpec().fl }, tower))
       warn.push('⚠ LED가 OLED 타워(노치)와 겹칩니다');
     if (bRect650 && rectsOverlap(bRect650, tower)) warn.push('⚠ 650 배터리가 OLED 타워와 겹칩니다');
     if (oledTowerTop() - P.f2H > P.f3H - F3_PLATE - 0.3)
