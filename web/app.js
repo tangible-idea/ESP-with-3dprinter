@@ -1266,6 +1266,57 @@ const GPIO_ROLES = {
   bz:   { key: 'bzGpio', name: '부저' },
 };
 
+// ------------------------------------------------------------------
+// 배선표: 현재 설정(부품 on/off, GPIO 지정)을 사이드바 표로 요약 — updateWires마다 갱신
+// ------------------------------------------------------------------
+const wireTableEl = document.getElementById('wireTable');
+function renderWireTable() {
+  const hex = c => '#' + c.toString(16).padStart(6, '0');
+  const rows = [];
+  const grp = t => rows.push(`<tr class="grp"><td colspan="4">${t}</td></tr>`);
+  const row = (color, from, to, note = '') => rows.push(
+    `<tr><td><span class="sw" style="background:${hex(color)}"></span></td>` +
+    `<td>${from}</td><td>${to}</td><td>${note}</td></tr>`);
+  if (noBat()) {
+    grp('전원');
+    row(WIRE_COLORS.plus, 'USB-C', 'ESP32 직결', '배터리 없음');
+  } else {
+    grp('전원 (배터리 → 충전모듈 → ESP32)');
+    row(WIRE_COLORS.plus, '배터리 +', '충전모듈 B+');
+    row(WIRE_COLORS.minus, '배터리 −', '충전모듈 B−');
+    row(WIRE_COLORS.plus, '충전모듈 OUT+', 'ESP32 5V');
+    row(WIRE_COLORS.minus, '충전모듈 OUT−', 'ESP32 GND');
+  }
+  if (P.oledSide !== 'none') {
+    grp('OLED (I2C)');
+    row(WIRE_COLORS.plus, 'OLED VCC', 'ESP32 3V3');
+    row(WIRE_COLORS.minus, 'OLED GND', 'ESP32 GND');
+    row(WIRE_COLORS.sda, 'OLED SDA', 'GPIO ' + P.sdaGpio);
+    row(WIRE_COLORS.scl, 'OLED SCL', 'GPIO ' + P.sclGpio, '모듈 표기는 SCK이기도');
+  }
+  grp('스위치 (MX)');
+  row(WIRE_COLORS.gpio, '스위치 핀 A', 'GPIO ' + P.swGpio, '내부 풀업 입력');
+  row(WIRE_COLORS.minus, '스위치 핀 B', 'ESP32 GND');
+  if (P.ledOn) {
+    if (ledSpec().rect) {
+      grp('LED (2×5 투톤 3핀)');
+      row(WIRE_COLORS.led, 'LED 빨강 (1번 핀)', 'GPIO ' + P.ledGpio, '저항 150~220Ω');
+      row(WIRE_COLORS.led2, 'LED 초록 (3번 핀)', 'GPIO ' + P.led2Gpio, '저항 150~220Ω');
+      row(WIRE_COLORS.minus, 'LED 공통 − (가운데)', 'ESP32 GND');
+    } else {
+      grp('LED (원형 ' + ledSpec().d + 'mm)');
+      row(WIRE_COLORS.led, 'LED + (긴 다리)', 'GPIO ' + P.ledGpio, '저항 150~220Ω');
+      row(WIRE_COLORS.minus, 'LED − (짧은 다리)', 'ESP32 GND');
+    }
+  }
+  if (P.bzOn) {
+    grp('피에조 부저');
+    row(WIRE_COLORS.bz, '부저 +', 'GPIO ' + P.bzGpio, 'PWM 톤');
+    row(WIRE_COLORS.minus, '부저 −', 'ESP32 GND');
+  }
+  wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
+}
+
 function wireLabel(text, colorHex, pos) {
   const c = document.createElement('canvas');
   c.width = 160; c.height = 44;
@@ -1310,6 +1361,7 @@ function addWire(points, color, label1, label2, tag) {
 }
 
 function updateWires() {
+  renderWireTable();
   wireGroup.clear();
   if (!wiresOn) return;
   try {
