@@ -44,13 +44,22 @@
   button.ghost { background: #f1ead7; color: #6b5d43; }
   #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
   #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; }
+  #wireOverlay {
+    position: absolute; top: 12px; right: 12px; width: 238px; max-height: calc(100% - 24px);
+    overflow-y: auto; background: rgba(255,253,248,.93); border: 1px solid #e8dfc9;
+    border-radius: 12px; padding: 8px 10px 9px; z-index: 5;
+    box-shadow: 0 2px 10px rgba(77,58,20,.08); backdrop-filter: blur(3px);
+  }
+  #wireOverlay .wo-head { font-size: 12px; font-weight: 700; color: #6b5d43; margin-bottom: 4px; }
+  #wireOverlay .wo-hint { font-size: 10px; color: #b0a68e; margin-top: 6px; line-height: 1.4; }
   #wireTable table { width: 100%; border-collapse: collapse; font-size: 11px; }
   #wireTable td { padding: 3px 4px; border-bottom: 1px solid #eee4cf; color: #6b5d43; }
   #wireTable td:last-child { color: #a8905f; font-size: 10px; }
   #wireTable tr.grp td { padding-top: 8px; font-weight: 600; font-size: 10px; color: #a8905f; border-bottom: none; }
   #wireTable .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; }
   #status {
-    position: fixed; right: 14px; top: 12px; background: #4d3a14; color: #ffe9b8;
+    position: fixed; left: 50%; transform: translateX(-50%); top: 12px;
+    background: #4d3a14; color: #ffe9b8;
     font-size: 12px; padding: 6px 12px; border-radius: 999px; opacity: 0; transition: opacity .2s;
     pointer-events: none; z-index: 10;
   }
@@ -199,14 +208,6 @@
   </details>
 
   <details open>
-    <summary>배선표</summary>
-    <div class="body">
-      <div id="wireTable"></div>
-      <div class="hint">현재 설정(부품·GPIO 지정)에 맞춰 자동 갱신됩니다. GPIO는 3D 뷰에서 해당 전선/라벨을 우클릭해 바꿀 수 있습니다.</div>
-    </div>
-  </details>
-
-  <details open>
     <summary>STL 내보내기</summary>
     <div class="body">
       <div class="btns">
@@ -236,7 +237,13 @@
   <div id="warnings"></div>
 </div>
 
-<div id="viewer"></div>
+<div id="viewer">
+  <div id="wireOverlay">
+    <div class="wo-head">배선표</div>
+    <div id="wireTable"></div>
+    <div class="wo-hint">현재 설정에 맞춰 자동 갱신 · 전선/라벨 우클릭으로 GPIO 변경</div>
+  </div>
+</div>
 <div id="status">모델 생성 중…</div>
 
 <script type="module" src="./app.js"></script>
