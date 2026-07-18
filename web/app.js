@@ -874,16 +874,17 @@ function buildFloor3() {
     b = sub(b, toMan(cyl));
   }
 
-  // LED 구멍: 몸통+0.2 관통 — 원형은 아래에서 꽂으면 플랜지가 상판 밑면에 정지, 돔 끝만 돌출.
-  // 사각 투톤(r25)은 플랜지 없이 2.2×5.2 구멍에 마찰 끼움. 다리는 2층 ESP32로 (저항 150~220Ω 권장)
+  // LED 구멍: 몸통+0.3 관통(실피팅 피드백: +0.2는 꽉 낌) — 원형은 아래에서 꽂으면
+  // 플랜지가 상판 밑면에 정지, 돔 끝만 돌출. 사각 투톤(r25)은 플랜지 없이 2.3×5.3 구멍에
+  // 마찰 끼움. 다리는 2층 ESP32로 (저항 150~220Ω 권장)
   if (P.ledOn) {
     const s = ledSpec();
     const len = F3_PLATE + effBossH() + 1;
     let cut;
     if (s.rect) {
-      cut = new THREE.BoxGeometry(s.w + 0.2, s.t + 0.2, len);   // 핀 열 = X 방향
+      cut = new THREE.BoxGeometry(s.w + 0.3, s.t + 0.3, len);   // 핀 열 = X 방향
     } else {
-      const r = s.d / 2 + 0.1;
+      const r = s.d / 2 + 0.15;
       cut = new THREE.CylinderGeometry(r, r, len, 24);
       cut.rotateX(Math.PI / 2);
     }
