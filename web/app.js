@@ -1273,7 +1273,7 @@ const GPIO_ROLES = {
 };
 
 // ------------------------------------------------------------------
-// 배선표: 현재 설정(부품 on/off, GPIO 지정)을 사이드바 표로 요약 — updateWires마다 갱신
+// 배선표: 현재 설정(부품 on/off, GPIO 지정)을 3D 뷰 우측 상단 오버레이 표로 요약 — updateWires마다 갱신
 // ------------------------------------------------------------------
 const wireTableEl = document.getElementById('wireTable');
 function renderWireTable() {
@@ -1509,6 +1509,7 @@ function updateWires() {
 document.getElementById('wiresBtn').addEventListener('click', e => {
   wiresOn = !wiresOn;
   e.target.textContent = '배선 표시: ' + (wiresOn ? '켬' : '끔');
+  document.getElementById('wireOverlay').style.display = wiresOn ? '' : 'none';   // 배선표 오버레이도 함께
   updateWires();
 });
 
