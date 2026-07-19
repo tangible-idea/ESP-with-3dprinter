@@ -80,6 +80,7 @@
       <div class="row"><label>모양</label>
         <select id="shape">
           <option value="rect" selected>둥근 네모</option>
+          <option value="rect2">둥근 네모 더블 (스위치 2개)</option>
           <option value="circle">완전 원형 (딤섬 찜기)</option>
         </select>
       </div>
@@ -109,7 +110,7 @@
     <summary>부품 배치 (2층)</summary>
     <div class="body">
       <div class="row"><label>ESP32 X</label><input type="range" id="espX" min="-18" max="18" step="0.5" value="0"><span class="val" id="espXv"></span></div>
-      <div class="row"><label>ESP32 Y</label><input type="range" id="espY" min="-14" max="14" step="0.5" value="8"><span class="val" id="espYv"></span></div>
+      <div class="row"><label>ESP32 Y</label><input type="range" id="espY" min="-14" max="14" step="0.5" value="8"><span class="val" id="espYv"></span><button class="nudge" id="espYCenter" title="중앙 정렬 (Y=0)" style="width:auto; padding:0 7px; font-size:10.5px">중앙</button></div>
       <div class="row"><label>ESP32 회전</label>
         <select id="espRot">
           <option value="0" selected>가로 (24×18)</option>
@@ -140,7 +141,7 @@
       <div class="row"><label>OLED 종류</label>
         <select id="oledType">
           <option value="049" selected>0.49" (15×16)</option>
-          <option value="096">0.96" (26×26, 4홀 핀 고정)</option>
+          <option value="096">0.96" (포켓 25.5×27.3, 4홀 핀 고정)</option>
         </select>
       </div>
       <div class="row"><label>OLED 위치</label>
@@ -153,6 +154,7 @@
       </div>
       <div class="row"><label>OLED 돌출</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
       <div class="row"><label>OLED 분리 포드</label><input type="checkbox" id="oledPodOn"></div>
+      <div class="row"><label>OLED 뒷면 커버</label><input type="checkbox" id="coverOn" checked></div>
       <div class="row"><label>배선구멍 X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
       <div class="row"><label>배선구멍 Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12"><span class="val" id="wireYv"></span></div>
       <div class="row"><label>배선구멍 방향</label>
@@ -168,6 +170,7 @@
       <div class="row"><label>스위치 Boss</label><input type="checkbox" id="bossOn" checked></div>
       <div class="row"><label>Boss 높이</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
       <div class="row"><label>스위치 매립 깊이</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
+      <div class="row"><label>스위치 간격 (더블)</label><input type="range" id="swGap" min="22" max="36" step="0.5" value="29"><span class="val" id="swGapv"></span></div>
       <div class="row"><label>포켓 가로 (X)</label><input type="range" id="swBodyX" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyXv"></span></div>
       <div class="row"><label>포켓 세로 (Y)</label><input type="range" id="swBodyY" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyYv"></span></div>
       <div class="row"><label>포켓 귀퉁이 여유</label><input type="range" id="cornerOut" min="0" max="1.5" step="0.05" value="0.4"><span class="val" id="cornerOutv"></span></div>
@@ -220,9 +223,11 @@
         <button id="ex3">3층.stl</button>
         <button id="ex4">4층.stl</button>
         <button id="ex5">OLED포드.stl</button>
+        <button id="ex6">OLED커버.stl</button>
+        <button class="ghost" id="exOledTest">OLED 테스트.stl</button>
       </div>
       <div class="row" style="margin-top:8px"><label>3층 출력용 뒤집기</label><input type="checkbox" id="flip3" checked></div>
-      <div class="hint">3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다</div>
+      <div class="hint">3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 2층에서 OLED 타워 주변만 잘라낸 조각으로, 전체를 뽑지 않고 포켓·창·핀 피팅을 빠르게 확인할 때 쓰세요.</div>
     </div>
   </details>
 

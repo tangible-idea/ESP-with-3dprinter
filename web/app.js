@@ -33,8 +33,11 @@ const MOD = { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 }; // USB가 x끝에
 // OLED 종류별 실측 (win: 디스플레이 창, winC: 모듈 바닥 기준 창 중심 높이)
 const OLED_TYPES = {
   '049': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 8.9 },
-  '096': { w: 26, hgt: 26, t: 3.5, winW: 23.2, winH: 12.4, winC: 12.0,
-           pegs: { pitch: 22, d: 1.8, len: 2.0 } },   // 모서리 4홀(22×22)용 위치결정 핀
+  // 096 실피팅 보정(7/19 3차): 포켓 25.5×27.25(가로세로 확정). 핀은 세로 벌림(위+0.3/아래−0.3
+  // → pz 22.1), 가로는 왼쪽 열만 우측 0.3(px 21.2 + 중심 ox 0.15) — 홀 그리드가 정사각이 아님.
+  // 창 중심 13.5→14.5 ('구멍 살짝 더 위' 피드백)
+  '096': { w: 25, hgt: 27.05, t: 3.5, winW: 23.2, winH: 12.4, winC: 14.5,
+           pegs: { px: 21.2, pz: 22.1, ox: 0.15, d: 1.8, len: 2.0 } },
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
 const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
@@ -79,6 +82,44 @@ const ledSpec = () => LED_TYPES[P.ledType] || LED_TYPES['3'];
 const POD = { clr: 0.15, railT: 1.2 };
 // 텅 폭: 창 프레임 최소 1.05/측 확보하면서 어깨(빠짐 방지 턱)를 남김
 const oledTongueW = () => Math.max(oledSpec().winW + 2.1, oledSpec().w - 2);
+// OLED 뒷면 커버: 타워 꼭대기가 3층 상판을 넘으면 포켓 뒷면 노출부를 막는 별도 파트.
+// 하단 텅이 3층 상판 홈(깊이 tab+0.2)에 꽂히고, 판이 타워 뒷면에 기대어 섬.
+// 뒤(클리커 쪽)에는 세모형 받침 리브(ribW 폭, 기준 ribL=10) — 3층에 같은 모양 홈이 받아줌
+const COVER = { t: 1.2, tab: 1.5, ribW: 2.4, ribL: 10, ribHMax: 15 };   // t: 1.6→1.2 (얇게 피드백)
+const oledCoverW = () => oledTowerW();   // 폭 = OLED 타워(케이스)와 동일
+const oledCoverNeeded = () =>
+  P.coverOn && P.oledSide !== 'none' && oledTowerTop() > P.f2H + P.f3H - 0.05;
+// 삼각 받침 높이: 커버 노출 높이를 따라가되 최대 ribHMax(15)로 제한 — 너무 높지 않게
+const coverRibH = () => Math.min(oledTowerTop() - P.f2H - P.f3H, COVER.ribHMax);
+// 커버 뒷면(로컬 y) 평면
+const coverBackY = () => oledFrame().seatY - oledSpec().t - 2.0 - COVER.t - 0.15;
+// 받침 길이: 기준 10, 스위치 포켓 직전에서 자동 클램프 (보스·컵 구간은 홈이 파여 통과)
+function coverRibL() {
+  const keep = Math.max(P.swBodyX, P.swBodyY) / 2 + P.cornerOut + 0.4;
+  return Math.max(0, Math.min(COVER.ribL, coverBackY() - keep));
+}
+// 직각삼각형 프리즘 (수직변이 y=yBack 평면, 빗변이 뒤로 내려감, x폭 w) — oled 프레임 m 적용.
+// apexR > 0이면 위 꼭짓점을 둥글려 손가락이 닿아도 안 아프게 (받아주는 홈은 각지게 유지)
+function triPrism(len, hgt, w, yBack, zBase, m, apexR = 0) {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.lineTo(-len, 0);
+  if (apexR > 0.05 && hgt > apexR * 1.4) {
+    const hl = Math.hypot(len, hgt);
+    const ux = -len / hl, uy = -hgt / hl;            // 꼭짓점 → 빗변 아래쪽 단위벡터
+    s.lineTo(ux * apexR, hgt + uy * apexR);          // 빗변 위 접점에서 멈추고
+    s.quadraticCurveTo(0, hgt, 0, hgt - apexR);      // 꼭짓점을 둥글려 수직변으로
+  } else {
+    s.lineTo(0, hgt);
+  }
+  s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: w, bevelEnabled: false, curveSegments: 8 });
+  g.deleteAttribute('uv');
+  g.rotateX(Math.PI / 2);   // (프로파일x, 프로파일y, 폭) → …
+  g.rotateZ(Math.PI / 2);   // … → (폭, 프로파일x=깊이, 프로파일y=높이)
+  g.translate(-w / 2, yBack, zBase);
+  return toMan(g, m);
+}
 // 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
 // f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
 //       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
@@ -99,9 +140,9 @@ const P = {
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
-  oledPodOn: false,
+  oledPodOn: false, coverOn: true,
   batType: '520', batPose: 'flat', batX: -8,
-  wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sdaGpio: 8, sclGpio: 9,
+  wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sw2Gpio: 6, sdaGpio: 8, sclGpio: 9, swGap: 29,
   lidOn: true, lidH: 6,
   ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 3, led2Gpio: 5,
   bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
@@ -119,7 +160,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH',
+                 'espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY'];
 let rebuildTimer = null;
 function queueRebuild() {
@@ -163,6 +204,7 @@ function applyShapeUI() {
   const circ = P.shape === 'circle';
   document.getElementById('D').disabled = circ;
   document.getElementById('R').disabled = circ;
+  document.getElementById('swGap').disabled = P.shape !== 'rect2';   // 스위치 간격은 더블 전용
   applyBatUI();   // modY 등은 배터리 모드와 함께 결정
 }
 // 배터리 없음: 배터리·충전모듈 컨트롤 잠금, ESP32는 동쪽 벽 자동 도킹(X/회전/띄움 잠금)
@@ -173,6 +215,7 @@ function applyBatUI() {
   document.getElementById('batX').disabled = !batStand();
   document.getElementById('espX').disabled = nb;
   document.getElementById('espY').disabled = nb && circ;   // 원형 도킹은 항상 중앙
+  document.getElementById('espYCenter').disabled = nb && circ;
   document.getElementById('espRot').disabled = nb;
   document.getElementById('espLift').disabled = nb || espStand();
   document.getElementById('modY').disabled = nb || circ;   // 원형: 충전모듈은 항상 중앙 고정
@@ -187,6 +230,11 @@ document.getElementById('shape').addEventListener('change', e => {
     const el = document.getElementById('W');
     el.value = 54;
     document.getElementById('Wv').textContent = '54.0';
+  }
+  if (P.shape === 'rect2' && P.D < 63) {
+    P.D = 63;   // 더블: 스위치 2개 + 캐릭터 2개(Ø28.7, 간격 29)가 들어가는 세로
+    document.getElementById('D').value = 63;
+    document.getElementById('Dv').textContent = '63.0';
   }
   applyShapeUI();
   queueRebuild();
@@ -261,6 +309,13 @@ document.getElementById('bzOn').addEventListener('change', e => {
   queueRebuild();
 });
 document.getElementById('bzMount').addEventListener('change', e => { P.bzMount = e.target.value; queueRebuild(); });
+// ESP32 Y 중앙 정렬: Y=0으로 스냅
+document.getElementById('espYCenter').addEventListener('click', () => {
+  P.espY = 0;
+  document.getElementById('espY').value = 0;
+  document.getElementById('espYv').textContent = '0.0';
+  queueRebuild();
+});
 document.getElementById('espRot').addEventListener('change', e => {
   const v = e.target.value;
   P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90'/'u0'/'u90' = 세움
@@ -271,6 +326,8 @@ document.getElementById('wireRot').addEventListener('change', e => { P.wireRot =
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('oledPodOn').checked = P.oledPodOn;
 document.getElementById('oledPodOn').addEventListener('change', e => { P.oledPodOn = e.target.checked; queueRebuild(); });
+document.getElementById('coverOn').checked = P.coverOn;
+document.getElementById('coverOn').addEventListener('change', e => { P.coverOn = e.target.checked; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
 document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.removeItem('dimsum-params');
@@ -291,6 +348,7 @@ function syncControls() {
   document.getElementById('oledSide').value = P.oledSide;
   document.getElementById('oledType').value = P.oledType;
   document.getElementById('oledPodOn').checked = P.oledPodOn;
+  document.getElementById('coverOn').checked = P.coverOn;
   document.getElementById('batType').value = P.batType;
   document.getElementById('batPose').value = P.batPose;
   document.getElementById('bands').checked = P.bands;
@@ -395,8 +453,8 @@ const MATS = {
   bz: partMat(0x23272e),
 };
 
-// 층 그룹 (분해/조립용) — [0..2] = 1~3층, [3] = 딤섬 뚜껑
-const G = [new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group()];
+// 층 그룹 (분해/조립용) — [0..2] = 1~3층, [3] = 딤섬 뚜껑, [4] = OLED 뒷면 커버(자체 분해 이동)
+const G = [new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group()];
 G.forEach(g => scene.add(g));
 let floorMeshes = [null, null, null, null];
 let exportGeos = [null, null, null, null];
@@ -451,6 +509,9 @@ const rrShape = (w, d, r) => rrPath(THREE.Shape, w, d, r);
 // 모양: 둥근 네모 / 완전 원형(D=W, R=W/2 → rrPath가 원이 됨)
 const effD = () => P.shape === 'circle' ? P.W : P.D;
 const effR = () => P.shape === 'circle' ? P.W / 2 : P.R;
+// 둥근 네모 더블: 스위치 홀더 2개 (y ±swGap/2), 세로 D 60 이상 권장. Ø41 뚜껑(4층)은 비활성
+const dbl = () => P.shape === 'rect2';
+const swOffsets = () => dbl() ? [-P.swGap / 2, P.swGap / 2] : [0];
 // 외곽 base 의 inset 버전 (둥근 모서리 유지)
 const baseShape  = i => rrShape(P.W - 2 * i, effD() - 2 * i, effR() - i);
 const basePath   = i => rrPath(THREE.Path, P.W - 2 * i, effD() - 2 * i, effR() - i);
@@ -870,14 +931,15 @@ function oledCavityCut(b, withPegs) {
   wg.rotateX(-Math.PI / 2);
   wg.translate(0, seatY - 0.8, 4.2 + spec.winC);
   b = sub(b, toMan(wg, m));
-  // 0.96": 모서리 4홀(22×22)용 위치결정 핀 — 안착면에서 포켓으로 돌출
+  // 0.96": 모서리 4홀용 위치결정 핀 — 안착면에서 포켓으로 돌출.
+  // px/pz = 가로/세로 홀 그리드, ox = 가로 중심 오프셋 (실피팅 보정)
   if (withPegs && spec.pegs) {
     const pg = spec.pegs;
     const zc = 4.2 + spec.hgt / 2;   // 포켓 중심 높이
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       const peg = new THREE.CylinderGeometry(pg.d / 2, pg.d / 2 - 0.2, pg.len, 12);
-      peg.translate(sx * pg.pitch / 2, seatY - pg.len / 2 + 0.05,
-                    zc + sz * pg.pitch / 2);   // 실린더 축 = y (벽 → 내부 방향)
+      peg.translate(pg.ox + sx * pg.px / 2, seatY - pg.len / 2 + 0.05,
+                    zc + sz * pg.pz / 2);   // 실린더 축 = y (벽 → 내부 방향)
       peg.deleteAttribute('uv');
       b = add(b, toMan(peg, m));
     }
@@ -909,38 +971,67 @@ function buildOledPod() {
   return b;
 }
 
+// OLED 뒷면 커버 (3층 로컬 좌표, 별도 출력): 하단 텅이 3층 상판 홈에 꽂히고
+// 판이 타워 뒷면(0.15 유격)에 기대어 노출된 포켓 뒷면을 막음. 눕혀서 출력.
+// OLED 쪽 앞면은 각지고 평평하게(딱 맞게), 뒤쪽(클리커 쪽) 세로 모서리만 둥글게
+function buildOledCover() {
+  const spec = oledSpec();
+  const { m, seatY } = oledFrame();
+  const towerBack = seatY - spec.t - 2.0;
+  const topLocal = oledTowerTop() - P.f2H;      // 3층 로컬 타워 꼭대기
+  const z0 = P.f3H - COVER.tab;                 // 텅이 홈에 1.5 삽입 (홈 바닥 여유 0.2)
+  const h = topLocal - z0;
+  // 앞판 (타워 쪽): 완전 각진 평면 — y towerBack−0.85 ~ −0.15
+  let b = boxBrush(oledCoverW(), 0.7, h, 0, towerBack - 0.5, z0, 0, m);
+  // 뒤판: 뒤쪽 세로 모서리만 둥글게 — y towerBack−1.35 ~ −0.45 (앞판과 겹쳐 union, 총 두께 1.2)
+  b = add(b, boxBrush(oledCoverW(), 0.9, h, 0, towerBack - 0.9, z0, 0.45, m));
+  // 세모 받침 리브 (뒤쪽 중앙): 아래는 텅 연장(홈에 같이 꽂힘), 위는 직각삼각 버팀
+  const L = coverRibL();
+  if (L > 1) {
+    const backP = towerBack - 0.15 - COVER.t;
+    b = add(b, boxBrush(COVER.ribW, L + 0.1, P.f3H - z0 + 0.05, 0, backP - L / 2 + 0.05, z0, 0, m));
+    b = add(b, triPrism(L, coverRibH(), COVER.ribW, backP + 0.05, P.f3H - 0.05, m,
+                        Math.min(1.2, coverRibH() * 0.5)));
+  }
+  return b;
+}
+
 function buildFloor3() {
   let b = ringBrush(0, P.wall, P.f3H, 0);                             // 벽
   b = add(b, extrude(baseShape(P.wall - 0.1), F3_PLATE, P.f3H - F3_PLATE)); // 상판
   // 스위치 보스 (뚜껑 꼭지처럼 봉긋한 받침)
   const bossTop = P.f3H + effBossH();
   if (effBossH() > 0.1) {
-    b = add(b, boxBrush(21, 23, effBossH(), 0, 0, P.f3H, 5));
+    // 더블이면 보스를 y로 늘려 두 스위치를 한 둔덕이 덮음
+    b = add(b, boxBrush(21, 23 + (dbl() ? P.swGap : 0), effBossH(), 0, 0, P.f3H, 5));
   }
-  // MX 스위치 홀더 (Key Holder V3 방식): 몸통 포켓 + 바닥에 중앙 1 + 구리선 4 구멍
+  // MX 스위치 홀더 (Key Holder V3 방식): 몸통 포켓 + 바닥에 중앙 1 + 구리선 4 구멍.
+  // 더블(rect2)이면 y ±swGap/2 두 곳에 홀더 전체를 복제
   const seatZ = bossTop - P.standSink - SW.seatH;   // 스위치 몸통 바닥 안착면
   const cupBottom = seatZ - SW.floorT;
-  // 컵 몸체: 보스/상판 아래로 매달리는 홀더 (기존 재료와 합쳐짐)
-  b = add(b, boxBrush(SW.cup, SW.cup, bossTop - cupBottom, 0, 0, cupBottom, 3));
-  // 몸통 포켓: 위로 개방 (보스 관통) — 가로/세로 실측이 달라 별도 슬라이더
-  b = sub(b, boxBrush(P.swBodyX, P.swBodyY, P.standSink + SW.seatH + 2, 0, 0, seatZ, 1));
-  // 포켓 귀퉁이 여유: 네 귀퉁이에 4×4 사각형을 놓고 파냄 — 각 사각형이 포켓 밖으로
-  // x/y 각각 1mm씩만 삐져나와 몸통 모서리가 안 걸리게. 벽면 중앙 그립은 그대로 유지
-  {
-    const ch = P.standSink + SW.seatH + 2;
-    const ccx = P.swBodyX / 2 + P.cornerOut - SW.cornerSq / 2;   // 귀퉁이 사각형 중심
-    const ccy = P.swBodyY / 2 + P.cornerOut - SW.cornerSq / 2;
-    for (const sx of [-1, 1]) for (const sy of [-1, 1])
-      b = sub(b, boxBrush(SW.cornerSq, SW.cornerSq, ch, sx * ccx, sy * ccy, seatZ));
-  }
-  // 바닥 구멍: 중앙 기둥 1 + 구리선 4, 아래로 갈수록 넓어지는 깔때기 (배선 삽입 유도)
-  for (const [hx, hy, hd] of SW.holes) {
-    const flare = hd > 4 ? 1.0 : 0.6;   // 깔때기: 작은 구리선 구멍은 플레어도 작게
-    const cyl = new THREE.CylinderGeometry(hd / 2, hd / 2 + flare, SW.floorT + 1.2, 24);
-    cyl.rotateX(Math.PI / 2);   // 축을 z로
-    cyl.translate(hx, hy, seatZ - SW.floorT / 2 - 0.05);
-    cyl.deleteAttribute('uv');
-    b = sub(b, toMan(cyl));
+  for (const oy of swOffsets()) {
+    // 컵 몸체: 보스/상판 아래로 매달리는 홀더 (기존 재료와 합쳐짐)
+    b = add(b, boxBrush(SW.cup, SW.cup, bossTop - cupBottom, 0, oy, cupBottom, 3));
+    // 몸통 포켓: 위로 개방 (보스 관통) — 가로/세로 실측이 달라 별도 슬라이더
+    b = sub(b, boxBrush(P.swBodyX, P.swBodyY, P.standSink + SW.seatH + 2, 0, oy, seatZ, 1));
+    // 포켓 귀퉁이 여유: 네 귀퉁이에 4×4 사각형을 놓고 파냄 — 각 사각형이 포켓 밖으로
+    // x/y 각각 1mm씩만 삐져나와 몸통 모서리가 안 걸리게. 벽면 중앙 그립은 그대로 유지
+    {
+      const ch = P.standSink + SW.seatH + 2;
+      const ccx = P.swBodyX / 2 + P.cornerOut - SW.cornerSq / 2;   // 귀퉁이 사각형 중심
+      const ccy = P.swBodyY / 2 + P.cornerOut - SW.cornerSq / 2;
+      for (const sx of [-1, 1]) for (const sy of [-1, 1])
+        b = sub(b, boxBrush(SW.cornerSq, SW.cornerSq, ch, sx * ccx, oy + sy * ccy, seatZ));
+    }
+    // 바닥 구멍: 중앙 기둥 1 + 구리선 4, 아래로 갈수록 넓어지는 깔때기 (배선 삽입 유도)
+    for (const [hx, hy, hd] of SW.holes) {
+      const flare = hd > 4 ? 1.0 : 0.6;   // 깔때기: 작은 구리선 구멍은 플레어도 작게
+      const cyl = new THREE.CylinderGeometry(hd / 2, hd / 2 + flare, SW.floorT + 1.2, 24);
+      cyl.rotateX(Math.PI / 2);   // 축을 z로
+      cyl.translate(hx, oy + hy, seatZ - SW.floorT / 2 - 0.05);
+      cyl.deleteAttribute('uv');
+      b = sub(b, toMan(cyl));
+    }
   }
 
   // LED 구멍: 몸통+0.3 관통(실피팅 피드백: +0.2는 꽉 낌) — 원형은 아래에서 꽂으면
@@ -999,11 +1090,27 @@ function buildFloor3() {
       b = sub(b, boxBrush(oledTowerW() + 0.8, cutD, cutTop + 0.1,
                           0, outHalf + 0.5 - cutD / 2, -0.1, 0, m));
     }
+    // 타워가 3층 상판보다 높으면 포켓 뒷면이 위로 노출됨 → 노치 뒤 상판에 커버 텅 홈을 파고,
+    // 별도 파트(OLED 뒷면 커버)가 여기 꽂혀 노출부를 막음 (buildOledCover)
+    if (oledCoverNeeded()) {
+      const towerBack = seatY - oledSpec().t - 2.0;
+      b = sub(b, boxBrush(oledCoverW() + 0.3, COVER.t + 0.4, COVER.tab + 0.2,
+                          0, towerBack - 0.05 - (COVER.t + 0.4) / 2, P.f3H - COVER.tab - 0.1, 0, m));
+      // 세모 받침을 받아주는 홈: 텅 홈에 연결된 리브 채널(아래) + 삼각 채널(위, 보스 구간 관통)
+      const L = coverRibL();
+      if (L > 1) {
+        const backP = towerBack - 0.15 - COVER.t;
+        b = sub(b, boxBrush(COVER.ribW + 0.3, L + 0.4, COVER.tab + 0.2,
+                            0, backP - L / 2 + 0.05, P.f3H - COVER.tab - 0.1, 0, m));
+        b = sub(b, triPrism(L + 0.5, coverRibH() * (1 + 0.5 / Math.max(L, 1)) + 0.4,
+                            COVER.ribW + 0.3, backP + 0.2, P.f3H - 0.1, m));
+      }
+    }
   }
 
   // 딤섬 뚜껑 결합 홈: 층간 bottomJointCut과 동일 프로파일을 원(Ø41) 기준으로 상판에 컷 (위로 개방).
-  // flip3 출력 시 홈이 바닥면을 향해 서포트 프리. 보스(최대 r≈13.5)·컵과 간섭 없음(홈 r17.6~19.8).
-  if (P.lidOn) b = lidJointGroove(b);
+  // flip3 출력 시 홈이 바닥면을 향해 서포트 프리. 더블(스위치 2개)은 뚜껑 미지원이라 생략.
+  if (P.lidOn && !dbl()) b = lidJointGroove(b);
 
   b = decoBands(b, [P.f3H * 0.4]);
   return b;
@@ -1040,20 +1147,20 @@ function steamerFloor(b) {
   const ringW = 1.6;                      // 테두리 링 폭
   let ribs = strips(STEAM.ribW, STEAM.ribH, P.f3H, 0);
   ribs = inter(ribs, extrude(baseShape(P.wall + 0.6), STEAM.ribH + 0.2, P.f3H - 0.1));
-  if (P.lidOn) ribs = inter(ribs, cylBrush(rimR, STEAM.ribH + 0.2, P.f3H - 0.1));
+  if (P.lidOn && !dbl()) ribs = inter(ribs, cylBrush(rimR, STEAM.ribH + 0.2, P.f3H - 0.1));
   // 테두리 링: 슬랫 경계를 따라 립과 같은 높이로 두름 — 뒤집어 출력 시 립 끝과 한 평면 접지
-  ribs = add(ribs, P.lidOn
+  ribs = add(ribs, (P.lidOn && !dbl())
     ? cylRing(rimR, rimR - ringW, STEAM.ribH, P.f3H)
     : ringBrush(P.wall + 0.6, P.wall + 0.6 + ringW, STEAM.ribH, P.f3H));
-  ribs = sub(ribs, boxBrush(17, 17, STEAM.ribH + 0.4, 0, 0, P.f3H - 0.2));   // 스위치 포켓 + 귀퉁이 여유
+  ribs = sub(ribs, boxBrush(17, 17 + (dbl() ? P.swGap : 0), STEAM.ribH + 0.4, 0, 0, P.f3H - 0.2));   // 스위치 포켓 + 귀퉁이 여유 (더블은 y로 확장)
   if (P.ledOn) ribs = sub(ribs, ledKeep(1.0, STEAM.ribH + 0.4, P.f3H - 0.2));
   b = add(b, ribs);
   // --- 골 홈: 골 자리에 얕게만 파냄 (관통 X — 아래 살이 남아 속이 안 보임, 링 안쪽까지만) ---
   const z0 = P.f3H - STEAM.grooveD, h = STEAM.grooveD + 0.2;
   let slits = strips(STEAM.gap - 0.2, h, z0, pitch / 2);
   slits = inter(slits, extrude(baseShape(P.wall + 0.6 + ringW), h + 0.2, z0 - 0.1));
-  if (P.lidOn) slits = inter(slits, cylBrush(rimR - ringW, h + 0.2, z0 - 0.1));
-  slits = sub(slits, boxBrush(24, 26, h + 0.4, 0, 0, z0 - 0.2, 6));          // 컵/보스 보호
+  if (P.lidOn && !dbl()) slits = inter(slits, cylBrush(rimR - ringW, h + 0.2, z0 - 0.1));
+  slits = sub(slits, boxBrush(24, 26 + (dbl() ? P.swGap : 0), h + 0.4, 0, 0, z0 - 0.2, 6));          // 컵/보스 보호 (더블 확장)
   if (P.ledOn) slits = sub(slits, ledKeep(1.6, h + 0.4, z0 - 0.2));
   return sub(b, slits);
 }
@@ -1181,11 +1288,13 @@ function placeGhosts() {
   }
   // 3층: MX 스위치(실물) + 딤섬 캐릭터
   const seatZ3 = P.f3H + effBossH() - P.standSink - SW.seatH;
-  const sg = ASSETS.switch.clone();
-  sg.rotateZ(Math.PI);   // 핀 배치를 홀더 구멍(180° 장착 기준)에 정렬
-  G[2].add(ghostMesh(sg, MATS.stand, T(0, 0, seatZ3 - SW.pinLen)));
-  // 캐릭터: 바닥 공동(17.9각×10.7)이 스위치를 통째로 덮고 보스/컵 윗면에 얹힘
-  G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, 0, P.f3H + effBossH())));
+  for (const oy of swOffsets()) {
+    const sg = ASSETS.switch.clone();
+    sg.rotateZ(Math.PI);   // 핀 배치를 홀더 구멍(180° 장착 기준)에 정렬
+    G[2].add(ghostMesh(sg, MATS.stand, T(0, oy, seatZ3 - SW.pinLen)));
+    // 캐릭터: 바닥 공동(17.9각×10.7)이 스위치를 통째로 덮고 보스/컵 윗면에 얹힘
+    G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, oy, P.f3H + effBossH())));
+  }
   // LED: 원형(3/4/5mm)은 플랜지가 상판 밑면에 정지 → 원통부 + 돔 끝만 상판 위로 돌출.
   // 사각 투톤(2×5×7)은 몸통 바닥이 상판 밑면과 나란 → 위로 3.8 돌출. 빨강/초록 반쪽으로 표시
   if (P.ledOn) {
@@ -1244,14 +1353,16 @@ function rebuild() {
     const buildErrs = [];
     try {
       const t0 = performance.now();
-      const builders = [buildFloor1, buildFloor2, buildFloor3, buildLid, buildOledPod];
-      const names = ['1층', '2층', '3층', '4층', 'OLED 포드'];
-      for (let i = 0; i < 5; i++) {
-        if (i < 4) G[i].clear();   // 포드(i=4)는 G[1]에 얹혀 2층과 함께 움직임
-        if (i === 3 && !P.lidOn) { exportGeos[3] = null; floorMeshes[3] = null; continue; }
+      const builders = [buildFloor1, buildFloor2, buildFloor3, buildLid, buildOledPod, buildOledCover];
+      const names = ['1층', '2층', '3층', '4층', 'OLED 포드', 'OLED 커버'];
+      for (let i = 0; i < 6; i++) {
+        if (i < 4) G[i].clear();        // 포드(i=4)는 G[1]에 얹혀 2층과 함께 움직임
+        else if (i === 5) G[4].clear(); // 커버(i=5)는 자체 그룹 G[4] — 분해 애니메이션 참여
+        if (i === 3 && (!P.lidOn || dbl())) { exportGeos[3] = null; floorMeshes[3] = null; continue; }
         if (i === 4 && !(P.oledSide !== 'none' && P.oledPodOn)) {
           exportGeos[4] = null; floorMeshes[4] = null; continue;
         }
+        if (i === 5 && !oledCoverNeeded()) { exportGeos[5] = null; floorMeshes[5] = null; continue; }
         try {   // 한 층이 실패해도 나머지 층은 유지
           const man = builders[i]();
           const geo = manToGeo(man);
@@ -1259,7 +1370,7 @@ function rebuild() {
           exportGeos[i] = geo;
           const mesh = new THREE.Mesh(geo, xray ? matCaseX : matCase);
           floorMeshes[i] = mesh;
-          G[i === 4 ? 1 : i].add(mesh);
+          G[i === 4 ? 1 : i === 5 ? 4 : i].add(mesh);
         } catch (e) {
           exportGeos[i] = null;
           floorMeshes[i] = null;
@@ -1303,6 +1414,10 @@ function checkFit() {
       const mp = g(g(toMan(exportGeos[4])).translate([0, 0, P.f1H]));
       iPod = vol(g(m2.intersect(mp))) + vol(g(m3.intersect(mp)));
     }
+    if (exportGeos[5]) {   // OLED 뒷면 커버 ↔ 3층 (텅 홈 안착 위치)
+      const mc = g(g(toMan(exportGeos[5])).translate([0, 0, P.f1H + P.f2H]));
+      iPod += vol(g(m3.intersect(mc)));
+    }
     garbage.forEach(x => x.delete());
     return { i12, i23, i34, iPod, ok: i12 < 0.5 && i23 < 0.5 && i34 < 0.5 && iPod < 0.5 };
   } catch (e) { return null; }
@@ -1317,6 +1432,8 @@ function applyExplode() {
   G[2].position.z = P.f1H + P.f2H + gap * 2;
   // 뚜껑: 림(local z=RIDGE_H)이 3층 상판 위에 안착, 턱이 홈에 꽂힘
   G[3].position.z = P.f1H + P.f2H + P.f3H - RIDGE_H + gap * 3;
+  // OLED 뒷면 커버: 조립 시 3층 홈에 안착(3층과 같은 기준), 분해 시 3층 위로 떠오름
+  G[4].position.z = P.f1H + P.f2H + gap * 2 + gap * 0.8;
   updateWires();
 }
 document.getElementById('explode').addEventListener('input', () => {
@@ -1343,6 +1460,7 @@ const ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
 // 우클릭으로 핀을 바꿀 수 있는 배선 (태그 → P 키/이름). ESP32-C3는 I2C 핀도 자유 지정 가능
 const GPIO_ROLES = {
   gpio: { key: 'swGpio', name: '스위치' },
+  gpio2: { key: 'sw2Gpio', name: '스위치 2' },
   sda:  { key: 'sdaGpio', name: 'OLED SDA' },
   scl:  { key: 'sclGpio', name: 'OLED SCL' },
   led:  { key: 'ledGpio', name: 'LED' },
@@ -1379,8 +1497,15 @@ function renderWireTable() {
     row(WIRE_COLORS.scl, 'OLED SCL', 'GPIO ' + P.sclGpio, '모듈 표기는 SCK이기도');
   }
   grp('스위치 (MX)');
-  row(WIRE_COLORS.gpio, '스위치 핀 A', 'GPIO ' + P.swGpio, '내부 풀업 입력');
-  row(WIRE_COLORS.minus, '스위치 핀 B', 'ESP32 GND');
+  if (dbl()) {
+    row(WIRE_COLORS.gpio, '스위치1 핀 A', 'GPIO ' + P.swGpio, '내부 풀업 입력');
+    row(WIRE_COLORS.minus, '스위치1 핀 B', 'ESP32 GND');
+    row(WIRE_COLORS.gpio, '스위치2 핀 A', 'GPIO ' + P.sw2Gpio, '내부 풀업 입력');
+    row(WIRE_COLORS.minus, '스위치2 핀 B', 'ESP32 GND');
+  } else {
+    row(WIRE_COLORS.gpio, '스위치 핀 A', 'GPIO ' + P.swGpio, '내부 풀업 입력');
+    row(WIRE_COLORS.minus, '스위치 핀 B', 'ESP32 GND');
+  }
   if (P.ledOn) {
     if (ledSpec().rect) {
       grp('LED (2×5 투톤 3핀)');
@@ -1531,14 +1656,20 @@ function updateWires() {
       const z3b = G[2].position.z;
       const seatZ3 = z3b + P.f3H + effBossH() - P.standSink - SW.seatH;   // 홀더 안착면
       const below = seatZ3 - SW.floorT - 2;                               // 구멍 아래로 나온 지점
-      const pinSw = espPin(...(ESP_PINS[P.swGpio] || ESP_PINS[4]));
       const dropMid = (p, dst) =>
         [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (below + dst[2]) / 2];
-      const pinA = [3.8, -2.7], pinB = [-2.7, -5.2];   // 홀더 구리선 구멍 = 스위치 핀 위치
-      addWire([[...pinA, seatZ3 + 1], [...pinA, below], dropMid(pinA, pinSw), pinSw],
-              WIRE_COLORS.gpio, '스위치', 'G' + P.swGpio, 'gpio');
-      addWire([[...pinB, seatZ3 + 1], [...pinB, below], dropMid(pinB, pinGND), pinGND],
-              WIRE_COLORS.minus, null, null);
+      const swCfg = dbl()
+        ? [{ oy: -P.swGap / 2, gpio: P.swGpio, tag: 'gpio', lb: '스위치1' },
+           { oy: P.swGap / 2, gpio: P.sw2Gpio, tag: 'gpio2', lb: '스위치2' }]
+        : [{ oy: 0, gpio: P.swGpio, tag: 'gpio', lb: '스위치' }];
+      for (const c of swCfg) {
+        const pinSw = espPin(...(ESP_PINS[c.gpio] || ESP_PINS[4]));
+        const pinA = [3.8, c.oy - 2.7], pinB = [-2.7, c.oy - 5.2];   // 홀더 구리선 구멍 = 스위치 핀 위치
+        addWire([[...pinA, seatZ3 + 1], [...pinA, below], dropMid(pinA, pinSw), pinSw],
+                WIRE_COLORS.gpio, c.lb, 'G' + c.gpio, c.tag);
+        addWire([[...pinB, seatZ3 + 1], [...pinB, below], dropMid(pinB, pinGND), pinGND],
+                WIRE_COLORS.minus, null, null);
+      }
     }
 
     // --- LED (3층 상판 관통, 다리가 아래로) → ESP32: GPIO(저항 권장) + GND ---
@@ -1699,7 +1830,7 @@ function updateInfo(ms, fit) {
     ? (fit.ok ? ' · 조립 간섭 없음 ✓' : ` · 조립 간섭 ${fit.i12.toFixed(1)}/${fit.i23.toFixed(1)}/${(fit.i34 || 0).toFixed(1)}/${(fit.iPod || 0).toFixed(1)}mm³ ⚠`)
     : '';
   const sizeTxt = P.shape === 'circle' ? `Ø${P.W}` : `${P.W} × ${P.D}`;
-  const lidTxt = P.lidOn ? ` · 4층 Ø${LID.r * 2} × ${(RIDGE_H + P.lidH + LID.h).toFixed(1)}mm` : '';
+  const lidTxt = P.lidOn && !dbl() ? ` · 4층 Ø${LID.r * 2} × ${(RIDGE_H + P.lidH + LID.h).toFixed(1)}mm` : '';
   document.getElementById('dims').textContent =
     `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함)${lidTxt} · CSG ${ms.toFixed(0)}ms${fitTxt}`;
   const warn = [];
@@ -1767,10 +1898,18 @@ function updateInfo(ms, fit) {
   }
   if (!noBat() && !batStand() && P.f1H < F1_PLATE + batSpec().T + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
   // 스위치 홀더 컵 하단 (3층 로컬 z)
+  if (oledCoverNeeded() && coverRibL() < COVER.ribL - 0.01)
+    warn.push(`⚠ 커버 세모 받침이 스위치 자리 때문에 ${coverRibL().toFixed(1)}mm로 줄었습니다 (기준 ${COVER.ribL})`);
   const cupBotZ = P.f3H + effBossH() - P.standSink - SW.seatH - SW.floorT;
   if (cupBotZ < 0.5)
     warn.push('⚠ 스위치 홀더가 뚜껑 아래로 뚫고 나갑니다 — 매립을 줄이거나 3층/보스를 키우세요');
-  if (P.lidOn && LID.r * 2 > Math.min(P.W, effD()) + 0.1)
+  if (dbl()) {
+    if (P.D < 60) warn.push('⚠ 더블 모드는 세로 D 60 이상을 권장합니다');
+    if (P.swGap < 29) warn.push('⚠ 스위치 간격이 좁아 딤섬 캐릭터(Ø28.7)끼리 겹칩니다 — 29 이상 권장');
+    if (P.swGap / 2 + 14.4 > innerHalfD())
+      warn.push('⚠ 캐릭터가 앞뒤 벽에 닿습니다 — D를 키우거나 스위치 간격을 줄이세요');
+  }
+  if (P.lidOn && !dbl() && LID.r * 2 > Math.min(P.W, effD()) + 0.1)
     warn.push(`⚠ 4층(Ø${LID.r * 2})이 케이스 외곽보다 넓어 밖으로 걸칩니다 — W를 41 이상으로`);
   if (P.ledOn) {
     const lfr = ledSpec().fl / 2 + 0.1;   // 플랜지 반경 + 여유
@@ -1779,12 +1918,12 @@ function updateInfo(ms, fit) {
     const ox = (P.bossOn ? 10.5 : SW.cup / 2) + lfr, oy = (P.bossOn ? 11.5 : SW.cup / 2) + lfr;
     if (Math.abs(P.ledX) < ox && Math.abs(P.ledY) < oy)
       warn.push('⚠ LED가 스위치 보스/홀더와 겹칩니다 — 밖으로 옮기세요');
-    if (P.lidOn && Math.hypot(P.ledX, P.ledY) + lfr > LID.r - LID.bandW - 0.6)
+    if (P.lidOn && !dbl() && Math.hypot(P.ledX, P.ledY) + lfr > LID.r - LID.bandW - 0.6)
       warn.push('⚠ LED가 4층 결합 홈/밴드와 겹칩니다 — 중심 쪽으로 옮기세요');
   }
-  if (P.lidOn && P.lidH + LID.innerH < charTopOverLid() + 0.3)
+  if (P.lidOn && !dbl() && P.lidH + LID.innerH < charTopOverLid() + 0.3)
     warn.push(`⚠ 4층이 딤섬 캐릭터에 닿습니다 — 밴드 높이를 ${Math.max(0, charTopOverLid() + 0.5 - LID.innerH).toFixed(1)} 이상으로 (또는 캐릭터 없이 사용)`);
-  const cupRect = { x: 0, y: 0, w: SW.cup, d: SW.cup };
+  const cupRect = { x: 0, y: 0, w: SW.cup, d: SW.cup + (dbl() ? P.swGap : 0) };
   if (bRect650 && rectsOverlap(bRect650, cupRect) && F2_PLATE + batSpec().W > P.f2H + cupBotZ - 0.3)
     warn.push('⚠ 세운 배터리가 스위치 홀더 컵에 부딪힙니다 — 배터리 X를 옮기거나 층 높이를 키우세요');
   const espTopLocal = espStand()
@@ -1838,14 +1977,7 @@ function updateInfo(ms, fit) {
 // STL 내보내기
 // ------------------------------------------------------------------
 const exporter = new STLExporter();
-function exportFloor(i, name) {
-  if (!exportGeos[i]) return;
-  let geo = exportGeos[i].clone();
-  if (i === 2 && document.getElementById('flip3').checked) {
-    geo.rotateX(Math.PI);
-    geo.computeBoundingBox();
-    geo.translate(0, 0, -geo.boundingBox.min.z);
-  }
+function downloadSTL(geo, name) {
   const mesh = new THREE.Mesh(geo);
   const data = exporter.parse(mesh, { binary: true });
   const blob = new Blob([data], { type: 'application/octet-stream' });
@@ -1857,11 +1989,40 @@ function exportFloor(i, name) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
+
+function exportFloor(i, name) {
+  if (!exportGeos[i]) return;
+  let geo = exportGeos[i].clone();
+  if (i === 2 && document.getElementById('flip3').checked) {
+    geo.rotateX(Math.PI);
+    geo.computeBoundingBox();
+    geo.translate(0, 0, -geo.boundingBox.min.z);
+  }
+  downloadSTL(geo, name);
+}
+
+// 테스트 내보내기: 2층에서 OLED 타워 주변만 크롭한 조각 — 전체 출력 없이 포켓·창·핀 피팅 확인용.
+// 분리 포드 모드면 소켓 레일·개구 구간이 잘려 나옴 (포드는 ex5로 따로)
+function exportOledTest() {
+  if (!exportGeos[1] || P.oledSide === 'none') return;
+  const { m, seatY, proud, outHalf } = oledFrame();
+  const backY = seatY - oledSpec().t - 2.0 - 5;          // 소켓 뒤판까지 포함
+  const frontY = outHalf + proud + 2;
+  const man = toMan(exportGeos[1]);
+  const crop = boxBrush(oledTowerW() + 8, frontY - backY, oledTowerTop() + 1,
+                        0, (frontY + backY) / 2, -0.3, 0, m);
+  const piece = inter(man, crop);
+  const geo = manToGeo(piece);
+  piece.delete();
+  downloadSTL(geo, 'oled_fit_test.stl');
+}
 document.getElementById('ex1').addEventListener('click', () => exportFloor(0, 'floor1_battery.stl'));
 document.getElementById('ex2').addEventListener('click', () => exportFloor(1, 'floor2_esp32.stl'));
 document.getElementById('ex3').addEventListener('click', () => exportFloor(2, 'floor3_switch_lid.stl'));
 document.getElementById('ex4').addEventListener('click', () => exportFloor(3, 'floor4_bun_lid.stl'));
 document.getElementById('ex5').addEventListener('click', () => exportFloor(4, 'oled_pod.stl'));
+document.getElementById('ex6').addEventListener('click', () => exportFloor(5, 'oled_back_cover.stl'));
+document.getElementById('exOledTest').addEventListener('click', exportOledTest);
 
 // ------------------------------------------------------------------
 Promise.all([
