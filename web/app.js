@@ -1036,17 +1036,23 @@ function steamerFloor(b) {
     return m;
   };
   // --- 슬랫 립: 상판 위 돌출, 벽/뚜껑 홈 안쪽으로 트림 ---
+  const rimR = LID.r - LID.bandW - 1.0;   // 뚜껑 결합 홈 안쪽 슬랫 경계 반지름
+  const ringW = 1.6;                      // 테두리 링 폭
   let ribs = strips(STEAM.ribW, STEAM.ribH, P.f3H, 0);
   ribs = inter(ribs, extrude(baseShape(P.wall + 0.6), STEAM.ribH + 0.2, P.f3H - 0.1));
-  if (P.lidOn) ribs = inter(ribs, cylBrush(LID.r - LID.bandW - 1.0, STEAM.ribH + 0.2, P.f3H - 0.1));
+  if (P.lidOn) ribs = inter(ribs, cylBrush(rimR, STEAM.ribH + 0.2, P.f3H - 0.1));
+  // 테두리 링: 슬랫 경계를 따라 립과 같은 높이로 두름 — 뒤집어 출력 시 립 끝과 한 평면 접지
+  ribs = add(ribs, P.lidOn
+    ? cylRing(rimR, rimR - ringW, STEAM.ribH, P.f3H)
+    : ringBrush(P.wall + 0.6, P.wall + 0.6 + ringW, STEAM.ribH, P.f3H));
   ribs = sub(ribs, boxBrush(17, 17, STEAM.ribH + 0.4, 0, 0, P.f3H - 0.2));   // 스위치 포켓 + 귀퉁이 여유
   if (P.ledOn) ribs = sub(ribs, ledKeep(1.0, STEAM.ribH + 0.4, P.f3H - 0.2));
   b = add(b, ribs);
-  // --- 골 홈: 골 자리에 얕게만 파냄 (관통 X — 아래 1층분 살이 남아 속이 안 보임) ---
+  // --- 골 홈: 골 자리에 얕게만 파냄 (관통 X — 아래 살이 남아 속이 안 보임, 링 안쪽까지만) ---
   const z0 = P.f3H - STEAM.grooveD, h = STEAM.grooveD + 0.2;
   let slits = strips(STEAM.gap - 0.2, h, z0, pitch / 2);
-  slits = inter(slits, extrude(baseShape(P.wall + 1.0), h + 0.2, z0 - 0.1));
-  if (P.lidOn) slits = inter(slits, cylBrush(LID.r - LID.bandW - 1.4, h + 0.2, z0 - 0.1));
+  slits = inter(slits, extrude(baseShape(P.wall + 0.6 + ringW), h + 0.2, z0 - 0.1));
+  if (P.lidOn) slits = inter(slits, cylBrush(rimR - ringW, h + 0.2, z0 - 0.1));
   slits = sub(slits, boxBrush(24, 26, h + 0.4, 0, 0, z0 - 0.2, 6));          // 컵/보스 보호
   if (P.ledOn) slits = sub(slits, ledKeep(1.6, h + 0.4, z0 - 0.2));
   return sub(b, slits);
