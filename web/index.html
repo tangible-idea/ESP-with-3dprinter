@@ -152,12 +152,13 @@
         </select>
       </div>
       <div class="row"><label>OLED 돌출</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
+      <div class="row"><label>OLED 분리 포드</label><input type="checkbox" id="oledPodOn"></div>
       <div class="row"><label>배선구멍 X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
       <div class="row"><label>배선구멍 Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12"><span class="val" id="wireYv"></span></div>
       <div class="row"><label>배선구멍 방향</label>
         <select id="wireRot"><option value="0" selected>가로 (14×5)</option><option value="90">세로 (5×14)</option></select>
       </div>
-      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절.</div>
+      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절. <b>OLED 분리 포드</b>를 켜면 OLED 타워(창·포켓 포함)가 별도 출력 파트가 됩니다: 벽 관통 개구에 위에서 아래로 슬라이드 — 텅(전면부)이 외곽면과 플러시로 개구를 채우고, 어깨가 벽 안쪽에 걸리며, 안쪽 U자 소켓 레일이 뒤·옆을 잡습니다. 3층을 덮으면 노치가 위를 눌러 잠금. 포드·레일 모두 서포트 없이 세워서 출력.</div>
     </div>
   </details>
 
@@ -167,6 +168,9 @@
       <div class="row"><label>스위치 Boss</label><input type="checkbox" id="bossOn" checked></div>
       <div class="row"><label>Boss 높이</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
       <div class="row"><label>스위치 매립 깊이</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
+      <div class="row"><label>포켓 가로 (X)</label><input type="range" id="swBodyX" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyXv"></span></div>
+      <div class="row"><label>포켓 세로 (Y)</label><input type="range" id="swBodyY" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyYv"></span></div>
+      <div class="row"><label>포켓 귀퉁이 여유</label><input type="range" id="cornerOut" min="0" max="1.5" step="0.05" value="0.4"><span class="val" id="cornerOutv"></span></div>
       <div class="row"><label>찜통 바닥 슬랫</label><input type="checkbox" id="steamOn" checked></div>
       <div class="row"><label>LED</label><input type="checkbox" id="ledOn" checked></div>
       <div class="row"><label>LED 종류</label>
@@ -215,6 +219,7 @@
         <button id="ex2">2층.stl</button>
         <button id="ex3">3층.stl</button>
         <button id="ex4">4층.stl</button>
+        <button id="ex5">OLED포드.stl</button>
       </div>
       <div class="row" style="margin-top:8px"><label>3층 출력용 뒤집기</label><input type="checkbox" id="flip3" checked></div>
       <div class="hint">3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다</div>
