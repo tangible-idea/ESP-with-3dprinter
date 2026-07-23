@@ -17,6 +17,341 @@ import faceUrl from '../dimsum/obj_2_sup 2.0 face.stl?url';
 import bunLidUrl from '../my_designs/bun_lid_clean.stl?url';
 
 // ------------------------------------------------------------------
+// i18n: 기본 English, 설정 메뉴에서 한국어(ko)로 전환. 개발자 주석은 그대로 둠.
+// 사용자에게 보이는 텍스트만 여기서 관리 — 정적 텍스트는 index.html의 data-i18n 속성으로,
+// 동적 텍스트(경고·배선표·정보줄 등)는 t(key, ...args)로 조회한다.
+// ------------------------------------------------------------------
+const I18N = {
+  en: {
+    title: '🥟 Dim Sum Clicker Configurator',
+    // 층 이름 (STL 빌드 오류 메시지용)
+    layerNames: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4', 'OLED pod', 'OLED cover'],
+    buildErr: (name, msg) => `⚠ ${name} build error: ${msg}`,
+    buildErrGeneric: (msg) => `⚠ Build error: ${msg}`,
+    initError: (e) => `⚠ Initialization failed: ${e}\nCheck that you ran it with \`npm run dev\`.`,
+    presetLoaded: (n) => `✓ Preset loaded (${n} items applied)`,
+    presetError: '⚠ Cannot read preset file (JSON format error)',
+    // GPIO 역할 이름 (우클릭 메뉴)
+    roleSwitch: 'Switch', roleSwitch2: 'Switch 2', roleOledSda: 'OLED SDA',
+    roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED green', roleBuzzer: 'Buzzer',
+    gpioSelect: (name) => `${name} GPIO select`,
+    // 배선표
+    wtGrpPower: 'Power',
+    wtUsbC: 'USB-C', wtEspDirect: 'ESP32 direct', wtNoBattery: 'no battery',
+    wtGrpPowerChain: 'Power (battery → charger → ESP32)',
+    wtBatPlus: 'Battery +', wtBatMinus: 'Battery −',
+    wtChgBplus: 'Charger B+', wtChgBminus: 'Charger B−',
+    wtChgOutPlus: 'Charger OUT+', wtChgOutMinus: 'Charger OUT−',
+    wtEsp5v: 'ESP32 5V', wtEspGnd: 'ESP32 GND', wtEsp3v3: 'ESP32 3V3',
+    wtGrpOled: 'OLED (I2C)', wtOledVcc: 'OLED VCC', wtOledGnd: 'OLED GND',
+    wtOledSda: 'OLED SDA', wtOledScl: 'OLED SCL', wtSckNote: 'module may label it SCK',
+    wtGrpSwitch: 'Switch (MX)',
+    wtSw1PinA: 'Switch 1 pin A', wtSw1PinB: 'Switch 1 pin B',
+    wtSw2PinA: 'Switch 2 pin A', wtSw2PinB: 'Switch 2 pin B',
+    wtSwPinA: 'Switch pin A', wtSwPinB: 'Switch pin B', wtPullup: 'internal pull-up input',
+    wtGrpLedRgb: 'LED (2×5 two-tone 3-pin)',
+    wtLedRed: 'LED red (pin 1)', wtLedGreen: 'LED green (pin 3)', wtLedCommon: 'LED common − (center)',
+    wtResistor: '150~220Ω resistor',
+    wtGrpLedRound: (d) => `LED (round ${d}mm)`,
+    wtLedPlusLeg: 'LED + (long leg)', wtLedMinusLeg: 'LED − (short leg)',
+    wtGrpBuzzer: 'Piezo buzzer', wtBzPlus: 'Buzzer +', wtBzMinus: 'Buzzer −', wtPwmTone: 'PWM tone',
+    // 3D 스프라이트 라벨
+    spSw1: 'SW1', spSw2: 'SW2', spSw: 'SW', spBzPlus: 'BZ+', spBzMinus: 'BZ−',
+    // 토글 버튼
+    tgGhost: (on) => `Components: ${on ? 'On' : 'Off'}`,
+    tgWires: (on) => `Wiring: ${on ? 'On' : 'Off'}`,
+    tgXray: (on) => `Case X-ray: ${on ? 'On' : 'Off'}`,
+    // 정보줄
+    infoDims: (size, total, lidTxt, ms, fitTxt) => `Total ${size} × ${total}mm (incl. boss)${lidTxt} · CSG ${ms}ms${fitTxt}`,
+    infoLid: (d, h) => ` · Layer 4 Ø${d} × ${h}mm`,
+    fitOk: ' · no assembly interference ✓',
+    fitBad: (a, b, c, d) => ` · assembly interference ${a}/${b}/${c}/${d}mm³ ⚠`,
+    // 경고
+    wFit: '⚠ Layers overlap when assembled — adjust component layout or layer heights',
+    wBatFit: (l, w) => `⚠ Battery (${l}×${w}) doesn't fit in Layer 1 — increase W/D or reduce the corner`,
+    wBatStandFit: (tk, l) => `⚠ Upright battery (${tk}×${l}) doesn't fit in Layer 2 — increase depth D or move Battery X`,
+    wBatStandEsp: '⚠ Upright battery overlaps the ESP32',
+    wBatStandMod: '⚠ Upright battery overlaps the charge module',
+    wBatStandTop: (w) => `⚠ Upright battery (height ${w}) touches the Layer 3 top plate — increase Layer 2·3 heights`,
+    wEspWallYNoBat: '⚠ ESP32 overlaps the top/bottom wall — move ESP32 Y toward center',
+    wEspWidthNoBat: (l) => `⚠ ESP32 (length ${l}) doesn't fit widthwise — increase W`,
+    wEspWall: '⚠ ESP32 overlaps the wall',
+    wEspStandTop: (h) => `⚠ Upright ESP32 (height ${h}) touches the Layer 3 top plate — increase Layer 2·3 heights`,
+    wModWall: '⚠ Charge module overlaps the top/bottom wall',
+    wModCurve: '⚠ Charge module doesn\'t fit the curved wall — move Y toward center',
+    wEspModOverlap: '⚠ ESP32 and charge module pockets overlap — raising the lift (Layer 2.5) lets them coexist',
+    wEspLiftLow: (lift, h, min) => `⚠ ESP32 lift (${lift}) is lower than the charge module height (${h}) — raise it to at least ${min}`,
+    wEspLiftTop: '⚠ Lifted ESP32 touches the Layer 3 top plate — reduce the lift or increase layer heights',
+    wBeamMod: '⚠ The Layer 2.5 support beam crosses the charge module — move the ESP32',
+    wBeamBat: '⚠ The Layer 2.5 support beam crosses the upright battery — adjust the position',
+    wEspTower: '⚠ ESP32 overlaps the OLED tower',
+    wModTower: '⚠ Charge module overlaps the OLED tower',
+    wLedTower: '⚠ LED overlaps the OLED tower (notch)',
+    wBatTower: '⚠ 650 battery overlaps the OLED tower',
+    wTowerTop: '⚠ OLED tower pierces the Layer 3 top plate — increase Layer 2 or 3 height',
+    wOledBig: '⚠ OLED is large for the wall width/curvature — increase the diameter (W)',
+    wF1Low: '⚠ Layer 1 is too low (not enough room for battery + wiring)',
+    wCoverRib: (len, base) => `⚠ Cover triangle support was reduced to ${len}mm by the switch (base ${base})`,
+    wSwThrough: '⚠ Switch holder pokes through below the lid — reduce recess or increase Layer 3/boss',
+    wDblD: '⚠ Double mode recommends depth D of 60 or more',
+    wSwGap: '⚠ Switch spacing is too narrow — dim sum characters (Ø28.7) overlap; 29 or more recommended',
+    wCharWall: '⚠ Characters touch the front/back wall — increase D or reduce switch spacing',
+    wLidWide: (d) => `⚠ Layer 4 (Ø${d}) is wider than the case outline and hangs over — set W to 41 or more`,
+    wLedWall: '⚠ LED overlaps the Layer 3 wall/outline — move X/Y inward',
+    wLedBoss: '⚠ LED overlaps the switch boss/holder — move it outward',
+    wLedBand: '⚠ LED overlaps the Layer 4 joint groove/band — move it toward center',
+    wLidChar: (min) => `⚠ Layer 4 touches the dim sum character — set the band height to ${min} or more (or use without the character)`,
+    wBatCup: '⚠ Upright battery hits the switch holder cup — move Battery X or increase layer heights',
+    wEspCup: '⚠ ESP32 hits the switch holder cup — move it or increase layer heights',
+    wBzWall: '⚠ Buzzer overlaps the wall — move it inward',
+    wBzCup: '⚠ Buzzer overlaps the switch holder cup — if there\'s no room, change buzzer mount to the Layer 2 floor',
+    wBzLed: '⚠ Buzzer overlaps the LED',
+    wBzThick: (mm) => `⚠ Buzzer (8.3) is thicker than Layer 3 and pokes ${mm}mm below — check it doesn't overlap Layer 2 components`,
+    wBzEsp: '⚠ Buzzer overlaps the ESP32',
+    wBzMod: '⚠ Buzzer overlaps the charge module',
+    wBzLayFlipThrough: '⚠ Laid-down buzzer pokes through the Layer 3 top plate — increase layer heights',
+    wBzLayPocket: '⚠ Laid-down buzzer carve intrudes into the switch pocket — move X/Y',
+    wBzLayCup: '⚠ Laid-down buzzer carves into the Layer 3 holder cup (watch for thin cup walls)',
+    wBzCupBelow: '⚠ Buzzer touches under the Layer 3 switch holder cup — move X/Y',
+    wBzTop: '⚠ Buzzer touches the Layer 3 top plate — increase layer heights',
+  },
+  ko: {
+    title: '🥟 딤섬 클리커 컨피규레이터',
+    layerNames: ['1층', '2층', '3층', '4층', 'OLED 포드', 'OLED 커버'],
+    buildErr: (name, msg) => `⚠ ${name} 생성 오류: ${msg}`,
+    buildErrGeneric: (msg) => `⚠ 생성 오류: ${msg}`,
+    initError: (e) => `⚠ 초기화 실패: ${e}\n\`npm run dev\` 로 실행했는지 확인하세요.`,
+    presetLoaded: (n) => `✓ 프리셋 불러옴 (${n}개 항목 적용)`,
+    presetError: '⚠ 프리셋 파일을 읽을 수 없습니다 (JSON 형식 오류)',
+    roleSwitch: '스위치', roleSwitch2: '스위치 2', roleOledSda: 'OLED SDA',
+    roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED 초록', roleBuzzer: '부저',
+    gpioSelect: (name) => `${name} GPIO 선택`,
+    wtGrpPower: '전원',
+    wtUsbC: 'USB-C', wtEspDirect: 'ESP32 직결', wtNoBattery: '배터리 없음',
+    wtGrpPowerChain: '전원 (배터리 → 충전모듈 → ESP32)',
+    wtBatPlus: '배터리 +', wtBatMinus: '배터리 −',
+    wtChgBplus: '충전모듈 B+', wtChgBminus: '충전모듈 B−',
+    wtChgOutPlus: '충전모듈 OUT+', wtChgOutMinus: '충전모듈 OUT−',
+    wtEsp5v: 'ESP32 5V', wtEspGnd: 'ESP32 GND', wtEsp3v3: 'ESP32 3V3',
+    wtGrpOled: 'OLED (I2C)', wtOledVcc: 'OLED VCC', wtOledGnd: 'OLED GND',
+    wtOledSda: 'OLED SDA', wtOledScl: 'OLED SCL', wtSckNote: '모듈 표기는 SCK이기도',
+    wtGrpSwitch: '스위치 (MX)',
+    wtSw1PinA: '스위치1 핀 A', wtSw1PinB: '스위치1 핀 B',
+    wtSw2PinA: '스위치2 핀 A', wtSw2PinB: '스위치2 핀 B',
+    wtSwPinA: '스위치 핀 A', wtSwPinB: '스위치 핀 B', wtPullup: '내부 풀업 입력',
+    wtGrpLedRgb: 'LED (2×5 투톤 3핀)',
+    wtLedRed: 'LED 빨강 (1번 핀)', wtLedGreen: 'LED 초록 (3번 핀)', wtLedCommon: 'LED 공통 − (가운데)',
+    wtResistor: '저항 150~220Ω',
+    wtGrpLedRound: (d) => `LED (원형 ${d}mm)`,
+    wtLedPlusLeg: 'LED + (긴 다리)', wtLedMinusLeg: 'LED − (짧은 다리)',
+    wtGrpBuzzer: '피에조 부저', wtBzPlus: '부저 +', wtBzMinus: '부저 −', wtPwmTone: 'PWM 톤',
+    spSw1: '스위치1', spSw2: '스위치2', spSw: '스위치', spBzPlus: '부저+', spBzMinus: '부저−',
+    tgGhost: (on) => `부품 표시: ${on ? '켬' : '끔'}`,
+    tgWires: (on) => `배선 표시: ${on ? '켬' : '끔'}`,
+    tgXray: (on) => `케이스 반투명: ${on ? '켬' : '끔'}`,
+    infoDims: (size, total, lidTxt, ms, fitTxt) => `전체 ${size} × ${total}mm (보스 포함)${lidTxt} · CSG ${ms}ms${fitTxt}`,
+    infoLid: (d, h) => ` · 4층 Ø${d} × ${h}mm`,
+    fitOk: ' · 조립 간섭 없음 ✓',
+    fitBad: (a, b, c, d) => ` · 조립 간섭 ${a}/${b}/${c}/${d}mm³ ⚠`,
+    wFit: '⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요',
+    wBatFit: (l, w) => `⚠ 배터리(${l}×${w})가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요`,
+    wBatStandFit: (tk, l) => `⚠ 세운 배터리(${tk}×${l})가 2층에 안 들어갑니다 — 세로 D를 키우거나 배터리 X를 옮기세요`,
+    wBatStandEsp: '⚠ 세운 배터리가 ESP32와 겹칩니다',
+    wBatStandMod: '⚠ 세운 배터리가 충전모듈과 겹칩니다',
+    wBatStandTop: (w) => `⚠ 세운 배터리(높이 ${w})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`,
+    wEspWallYNoBat: '⚠ ESP32가 위/아래 벽과 겹칩니다 — ESP32 Y를 중앙 쪽으로 옮기세요',
+    wEspWidthNoBat: (l) => `⚠ ESP32(길이 ${l})가 가로로 안 들어갑니다 — W를 키우세요`,
+    wEspWall: '⚠ ESP32가 벽과 겹칩니다',
+    wEspStandTop: (h) => `⚠ 세운 ESP32(높이 ${h})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`,
+    wModWall: '⚠ 충전모듈이 위/아래 벽과 겹칩니다',
+    wModCurve: '⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요',
+    wEspModOverlap: '⚠ ESP32와 충전모듈 포켓이 겹칩니다 — 띄움(2.5층)을 올리면 공존 가능',
+    wEspLiftLow: (lift, h, min) => `⚠ ESP32 띄움(${lift})이 충전모듈 높이(${h})보다 낮습니다 — ${min} 이상으로 올리세요`,
+    wEspLiftTop: '⚠ 띄운 ESP32가 3층 상판에 닿습니다 — 띄움을 줄이거나 층 높이를 키우세요',
+    wBeamMod: '⚠ 2.5층 받침 선이 충전모듈 자리를 가로지릅니다 — ESP32 위치를 옮기세요',
+    wBeamBat: '⚠ 2.5층 받침 선이 세운 배터리 자리를 가로지릅니다 — 위치를 조정하세요',
+    wEspTower: '⚠ ESP32가 OLED 타워와 겹칩니다',
+    wModTower: '⚠ 충전모듈이 OLED 타워와 겹칩니다',
+    wLedTower: '⚠ LED가 OLED 타워(노치)와 겹칩니다',
+    wBatTower: '⚠ 650 배터리가 OLED 타워와 겹칩니다',
+    wTowerTop: '⚠ OLED 타워가 3층 상판을 뚫습니다 — 2층 또는 3층 높이를 키우세요',
+    wOledBig: '⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요',
+    wF1Low: '⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)',
+    wCoverRib: (len, base) => `⚠ 커버 세모 받침이 스위치 자리 때문에 ${len}mm로 줄었습니다 (기준 ${base})`,
+    wSwThrough: '⚠ 스위치 홀더가 뚜껑 아래로 뚫고 나갑니다 — 매립을 줄이거나 3층/보스를 키우세요',
+    wDblD: '⚠ 더블 모드는 세로 D 60 이상을 권장합니다',
+    wSwGap: '⚠ 스위치 간격이 좁아 딤섬 캐릭터(Ø28.7)끼리 겹칩니다 — 29 이상 권장',
+    wCharWall: '⚠ 캐릭터가 앞뒤 벽에 닿습니다 — D를 키우거나 스위치 간격을 줄이세요',
+    wLidWide: (d) => `⚠ 4층(Ø${d})이 케이스 외곽보다 넓어 밖으로 걸칩니다 — W를 41 이상으로`,
+    wLedWall: '⚠ LED가 3층 벽/외곽과 겹칩니다 — X/Y를 안쪽으로 옮기세요',
+    wLedBoss: '⚠ LED가 스위치 보스/홀더와 겹칩니다 — 밖으로 옮기세요',
+    wLedBand: '⚠ LED가 4층 결합 홈/밴드와 겹칩니다 — 중심 쪽으로 옮기세요',
+    wLidChar: (min) => `⚠ 4층이 딤섬 캐릭터에 닿습니다 — 밴드 높이를 ${min} 이상으로 (또는 캐릭터 없이 사용)`,
+    wBatCup: '⚠ 세운 배터리가 스위치 홀더 컵에 부딪힙니다 — 배터리 X를 옮기거나 층 높이를 키우세요',
+    wEspCup: '⚠ ESP32가 스위치 홀더 컵에 부딪힙니다 — 위치를 옮기거나 층 높이를 키우세요',
+    wBzWall: '⚠ 부저가 벽과 겹칩니다 — 안쪽으로 옮기세요',
+    wBzCup: '⚠ 부저가 스위치 홀더 컵과 겹칩니다 — 자리가 없으면 부저 장착을 2층 바닥으로 바꾸세요',
+    wBzLed: '⚠ 부저가 LED와 겹칩니다',
+    wBzThick: (mm) => `⚠ 부저(8.3)가 3층보다 두꺼워 아래로 ${mm}mm 튀어나옵니다 — 2층 부품과 겹치지 않는지 확인하세요`,
+    wBzEsp: '⚠ 부저가 ESP32와 겹칩니다',
+    wBzMod: '⚠ 부저가 충전모듈과 겹칩니다',
+    wBzLayFlipThrough: '⚠ 눕힌 부저가 3층 상판을 뚫고 나옵니다 — 층 높이를 키우세요',
+    wBzLayPocket: '⚠ 눕힌 부저 파임이 스위치 포켓까지 침범합니다 — X/Y를 옮기세요',
+    wBzLayCup: '⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)',
+    wBzCupBelow: '⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요',
+    wBzTop: '⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요',
+  },
+};
+// 정적 UI 텍스트 (index.html의 data-i18n / data-i18n-html / data-i18n-title 키) — I18N에 병합
+const STATIC_I18N = {
+  en: {
+    appTitle: '🥟 Dim Sum Clicker Configurator',
+    sub: 'Move the sliders to redesign the STL in real time',
+    secSettings: '⚙ Settings',
+    lblLanguage: 'Language', optLangEn: 'English', optLangKo: '한국어 (Korean)',
+    secOuter: 'Outer design',
+    lblShape: 'Shape', optRect: 'Rounded square', optRect2: 'Rounded square double (2 switches)',
+    optCircle: 'Full circle (dim sum steamer)',
+    lblW: 'Width W / diameter', lblD: 'Depth D', lblCorner: 'Corner rounding',
+    lblWall: 'Wall thickness', lblFit: 'Fit clearance', lblBands: 'Decorative grooves',
+    hintOuter: 'Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.',
+    secLayers: 'Layer heights',
+    lblF1: 'Layer 1 (battery)', lblF2: 'Layer 2 (board)', lblF3: 'Layer 3 (switch)',
+    lblLid: 'Layer 4 (dim sum lid)', lblLidH: 'Layer 4 band height',
+    hintLayers: 'Layer 4 = the bun_lid design (Ø41) placed as-is as the dim sum lid. Adjust the total height with the band height; the joint uses the same square tab and groove as Layers 1·2·3 (fit clearance applied), with the groove on the Layer 3 top plate and the tab on the Layer 4 underside. To fully cover the character (21.6), use at least the band height shown in the warnings.',
+    secLayout2: 'Component layout (Layer 2)',
+    tCenter: 'Center', tCenterTitle: 'Center (Y=0)',
+    lblEspRot: 'ESP32 rotation',
+    optEsp0: 'Flat (24×18)', optEsp90: 'Flat rotated (18×24)',
+    optEspS0: 'Upright-wide (24×5, h18)', optEspS90: 'Upright-tall (5×24, h18)',
+    optEspU0: 'Upright-USB down (18×5, h24)', optEspU90: 'Upright-USB down tall (5×18, h24)',
+    lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune', lblModY: 'Charge module Y',
+    lblBatType: 'Battery capacity', optBatNone: 'No battery (ESP32 direct USB)',
+    lblBatPose: 'Battery placement', optBatFlat: 'Flat on Layer 1', optBatStand: 'Upright on Layer 2 (slot-in)',
+    lblBatX: 'Battery X (upright)',
+    lblOledType: 'OLED type', optOled096: '0.96" (pocket 25.5×27.3, 4-hole pin mount)',
+    lblOledSide: 'OLED position', optOledW: 'West wall (opposite USB)', optOledN: 'North wall (back)',
+    optOledS: 'South wall (front)', optOledNone: 'None',
+    lblOledProud: 'OLED protrusion', lblOledPod: 'OLED separate pod', lblOledCover: 'OLED back cover',
+    lblWireX: 'Wire hole X', lblWireY: 'Wire hole Y', lblWireRot: 'Wire hole orientation',
+    optWire0: 'Horizontal (14×5)', optWire90: 'Vertical (5×14)',
+    hintLayout2: 'The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.',
+    secLayout3: 'Component layout (Layer 3)',
+    lblBoss: 'Switch boss', lblBossH: 'Boss height', lblSink: 'Switch recess depth',
+    lblSwGap: 'Switch spacing (double)', lblPocketX: 'Pocket width (X)', lblPocketY: 'Pocket depth (Y)',
+    lblCornerOut: 'Pocket corner clearance', lblSteam: 'Steamer floor slats',
+    lblLedType: 'LED type',
+    optLed3: '3mm round (hole Ø3.3, protrusion ~1.2)', optLed4: '4mm round (hole Ø4.3, protrusion ~2.6)',
+    optLed5: '5mm round (hole Ø5.3, protrusion ~4.5)', optLedR25: '2×5 rect two-tone 3-pin (hole 2.3×5.3, protrusion ~3.8)',
+    lblBz: 'Buzzer (Ø12 piezo)', lblBzMount: 'Buzzer mount',
+    optBzF2: 'Layer 2 floor upright (recess + ring)', optBzF2s: 'Layer 2 floor laid down (half-round groove)',
+    optBzF3: 'Layer 3 ceiling (sleeve hang)', lblBzX: 'Buzzer X', lblBzY: 'Buzzer Y',
+    hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that does not pierce the top plate; if it is tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.',
+    secView: 'View', lblExplode: 'Explode ⟷ Assemble', btnAnim: '▶ Assembly animation', btnReset: 'Reset settings',
+    secExport: 'STL export',
+    btnEx1: 'Layer 1.stl', btnEx2: 'Layer 2.stl', btnEx3: 'Layer 3.stl', btnEx4: 'Layer 4.stl',
+    btnEx5: 'OLED pod.stl', btnEx6: 'OLED cover.stl', btnExOledTest: 'OLED test.stl',
+    lblFlip3: 'Flip Layer 3 for printing',
+    hintExport: 'Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl is a piece cropped from Layer 2 around the OLED tower only — use it to quickly check the pocket, window, and pin fit without printing the whole part.',
+    secPreset: 'Presets (save/load settings)',
+    btnPresetExport: '⬇ Export (.json)', btnPresetImport: '⬆ Import',
+    hintPreset: 'Save all current settings to a .json file, or load a saved file to restore them exactly. You can manage multiple designs as files.',
+    woHead: 'Wiring table',
+    woHint: 'Auto-updates with current settings · right-click a wire/label to change GPIO',
+    statusText: 'Building model…',
+  },
+  ko: {
+    appTitle: '🥟 딤섬 클리커 컨피규레이터',
+    sub: '슬라이더를 움직이면 STL이 실시간으로 다시 설계됩니다',
+    secSettings: '⚙ 설정',
+    lblLanguage: '언어', optLangEn: 'English', optLangKo: '한국어',
+    secOuter: '외곽 디자인',
+    lblShape: '모양', optRect: '둥근 네모', optRect2: '둥근 네모 더블 (스위치 2개)',
+    optCircle: '완전 원형 (딤섬 찜기)',
+    lblW: '가로 W / 지름', lblD: '세로 D', lblCorner: '모서리 둥글기',
+    lblWall: '벽 두께', lblFit: '결합 유격', lblBands: '장식 홈',
+    hintOuter: '층간·4층 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 설정은 자동 저장됩니다.',
+    secLayers: '층 높이',
+    lblF1: '1층 (배터리)', lblF2: '2층 (보드)', lblF3: '3층 (스위치)',
+    lblLid: '4층 (딤섬 뚜껑)', lblLidH: '4층 밴드 높이',
+    hintLayers: '4층 = bun_lid 디자인(Ø41)이 그대로 올라간 딤섬 뚜껑. 밴드 높이로 전체 높이를 조절하고, 결합부는 1·2·3층과 동일한 사각 턱·홈(결합 유격 적용)으로 홈이 3층 상판에, 턱이 4층 밑면에 있습니다. 캐릭터(21.6)를 완전히 덮으려면 경고에 표시되는 밴드 높이가 필요합니다.',
+    secLayout2: '부품 배치 (2층)',
+    tCenter: '중앙', tCenterTitle: '중앙 정렬 (Y=0)',
+    lblEspRot: 'ESP32 회전',
+    optEsp0: '가로 (24×18)', optEsp90: '세로 (18×24)',
+    optEspS0: '세움-가로 (24×5, 높이 18)', optEspS90: '세움-세로 (5×24, 높이 18)',
+    optEspU0: '세움-USB아래 (18×5, 높이 24)', optEspU90: '세움-USB아래-세로 (5×18, 높이 24)',
+    lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정', lblModY: '충전모듈 Y',
+    lblBatType: '배터리 용량', optBatNone: '배터리 없음 (ESP32 USB 직결)',
+    lblBatPose: '배터리 배치', optBatFlat: '눕혀서 1층', optBatStand: '세워서 2층 (홈에 꽂기)',
+    lblBatX: '배터리 X (세움)',
+    lblOledType: 'OLED 종류', optOled096: '0.96" (포켓 25.5×27.3, 4홀 핀 고정)',
+    lblOledSide: 'OLED 위치', optOledW: '서쪽 벽 (USB 반대)', optOledN: '북쪽 벽 (뒤)',
+    optOledS: '남쪽 벽 (앞)', optOledNone: '없음',
+    lblOledProud: 'OLED 돌출', lblOledPod: 'OLED 분리 포드', lblOledCover: 'OLED 뒷면 커버',
+    lblWireX: '배선구멍 X', lblWireY: '배선구멍 Y', lblWireRot: '배선구멍 방향',
+    optWire0: '가로 (14×5)', optWire90: '세로 (5×14)',
+    hintLayout2: '배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절. <b>OLED 분리 포드</b>를 켜면 OLED 타워(창·포켓 포함)가 별도 출력 파트가 됩니다: 벽 관통 개구에 위에서 아래로 슬라이드 — 텅(전면부)이 외곽면과 플러시로 개구를 채우고, 어깨가 벽 안쪽에 걸리며, 안쪽 U자 소켓 레일이 뒤·옆을 잡습니다. 3층을 덮으면 노치가 위를 눌러 잠금. 포드·레일 모두 서포트 없이 세워서 출력.',
+    secLayout3: '부품 배치 (3층)',
+    lblBoss: '스위치 Boss', lblBossH: 'Boss 높이', lblSink: '스위치 매립 깊이',
+    lblSwGap: '스위치 간격 (더블)', lblPocketX: '포켓 가로 (X)', lblPocketY: '포켓 세로 (Y)',
+    lblCornerOut: '포켓 귀퉁이 여유', lblSteam: '찜통 바닥 슬랫',
+    lblLedType: 'LED 종류',
+    optLed3: '3mm 원형 (구멍 Ø3.3, 돌출 ~1.2)', optLed4: '4mm 원형 (구멍 Ø4.3, 돌출 ~2.6)',
+    optLed5: '5mm 원형 (구멍 Ø5.3, 돌출 ~4.5)', optLedR25: '2×5 사각 투톤 3핀 (구멍 2.3×5.3, 돌출 ~3.8)',
+    lblBz: '부저 (Ø12 피에조)', lblBzMount: '부저 장착',
+    optBzF2: '2층 바닥 세움 (리세스 + 링)', optBzF2s: '2층 바닥 눕힘 (반원 홈)',
+    optBzF3: '3층 천장 (슬리브 매달림)', lblBzX: '부저 X', lblBzY: '부저 Y',
+    hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.',
+    secView: '보기', lblExplode: '분해 ⟷ 조립', btnAnim: '▶ 조립 애니메이션', btnReset: '설정 초기화',
+    secExport: 'STL 내보내기',
+    btnEx1: '1층.stl', btnEx2: '2층.stl', btnEx3: '3층.stl', btnEx4: '4층.stl',
+    btnEx5: 'OLED포드.stl', btnEx6: 'OLED커버.stl', btnExOledTest: 'OLED 테스트.stl',
+    lblFlip3: '3층 출력용 뒤집기',
+    hintExport: '3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 2층에서 OLED 타워 주변만 잘라낸 조각으로, 전체를 뽑지 않고 포켓·창·핀 피팅을 빠르게 확인할 때 쓰세요.',
+    secPreset: '프리셋 (설정 저장/불러오기)',
+    btnPresetExport: '⬇ 내보내기 (.json)', btnPresetImport: '⬆ 불러오기',
+    hintPreset: '현재 모든 설정을 .json 파일로 저장하거나, 저장해둔 파일을 불러와 그대로 복원합니다. 여러 디자인을 파일로 관리할 수 있습니다.',
+    woHead: '배선표',
+    woHint: '현재 설정에 맞춰 자동 갱신 · 전선/라벨 우클릭으로 GPIO 변경',
+    statusText: '모델 생성 중…',
+  },
+};
+Object.assign(I18N.en, STATIC_I18N.en);
+Object.assign(I18N.ko, STATIC_I18N.ko);
+let LANG = 'en';
+try { const s = localStorage.getItem('dimsum-lang'); if (s === 'en' || s === 'ko') LANG = s; } catch (e) { /* 무시 */ }
+function t(key, ...args) {
+  const d = I18N[LANG] || I18N.en;
+  const v = (key in d) ? d[key] : (I18N.en[key] ?? key);
+  return typeof v === 'function' ? v(...args) : v;
+}
+// 정적 텍스트(index.html data-i18n) 일괄 적용
+function applyStaticI18n() {
+  document.documentElement.lang = LANG;
+  const ti = t('title'); if (ti) document.title = ti;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+}
+// 상태 의존 토글 버튼 라벨 (켬/끔 상태를 반영)
+function syncToggleLabels() {
+  const g = document.getElementById('ghostBtn'); if (g) g.textContent = t('tgGhost', showGhosts);
+  const w = document.getElementById('wiresBtn'); if (w) w.textContent = t('tgWires', wiresOn);
+  const x = document.getElementById('xrayBtn'); if (x) x.textContent = t('tgXray', xray);
+}
+// 언어 전환 — 정적/동적 텍스트 모두 갱신 후 저장. 파라미터·모델은 그대로 유지.
+function setLang(l) {
+  LANG = (l === 'ko') ? 'ko' : 'en';
+  try { localStorage.setItem('dimsum-lang', LANG); } catch (e) { /* 무시 */ }
+  applyStaticI18n();
+  syncToggleLabels();
+  renderWireTable();
+  updateWires();
+  rebuild();
+}
+
+// ------------------------------------------------------------------
 // 부품 실측 상수 (mm)
 // ------------------------------------------------------------------
 // 배터리 종류별 실측 — L=길이, W=폭(세움 시 높이), T=두께(세움 시 끼움 방향)
@@ -389,9 +724,9 @@ presetFile.addEventListener('change', e => {
       syncControls();
       saveParams();
       rebuild();
-      document.getElementById('warnings').textContent = `✓ 프리셋 불러옴 (${n}개 항목 적용)`;
+      document.getElementById('warnings').textContent = t('presetLoaded', n);
     } catch (err) {
-      document.getElementById('warnings').textContent = '⚠ 프리셋 파일을 읽을 수 없습니다 (JSON 형식 오류)';
+      document.getElementById('warnings').textContent = t('presetError');
     }
   };
   r.readAsText(file);
@@ -1354,7 +1689,7 @@ function rebuild() {
     try {
       const t0 = performance.now();
       const builders = [buildFloor1, buildFloor2, buildFloor3, buildLid, buildOledPod, buildOledCover];
-      const names = ['1층', '2층', '3층', '4층', 'OLED 포드', 'OLED 커버'];
+      const names = t('layerNames');
       for (let i = 0; i < 6; i++) {
         if (i < 4) G[i].clear();        // 포드(i=4)는 G[1]에 얹혀 2층과 함께 움직임
         else if (i === 5) G[4].clear(); // 커버(i=5)는 자체 그룹 G[4] — 분해 애니메이션 참여
@@ -1374,7 +1709,7 @@ function rebuild() {
         } catch (e) {
           exportGeos[i] = null;
           floorMeshes[i] = null;
-          buildErrs.push(`⚠ ${names[i]} 생성 오류: ${e.message || e}`);
+          buildErrs.push(t('buildErr', names[i], e.message || e));
           console.error(names[i], e);
         }
       }
@@ -1382,7 +1717,7 @@ function rebuild() {
       applyExplode();
       updateInfo(performance.now() - t0, checkFit());
     } catch (e) {
-      buildErrs.push('⚠ 생성 오류: ' + (e.message || e));
+      buildErrs.push(t('buildErrGeneric', e.message || e));
       console.error(e);
     }
     if (buildErrs.length) {
@@ -1459,13 +1794,13 @@ const ESP_PINS = {
 const ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
 // 우클릭으로 핀을 바꿀 수 있는 배선 (태그 → P 키/이름). ESP32-C3는 I2C 핀도 자유 지정 가능
 const GPIO_ROLES = {
-  gpio: { key: 'swGpio', name: '스위치' },
-  gpio2: { key: 'sw2Gpio', name: '스위치 2' },
-  sda:  { key: 'sdaGpio', name: 'OLED SDA' },
-  scl:  { key: 'sclGpio', name: 'OLED SCL' },
-  led:  { key: 'ledGpio', name: 'LED' },
-  led2: { key: 'led2Gpio', name: 'LED 초록' },
-  bz:   { key: 'bzGpio', name: '부저' },
+  gpio: { key: 'swGpio', name: 'roleSwitch' },
+  gpio2: { key: 'sw2Gpio', name: 'roleSwitch2' },
+  sda:  { key: 'sdaGpio', name: 'roleOledSda' },
+  scl:  { key: 'sclGpio', name: 'roleOledScl' },
+  led:  { key: 'ledGpio', name: 'roleLed' },
+  led2: { key: 'led2Gpio', name: 'roleLedGreen' },
+  bz:   { key: 'bzGpio', name: 'roleBuzzer' },
 };
 
 // ------------------------------------------------------------------
@@ -1480,48 +1815,48 @@ function renderWireTable() {
     `<tr><td><span class="sw" style="background:${hex(color)}"></span></td>` +
     `<td>${from}</td><td>${to}</td><td>${note}</td></tr>`);
   if (noBat()) {
-    grp('전원');
-    row(WIRE_COLORS.plus, 'USB-C', 'ESP32 직결', '배터리 없음');
+    grp(t('wtGrpPower'));
+    row(WIRE_COLORS.plus, t('wtUsbC'), t('wtEspDirect'), t('wtNoBattery'));
   } else {
-    grp('전원 (배터리 → 충전모듈 → ESP32)');
-    row(WIRE_COLORS.plus, '배터리 +', '충전모듈 B+');
-    row(WIRE_COLORS.minus, '배터리 −', '충전모듈 B−');
-    row(WIRE_COLORS.plus, '충전모듈 OUT+', 'ESP32 5V');
-    row(WIRE_COLORS.minus, '충전모듈 OUT−', 'ESP32 GND');
+    grp(t('wtGrpPowerChain'));
+    row(WIRE_COLORS.plus, t('wtBatPlus'), t('wtChgBplus'));
+    row(WIRE_COLORS.minus, t('wtBatMinus'), t('wtChgBminus'));
+    row(WIRE_COLORS.plus, t('wtChgOutPlus'), t('wtEsp5v'));
+    row(WIRE_COLORS.minus, t('wtChgOutMinus'), t('wtEspGnd'));
   }
   if (P.oledSide !== 'none') {
-    grp('OLED (I2C)');
-    row(WIRE_COLORS.plus, 'OLED VCC', 'ESP32 3V3');
-    row(WIRE_COLORS.minus, 'OLED GND', 'ESP32 GND');
-    row(WIRE_COLORS.sda, 'OLED SDA', 'GPIO ' + P.sdaGpio);
-    row(WIRE_COLORS.scl, 'OLED SCL', 'GPIO ' + P.sclGpio, '모듈 표기는 SCK이기도');
+    grp(t('wtGrpOled'));
+    row(WIRE_COLORS.plus, t('wtOledVcc'), t('wtEsp3v3'));
+    row(WIRE_COLORS.minus, t('wtOledGnd'), t('wtEspGnd'));
+    row(WIRE_COLORS.sda, t('wtOledSda'), 'GPIO ' + P.sdaGpio);
+    row(WIRE_COLORS.scl, t('wtOledScl'), 'GPIO ' + P.sclGpio, t('wtSckNote'));
   }
-  grp('스위치 (MX)');
+  grp(t('wtGrpSwitch'));
   if (dbl()) {
-    row(WIRE_COLORS.gpio, '스위치1 핀 A', 'GPIO ' + P.swGpio, '내부 풀업 입력');
-    row(WIRE_COLORS.minus, '스위치1 핀 B', 'ESP32 GND');
-    row(WIRE_COLORS.gpio, '스위치2 핀 A', 'GPIO ' + P.sw2Gpio, '내부 풀업 입력');
-    row(WIRE_COLORS.minus, '스위치2 핀 B', 'ESP32 GND');
+    row(WIRE_COLORS.gpio, t('wtSw1PinA'), 'GPIO ' + P.swGpio, t('wtPullup'));
+    row(WIRE_COLORS.minus, t('wtSw1PinB'), t('wtEspGnd'));
+    row(WIRE_COLORS.gpio, t('wtSw2PinA'), 'GPIO ' + P.sw2Gpio, t('wtPullup'));
+    row(WIRE_COLORS.minus, t('wtSw2PinB'), t('wtEspGnd'));
   } else {
-    row(WIRE_COLORS.gpio, '스위치 핀 A', 'GPIO ' + P.swGpio, '내부 풀업 입력');
-    row(WIRE_COLORS.minus, '스위치 핀 B', 'ESP32 GND');
+    row(WIRE_COLORS.gpio, t('wtSwPinA'), 'GPIO ' + P.swGpio, t('wtPullup'));
+    row(WIRE_COLORS.minus, t('wtSwPinB'), t('wtEspGnd'));
   }
   if (P.ledOn) {
     if (ledSpec().rect) {
-      grp('LED (2×5 투톤 3핀)');
-      row(WIRE_COLORS.led, 'LED 빨강 (1번 핀)', 'GPIO ' + P.ledGpio, '저항 150~220Ω');
-      row(WIRE_COLORS.led2, 'LED 초록 (3번 핀)', 'GPIO ' + P.led2Gpio, '저항 150~220Ω');
-      row(WIRE_COLORS.minus, 'LED 공통 − (가운데)', 'ESP32 GND');
+      grp(t('wtGrpLedRgb'));
+      row(WIRE_COLORS.led, t('wtLedRed'), 'GPIO ' + P.ledGpio, t('wtResistor'));
+      row(WIRE_COLORS.led2, t('wtLedGreen'), 'GPIO ' + P.led2Gpio, t('wtResistor'));
+      row(WIRE_COLORS.minus, t('wtLedCommon'), t('wtEspGnd'));
     } else {
-      grp('LED (원형 ' + ledSpec().d + 'mm)');
-      row(WIRE_COLORS.led, 'LED + (긴 다리)', 'GPIO ' + P.ledGpio, '저항 150~220Ω');
-      row(WIRE_COLORS.minus, 'LED − (짧은 다리)', 'ESP32 GND');
+      grp(t('wtGrpLedRound', ledSpec().d));
+      row(WIRE_COLORS.led, t('wtLedPlusLeg'), 'GPIO ' + P.ledGpio, t('wtResistor'));
+      row(WIRE_COLORS.minus, t('wtLedMinusLeg'), t('wtEspGnd'));
     }
   }
   if (P.bzOn) {
-    grp('피에조 부저');
-    row(WIRE_COLORS.bz, '부저 +', 'GPIO ' + P.bzGpio, 'PWM 톤');
-    row(WIRE_COLORS.minus, '부저 −', 'ESP32 GND');
+    grp(t('wtGrpBuzzer'));
+    row(WIRE_COLORS.bz, t('wtBzPlus'), 'GPIO ' + P.bzGpio, t('wtPwmTone'));
+    row(WIRE_COLORS.minus, t('wtBzMinus'), t('wtEspGnd'));
   }
   wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
 }
@@ -1581,8 +1916,8 @@ function updateWires() {
     const modW = mc ? mc.x - MOD.l / 2 : 0;                   // 모듈 서쪽(USB 반대) 끝
     const bz = z2b + F2_PLATE + 2;                            // 모듈 패드 높이
     const holeTop = z2b + F2_PLATE + F2_PLATFORM + 1.5;
-    if (mc) for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, '배터리 +', 'B+'],
-                                             [-1, WIRE_COLORS.minus, '배터리 −', 'B−']]) {
+    if (mc) for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, t('wtBatPlus'), 'B+'],
+                                             [-1, WIRE_COLORS.minus, t('wtBatMinus'), 'B−']]) {
       if (batStand()) {
         addWire([
           [P.batX + sy * 2, sy * 4, z2b + F2_PLATE + batSpec().W],
@@ -1659,9 +1994,9 @@ function updateWires() {
       const dropMid = (p, dst) =>
         [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (below + dst[2]) / 2];
       const swCfg = dbl()
-        ? [{ oy: -P.swGap / 2, gpio: P.swGpio, tag: 'gpio', lb: '스위치1' },
-           { oy: P.swGap / 2, gpio: P.sw2Gpio, tag: 'gpio2', lb: '스위치2' }]
-        : [{ oy: 0, gpio: P.swGpio, tag: 'gpio', lb: '스위치' }];
+        ? [{ oy: -P.swGap / 2, gpio: P.swGpio, tag: 'gpio', lb: t('spSw1') },
+           { oy: P.swGap / 2, gpio: P.sw2Gpio, tag: 'gpio2', lb: t('spSw2') }]
+        : [{ oy: 0, gpio: P.swGpio, tag: 'gpio', lb: t('spSw') }];
       for (const c of swCfg) {
         const pinSw = espPin(...(ESP_PINS[c.gpio] || ESP_PINS[4]));
         const pinA = [3.8, c.oy - 2.7], pinB = [-2.7, c.oy - 5.2];   // 홀더 구리선 구멍 = 스위치 핀 위치
@@ -1710,14 +2045,14 @@ function updateWires() {
           : z2b + F2_PLATE + F2_PLATFORM - BZ.sink + 1;
         lA = [P.bzX - 3.25, P.bzY, zLeg]; lB = [P.bzX + 3.25, P.bzY, zLeg];
       }
-      addWire([lA, dm(lA, pinBz), pinBz], WIRE_COLORS.bz, '부저+', 'G' + P.bzGpio, 'bz');
-      addWire([lB, dm(lB, pinGND), pinGND], WIRE_COLORS.minus, '부저−', null);
+      addWire([lA, dm(lA, pinBz), pinBz], WIRE_COLORS.bz, t('spBzPlus'), 'G' + P.bzGpio, 'bz');
+      addWire([lB, dm(lB, pinGND), pinGND], WIRE_COLORS.minus, t('spBzMinus'), null);
     }
   } catch (e) { /* 초기화 전 호출 등은 무시 */ }
 }
 document.getElementById('wiresBtn').addEventListener('click', e => {
   wiresOn = !wiresOn;
-  e.target.textContent = '배선 표시: ' + (wiresOn ? '켬' : '끔');
+  e.target.textContent = t('tgWires', wiresOn);
   document.getElementById('wireOverlay').style.display = wiresOn ? '' : 'none';   // 배선표 오버레이도 함께
   updateWires();
 });
@@ -1737,7 +2072,7 @@ const gpioTitle = gpioMenu.querySelector('#gpioTitle');
 function openGpioMenu(tag, clientX, clientY) {
   const role = GPIO_ROLES[tag];
   if (!role) return;
-  gpioTitle.textContent = role.name + ' GPIO 선택';
+  gpioTitle.textContent = t('gpioSelect', t(role.name));
   // 다른 배선이 이미 쓰는 핀은 제외 (충돌 방지)
   const used = Object.values(GPIO_ROLES).filter(r => r.key !== role.key).map(r => +P[r.key]);
   gpioGrid.innerHTML = '';
@@ -1803,12 +2138,12 @@ document.getElementById('animBtn').addEventListener('click', () => {
 
 document.getElementById('ghostBtn').addEventListener('click', e => {
   showGhosts = !showGhosts;
-  e.target.textContent = '부품 표시: ' + (showGhosts ? '켬' : '끔');
+  e.target.textContent = t('tgGhost', showGhosts);
   G.forEach(g => g.traverse(o => { if (o.userData.ghost) o.visible = showGhosts; }));
 });
 document.getElementById('xrayBtn').addEventListener('click', e => {
   xray = !xray;
-  e.target.textContent = '케이스 반투명: ' + (xray ? '켬' : '끔');
+  e.target.textContent = t('tgXray', xray);
   floorMeshes.forEach(m => { if (m) m.material = xray ? matCaseX : matCase; });
 });
 
@@ -1827,16 +2162,16 @@ function rectsOverlap(a, b) {
 function updateInfo(ms, fit) {
   const total = P.f1H + P.f2H + P.f3H + effBossH();
   const fitTxt = fit
-    ? (fit.ok ? ' · 조립 간섭 없음 ✓' : ` · 조립 간섭 ${fit.i12.toFixed(1)}/${fit.i23.toFixed(1)}/${(fit.i34 || 0).toFixed(1)}/${(fit.iPod || 0).toFixed(1)}mm³ ⚠`)
+    ? (fit.ok ? t('fitOk') : t('fitBad', fit.i12.toFixed(1), fit.i23.toFixed(1), (fit.i34 || 0).toFixed(1), (fit.iPod || 0).toFixed(1)))
     : '';
   const sizeTxt = P.shape === 'circle' ? `Ø${P.W}` : `${P.W} × ${P.D}`;
-  const lidTxt = P.lidOn && !dbl() ? ` · 4층 Ø${LID.r * 2} × ${(RIDGE_H + P.lidH + LID.h).toFixed(1)}mm` : '';
+  const lidTxt = P.lidOn && !dbl() ? t('infoLid', LID.r * 2, (RIDGE_H + P.lidH + LID.h).toFixed(1)) : '';
   document.getElementById('dims').textContent =
-    `전체 ${sizeTxt} × ${total.toFixed(1)}mm (보스 포함)${lidTxt} · CSG ${ms.toFixed(0)}ms${fitTxt}`;
+    t('infoDims', sizeTxt, total.toFixed(1), lidTxt, ms.toFixed(0), fitTxt);
   const warn = [];
-  if (fit && !fit.ok) warn.push('⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요');
+  if (fit && !fit.ok) warn.push(t('wFit'));
   if (!noBat() && !batStand() && !insideInner(batSpec().L / 2 + 0.4, batSpec().W / 2 + 0.4))
-    warn.push(`⚠ 배터리(${batSpec().L}×${batSpec().W})가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요`);
+    warn.push(t('wBatFit', batSpec().L, batSpec().W));
   const ef = espFoot();
   const eRect = noBat()
     ? { x: espDock().x, y: espDock().y, w: ESP.l + POCKET_CLR, d: ESP.w + POCKET_CLR }
@@ -1847,36 +2182,36 @@ function updateInfo(ms, fit) {
     ? { x: P.batX, y: 0, w: batSpec().T + batSpec().clr, d: batSpec().L + batSpec().clr } : null;
   if (bRect650) {
     if (!insideInner(Math.abs(P.batX) + bRect650.w / 2, bRect650.d / 2))
-      warn.push(`⚠ 세운 배터리(${batSpec().T}×${batSpec().L})가 2층에 안 들어갑니다 — 세로 D를 키우거나 배터리 X를 옮기세요`);
-    if (rectsOverlap(bRect650, eRect)) warn.push('⚠ 세운 배터리가 ESP32와 겹칩니다');
-    if (rectsOverlap(bRect650, mRect)) warn.push('⚠ 세운 배터리가 충전모듈과 겹칩니다');
+      warn.push(t('wBatStandFit', batSpec().T, batSpec().L));
+    if (rectsOverlap(bRect650, eRect)) warn.push(t('wBatStandEsp'));
+    if (rectsOverlap(bRect650, mRect)) warn.push(t('wBatStandMod'));
     if (F2_PLATE + batSpec().W > P.f2H + P.f3H - F3_PLATE - 0.3)
-      warn.push(`⚠ 세운 배터리(높이 ${batSpec().W})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`);
+      warn.push(t('wBatStandTop', batSpec().W));
   }
   if (noBat()) {
     // 도킹 모드: 동쪽 벽에 붙는 건 정상 — Y 방향과 가로 수납만 검사
     if (P.shape !== 'circle' && Math.abs(P.espY) + (ESP.w + POCKET_CLR) / 2 > innerHalfD() - 1)
-      warn.push('⚠ ESP32가 위/아래 벽과 겹칩니다 — ESP32 Y를 중앙 쪽으로 옮기세요');
+      warn.push(t('wEspWallYNoBat'));
     if (eRect.x - eRect.w / 2 < -innerHalfW() + 0.5)
-      warn.push(`⚠ ESP32(길이 ${ESP.l})가 가로로 안 들어갑니다 — W를 키우세요`);
-  } else if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push('⚠ ESP32가 벽과 겹칩니다');
+      warn.push(t('wEspWidthNoBat', ESP.l));
+  } else if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push(t('wEspWall'));
   if (espStand() && espBaseZ() + (espUsbDown() ? ESP.l : ESP.w) > P.f2H + P.f3H - F3_PLATE - 0.3)
-    warn.push(`⚠ 세운 ESP32(높이 ${espUsbDown() ? ESP.l : ESP.w})가 3층 상판에 닿습니다 — 2·3층 높이를 키우세요`);
-  if (!noBat() && P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push('⚠ 충전모듈이 위/아래 벽과 겹칩니다');
-  if (!noBat() && P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push('⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요');
+    warn.push(t('wEspStandTop', espUsbDown() ? ESP.l : ESP.w));
+  if (!noBat() && P.shape !== 'circle' && Math.abs(P.modY) + (MOD.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push(t('wModWall'));
+  if (!noBat() && P.shape !== 'circle' && mc.edgeX < MOD.l - 2) warn.push(t('wModCurve'));
   const espLifted = !noBat() && !espStand() && P.espLift > 0;
   if (mRect && rectsOverlap(eRect, mRect)) {
-    if (!espLifted) warn.push('⚠ ESP32와 충전모듈 포켓이 겹칩니다 — 띄움(2.5층)을 올리면 공존 가능');
+    if (!espLifted) warn.push(t('wEspModOverlap'));
     else if (P.espLift < MOD.h + 0.8)
-      warn.push(`⚠ ESP32 띄움(${P.espLift})이 충전모듈 높이(${MOD.h})보다 낮습니다 — ${(MOD.h + 1).toFixed(0)} 이상으로 올리세요`);
+      warn.push(t('wEspLiftLow', P.espLift, MOD.h, (MOD.h + 1).toFixed(0)));
   }
   if (espLifted && F2_PLATE + P.espLift + P.espZ - LIFT_SINK + ESP.h > P.f2H + P.f3H - F3_PLATE - 0.3)
-    warn.push('⚠ 띄운 ESP32가 3층 상판에 닿습니다 — 띄움을 줄이거나 층 높이를 키우세요');
+    warn.push(t('wEspLiftTop'));
   if (espLifted) {
     const beamRect = P.espRot === 90
       ? { x: P.espX, y: 0, w: 8, d: effD() } : { x: 0, y: P.espY, w: P.W, d: 8 };
-    if (mRect && rectsOverlap(beamRect, mRect)) warn.push('⚠ 2.5층 받침 선이 충전모듈 자리를 가로지릅니다 — ESP32 위치를 옮기세요');
-    if (bRect650 && rectsOverlap(beamRect, bRect650)) warn.push('⚠ 2.5층 받침 선이 세운 배터리 자리를 가로지릅니다 — 위치를 조정하세요');
+    if (mRect && rectsOverlap(beamRect, mRect)) warn.push(t('wBeamMod'));
+    if (bRect650 && rectsOverlap(beamRect, bRect650)) warn.push(t('wBeamBat'));
   }
   if (P.oledSide !== 'none') {
     const of = oledFrame();
@@ -1886,52 +2221,52 @@ function updateInfo(ms, fit) {
     const tower = P.oledSide === 'W'
       ? { x: -(P.W / 2 - tD / 2), y: 0, w: tD, d: tW }
       : { x: 0, y: (P.oledSide === 'N' ? 1 : -1) * (effD() / 2 - tD / 2), w: tW, d: tD };
-    if (rectsOverlap(eRect, tower)) warn.push('⚠ ESP32가 OLED 타워와 겹칩니다');
-    if (mRect && rectsOverlap(mRect, tower)) warn.push('⚠ 충전모듈이 OLED 타워와 겹칩니다');
+    if (rectsOverlap(eRect, tower)) warn.push(t('wEspTower'));
+    if (mRect && rectsOverlap(mRect, tower)) warn.push(t('wModTower'));
     if (P.ledOn && rectsOverlap({ x: P.ledX, y: P.ledY, w: ledSpec().fl, d: ledSpec().fl }, tower))
-      warn.push('⚠ LED가 OLED 타워(노치)와 겹칩니다');
-    if (bRect650 && rectsOverlap(bRect650, tower)) warn.push('⚠ 650 배터리가 OLED 타워와 겹칩니다');
+      warn.push(t('wLedTower'));
+    if (bRect650 && rectsOverlap(bRect650, tower)) warn.push(t('wBatTower'));
     if (oledTowerTop() - P.f2H > P.f3H - F3_PLATE - 0.3)
-      warn.push('⚠ OLED 타워가 3층 상판을 뚫습니다 — 2층 또는 3층 높이를 키우세요');
+      warn.push(t('wTowerTop'));
     if (of.seatY < oledSpec().t + 4)
-      warn.push('⚠ OLED가 벽 폭/곡률에 비해 큽니다 — 지름(W)을 키우세요');
+      warn.push(t('wOledBig'));
   }
-  if (!noBat() && !batStand() && P.f1H < F1_PLATE + batSpec().T + 1.2) warn.push('⚠ 1층이 너무 낮습니다 (배터리 + 배선 공간 부족)');
+  if (!noBat() && !batStand() && P.f1H < F1_PLATE + batSpec().T + 1.2) warn.push(t('wF1Low'));
   // 스위치 홀더 컵 하단 (3층 로컬 z)
   if (oledCoverNeeded() && coverRibL() < COVER.ribL - 0.01)
-    warn.push(`⚠ 커버 세모 받침이 스위치 자리 때문에 ${coverRibL().toFixed(1)}mm로 줄었습니다 (기준 ${COVER.ribL})`);
+    warn.push(t('wCoverRib', coverRibL().toFixed(1), COVER.ribL));
   const cupBotZ = P.f3H + effBossH() - P.standSink - SW.seatH - SW.floorT;
   if (cupBotZ < 0.5)
-    warn.push('⚠ 스위치 홀더가 뚜껑 아래로 뚫고 나갑니다 — 매립을 줄이거나 3층/보스를 키우세요');
+    warn.push(t('wSwThrough'));
   if (dbl()) {
-    if (P.D < 60) warn.push('⚠ 더블 모드는 세로 D 60 이상을 권장합니다');
-    if (P.swGap < 29) warn.push('⚠ 스위치 간격이 좁아 딤섬 캐릭터(Ø28.7)끼리 겹칩니다 — 29 이상 권장');
+    if (P.D < 60) warn.push(t('wDblD'));
+    if (P.swGap < 29) warn.push(t('wSwGap'));
     if (P.swGap / 2 + 14.4 > innerHalfD())
-      warn.push('⚠ 캐릭터가 앞뒤 벽에 닿습니다 — D를 키우거나 스위치 간격을 줄이세요');
+      warn.push(t('wCharWall'));
   }
   if (P.lidOn && !dbl() && LID.r * 2 > Math.min(P.W, effD()) + 0.1)
-    warn.push(`⚠ 4층(Ø${LID.r * 2})이 케이스 외곽보다 넓어 밖으로 걸칩니다 — W를 41 이상으로`);
+    warn.push(t('wLidWide', LID.r * 2));
   if (P.ledOn) {
     const lfr = ledSpec().fl / 2 + 0.1;   // 플랜지 반경 + 여유
     if (!insideInner(Math.abs(P.ledX) + lfr, Math.abs(P.ledY) + lfr))
-      warn.push('⚠ LED가 3층 벽/외곽과 겹칩니다 — X/Y를 안쪽으로 옮기세요');
+      warn.push(t('wLedWall'));
     const ox = (P.bossOn ? 10.5 : SW.cup / 2) + lfr, oy = (P.bossOn ? 11.5 : SW.cup / 2) + lfr;
     if (Math.abs(P.ledX) < ox && Math.abs(P.ledY) < oy)
-      warn.push('⚠ LED가 스위치 보스/홀더와 겹칩니다 — 밖으로 옮기세요');
+      warn.push(t('wLedBoss'));
     if (P.lidOn && !dbl() && Math.hypot(P.ledX, P.ledY) + lfr > LID.r - LID.bandW - 0.6)
-      warn.push('⚠ LED가 4층 결합 홈/밴드와 겹칩니다 — 중심 쪽으로 옮기세요');
+      warn.push(t('wLedBand'));
   }
   if (P.lidOn && !dbl() && P.lidH + LID.innerH < charTopOverLid() + 0.3)
-    warn.push(`⚠ 4층이 딤섬 캐릭터에 닿습니다 — 밴드 높이를 ${Math.max(0, charTopOverLid() + 0.5 - LID.innerH).toFixed(1)} 이상으로 (또는 캐릭터 없이 사용)`);
+    warn.push(t('wLidChar', Math.max(0, charTopOverLid() + 0.5 - LID.innerH).toFixed(1)));
   const cupRect = { x: 0, y: 0, w: SW.cup, d: SW.cup + (dbl() ? P.swGap : 0) };
   if (bRect650 && rectsOverlap(bRect650, cupRect) && F2_PLATE + batSpec().W > P.f2H + cupBotZ - 0.3)
-    warn.push('⚠ 세운 배터리가 스위치 홀더 컵에 부딪힙니다 — 배터리 X를 옮기거나 층 높이를 키우세요');
+    warn.push(t('wBatCup'));
   const espTopLocal = espStand()
     ? espBaseZ() + (espUsbDown() ? ESP.l : ESP.w)
     : F2_PLATE + P.espZ + (P.espLift > 0 ? P.espLift - LIFT_SINK : 0) + ESP.h;
   if ((espStand() || espLifted) && rectsOverlap(eRect, cupRect) &&
       espTopLocal > P.f2H + cupBotZ - 0.3)
-    warn.push('⚠ ESP32가 스위치 홀더 컵에 부딪힙니다 — 위치를 옮기거나 층 높이를 키우세요');
+    warn.push(t('wEspCup'));
   if (P.bzOn) {
     const side = P.bzMount === 'f2s';
     const hx2 = side ? (BZ.h + 0.5) / 2 : BZ.d / 2 + BZ.clr;
@@ -1941,32 +2276,32 @@ function updateInfo(ms, fit) {
       ? (side ? Math.hypot(Math.abs(P.bzX) + hx2, Math.abs(P.bzY) + hy2)
               : Math.hypot(P.bzX, P.bzY) + hx2) > P.W / 2 - P.wall + 0.1
       : !insideInner(Math.abs(P.bzX) + hx2, Math.abs(P.bzY) + hy2);
-    if (wallHit) warn.push('⚠ 부저가 벽과 겹칩니다 — 안쪽으로 옮기세요');
+    if (wallHit) warn.push(t('wBzWall'));
     if (P.bzMount === 'f3') {
       if (rectsOverlap(bzR, cupRect))
-        warn.push('⚠ 부저가 스위치 홀더 컵과 겹칩니다 — 자리가 없으면 부저 장착을 2층 바닥으로 바꾸세요');
+        warn.push(t('wBzCup'));
       if (P.ledOn && Math.hypot(P.ledX - P.bzX, P.ledY - P.bzY) < BZ.d / 2 + BZ.clr + ledSpec().fl / 2 + 0.3)
-        warn.push('⚠ 부저가 LED와 겹칩니다');
+        warn.push(t('wBzLed'));
       if (P.f3H - F3_PLATE < BZ.h)
-        warn.push(`⚠ 부저(8.3)가 3층보다 두꺼워 아래로 ${(BZ.h - P.f3H + F3_PLATE).toFixed(1)}mm 튀어나옵니다 — 2층 부품과 겹치지 않는지 확인하세요`);
+        warn.push(t('wBzThick', (BZ.h - P.f3H + F3_PLATE).toFixed(1)));
     } else {
-      if (rectsOverlap(bzR, eRect)) warn.push('⚠ 부저가 ESP32와 겹칩니다');
-      if (mRect && rectsOverlap(bzR, mRect)) warn.push('⚠ 부저가 충전모듈과 겹칩니다');
+      if (rectsOverlap(bzR, eRect)) warn.push(t('wBzEsp'));
+      if (mRect && rectsOverlap(bzR, mRect)) warn.push(t('wBzMod'));
       const bzTop = F2_PLATE + F2_PLATFORM + (side ? BZ.d - BZ.sideSink : BZ.h - BZ.sink);
       if (side) {
         // 3층 파임은 자동 — 관통·스위치 포켓 침범만 경고
         if (bzTop > P.f2H + P.f3H - 0.3)
-          warn.push('⚠ 눕힌 부저가 3층 상판을 뚫고 나옵니다 — 층 높이를 키우세요');
+          warn.push(t('wBzLayFlipThrough'));
         if (bzTop > P.f2H + cupBotZ &&
             rectsOverlap(bzR, { x: 0, y: 0, w: P.swBodyX + 2, d: P.swBodyY + 2 }))
-          warn.push('⚠ 눕힌 부저 파임이 스위치 포켓까지 침범합니다 — X/Y를 옮기세요');
+          warn.push(t('wBzLayPocket'));
         else if (bzTop > P.f2H + cupBotZ && rectsOverlap(bzR, cupRect))
-          warn.push('⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)');
+          warn.push(t('wBzLayCup'));
       } else {
         if (rectsOverlap(bzR, cupRect) && bzTop > P.f2H + cupBotZ - 0.2)
-          warn.push('⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요');
+          warn.push(t('wBzCupBelow'));
         else if (bzTop > P.f2H + P.f3H - F3_PLATE - 0.3)
-          warn.push('⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요');
+          warn.push(t('wBzTop'));
       }
     }
   }
@@ -2025,11 +2360,20 @@ document.getElementById('ex6').addEventListener('click', () => exportFloor(5, 'o
 document.getElementById('exOledTest').addEventListener('click', exportOledTest);
 
 // ------------------------------------------------------------------
+// 언어 선택 UI 연결 + 저장된 언어로 초기 텍스트 적용 (기본 English)
+const langSel = document.getElementById('lang');
+if (langSel) {
+  langSel.value = LANG;
+  langSel.addEventListener('change', e => setLang(e.target.value));
+}
+applyStaticI18n();
+syncToggleLabels();
+
+// ------------------------------------------------------------------
 Promise.all([
   loadAssets(),
   ManifoldModule({ locateFile: () => manifoldWasmUrl }).then(w => { w.setup(); M = w; }),
 ]).then(rebuild).catch(e => {
-  document.getElementById('warnings').textContent =
-    '⚠ 초기화 실패: ' + e + '\n`npm run dev` 로 실행했는지 확인하세요.';
+  document.getElementById('warnings').textContent = t('initError', e);
   console.error(e);
 });

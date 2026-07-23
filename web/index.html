@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>🥟 딤섬 클리커 컨피규레이터</title>
+<title data-i18n="title">🥟 Dim Sum Clicker Configurator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,175 +71,187 @@
 </head>
 <body>
 <div id="panel">
-  <h1>🥟 딤섬 클리커 컨피규레이터</h1>
-  <div class="sub">슬라이더를 움직이면 STL이 실시간으로 다시 설계됩니다</div>
+  <h1 data-i18n="appTitle">🥟 Dim Sum Clicker Configurator</h1>
+  <div class="sub" data-i18n="sub">Move the sliders to redesign the STL in real time</div>
 
-  <details open>
-    <summary>외곽 디자인</summary>
+  <details>
+    <summary data-i18n="secSettings">⚙ Settings</summary>
     <div class="body">
-      <div class="row"><label>모양</label>
-        <select id="shape">
-          <option value="rect" selected>둥근 네모</option>
-          <option value="rect2">둥근 네모 더블 (스위치 2개)</option>
-          <option value="circle">완전 원형 (딤섬 찜기)</option>
+      <div class="row"><label data-i18n="lblLanguage">Language</label>
+        <select id="lang">
+          <option value="en" data-i18n="optLangEn">English</option>
+          <option value="ko" data-i18n="optLangKo">한국어 (Korean)</option>
         </select>
       </div>
-      <div class="row"><label>가로 W / 지름</label><input type="range" id="W" min="40" max="70" step="0.5" value="44"><span class="val" id="Wv"></span></div>
-      <div class="row"><label>세로 D</label><input type="range" id="D" min="34" max="65" step="0.5" value="39"><span class="val" id="Dv"></span></div>
-      <div class="row"><label>모서리 둥글기</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
-      <div class="row"><label>벽 두께</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
-      <div class="row"><label>결합 유격</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
-      <div class="row"><label>장식 홈</label><input type="checkbox" id="bands" checked></div>
-      <div class="hint">층간·4층 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 설정은 자동 저장됩니다.</div>
     </div>
   </details>
 
   <details open>
-    <summary>층 높이</summary>
+    <summary data-i18n="secOuter">Outer design</summary>
     <div class="body">
-      <div class="row"><label>1층 (배터리)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
-      <div class="row"><label>2층 (보드)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="16"><span class="val" id="f2Hv"></span></div>
-      <div class="row"><label>3층 (스위치)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
-      <div class="row"><label>4층 (딤섬 뚜껑)</label><input type="checkbox" id="lidOn" checked></div>
-      <div class="row"><label>4층 밴드 높이</label><input type="range" id="lidH" min="0" max="30" step="0.5" value="6"><span class="val" id="lidHv"></span></div>
-      <div class="hint">4층 = bun_lid 디자인(Ø41)이 그대로 올라간 딤섬 뚜껑. 밴드 높이로 전체 높이를 조절하고, 결합부는 1·2·3층과 동일한 사각 턱·홈(결합 유격 적용)으로 홈이 3층 상판에, 턱이 4층 밑면에 있습니다. 캐릭터(21.6)를 완전히 덮으려면 경고에 표시되는 밴드 높이가 필요합니다.</div>
+      <div class="row"><label data-i18n="lblShape">Shape</label>
+        <select id="shape">
+          <option value="rect" selected data-i18n="optRect">Rounded square</option>
+          <option value="rect2" data-i18n="optRect2">Rounded square double (2 switches)</option>
+          <option value="circle" data-i18n="optCircle">Full circle (dim sum steamer)</option>
+        </select>
+      </div>
+      <div class="row"><label data-i18n="lblW">Width W / diameter</label><input type="range" id="W" min="40" max="70" step="0.5" value="44"><span class="val" id="Wv"></span></div>
+      <div class="row"><label data-i18n="lblD">Depth D</label><input type="range" id="D" min="34" max="65" step="0.5" value="39"><span class="val" id="Dv"></span></div>
+      <div class="row"><label data-i18n="lblCorner">Corner rounding</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
+      <div class="row"><label data-i18n="lblWall">Wall thickness</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
+      <div class="row"><label data-i18n="lblFit">Fit clearance</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
+      <div class="row"><label data-i18n="lblBands">Decorative grooves</label><input type="checkbox" id="bands" checked></div>
+      <div class="hint" data-i18n="hintOuter">Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.</div>
     </div>
   </details>
 
   <details open>
-    <summary>부품 배치 (2층)</summary>
+    <summary data-i18n="secLayers">Layer heights</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblF1">Layer 1 (battery)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
+      <div class="row"><label data-i18n="lblF2">Layer 2 (board)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="16"><span class="val" id="f2Hv"></span></div>
+      <div class="row"><label data-i18n="lblF3">Layer 3 (switch)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
+      <div class="row"><label data-i18n="lblLid">Layer 4 (dim sum lid)</label><input type="checkbox" id="lidOn" checked></div>
+      <div class="row"><label data-i18n="lblLidH">Layer 4 band height</label><input type="range" id="lidH" min="0" max="30" step="0.5" value="6"><span class="val" id="lidHv"></span></div>
+      <div class="hint" data-i18n="hintLayers">Layer 4 = the bun_lid design (Ø41) placed as-is as the dim sum lid. Adjust the total height with the band height; the joint uses the same square tab and groove as Layers 1·2·3 (fit clearance applied), with the groove on the Layer 3 top plate and the tab on the Layer 4 underside. To fully cover the character (21.6), use at least the band height shown in the warnings.</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary data-i18n="secLayout2">Component layout (Layer 2)</summary>
     <div class="body">
       <div class="row"><label>ESP32 X</label><input type="range" id="espX" min="-18" max="18" step="0.5" value="0"><span class="val" id="espXv"></span></div>
-      <div class="row"><label>ESP32 Y</label><input type="range" id="espY" min="-14" max="14" step="0.5" value="8"><span class="val" id="espYv"></span><button class="nudge" id="espYCenter" title="중앙 정렬 (Y=0)" style="width:auto; padding:0 7px; font-size:10.5px">중앙</button></div>
-      <div class="row"><label>ESP32 회전</label>
+      <div class="row"><label>ESP32 Y</label><input type="range" id="espY" min="-14" max="14" step="0.5" value="8"><span class="val" id="espYv"></span><button class="nudge" id="espYCenter" data-i18n-title="tCenterTitle" title="Center (Y=0)" style="width:auto; padding:0 7px; font-size:10.5px" data-i18n="tCenter">Center</button></div>
+      <div class="row"><label data-i18n="lblEspRot">ESP32 rotation</label>
         <select id="espRot">
-          <option value="0" selected>가로 (24×18)</option>
-          <option value="90">세로 (18×24)</option>
-          <option value="s0">세움-가로 (24×5, 높이 18)</option>
-          <option value="s90">세움-세로 (5×24, 높이 18)</option>
-          <option value="u0">세움-USB아래 (18×5, 높이 24)</option>
-          <option value="u90">세움-USB아래-세로 (5×18, 높이 24)</option>
+          <option value="0" selected data-i18n="optEsp0">Flat (24×18)</option>
+          <option value="90" data-i18n="optEsp90">Flat rotated (18×24)</option>
+          <option value="s0" data-i18n="optEspS0">Upright-wide (24×5, h18)</option>
+          <option value="s90" data-i18n="optEspS90">Upright-tall (5×24, h18)</option>
+          <option value="u0" data-i18n="optEspU0">Upright-USB down (18×5, h24)</option>
+          <option value="u90" data-i18n="optEspU90">Upright-USB down tall (5×18, h24)</option>
         </select>
       </div>
-      <div class="row"><label>ESP32 띄움 (2.5층)</label><input type="range" id="espLift" min="0" max="12" step="0.5" value="0"><span class="val" id="espLiftv"></span></div>
-      <div class="row"><label>ESP32 Z 미세조정</label><input type="range" id="espZ" min="-1" max="2" step="0.1" value="0"><span class="val" id="espZv"></span></div>
-      <div class="row"><label>충전모듈 Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
-      <div class="row"><label>배터리 용량</label>
+      <div class="row"><label data-i18n="lblEspLift">ESP32 lift (Layer 2.5)</label><input type="range" id="espLift" min="0" max="12" step="0.5" value="0"><span class="val" id="espLiftv"></span></div>
+      <div class="row"><label data-i18n="lblEspZ">ESP32 Z fine-tune</label><input type="range" id="espZ" min="-1" max="2" step="0.1" value="0"><span class="val" id="espZv"></span></div>
+      <div class="row"><label data-i18n="lblModY">Charge module Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
+      <div class="row"><label data-i18n="lblBatType">Battery capacity</label>
         <select id="batType">
           <option value="520" selected>520mAh (36.5×28.5×4.3)</option>
           <option value="650">650mAh (40×20×8)</option>
-          <option value="none">배터리 없음 (ESP32 USB 직결)</option>
+          <option value="none" data-i18n="optBatNone">No battery (ESP32 direct USB)</option>
         </select>
       </div>
-      <div class="row"><label>배터리 배치</label>
+      <div class="row"><label data-i18n="lblBatPose">Battery placement</label>
         <select id="batPose">
-          <option value="flat" selected>눕혀서 1층</option>
-          <option value="stand">세워서 2층 (홈에 꽂기)</option>
+          <option value="flat" selected data-i18n="optBatFlat">Flat on Layer 1</option>
+          <option value="stand" data-i18n="optBatStand">Upright on Layer 2 (slot-in)</option>
         </select>
       </div>
-      <div class="row"><label>배터리 X (세움)</label><input type="range" id="batX" min="-20" max="20" step="0.5" value="-8"><span class="val" id="batXv"></span></div>
-      <div class="row"><label>OLED 종류</label>
+      <div class="row"><label data-i18n="lblBatX">Battery X (upright)</label><input type="range" id="batX" min="-20" max="20" step="0.5" value="-8"><span class="val" id="batXv"></span></div>
+      <div class="row"><label data-i18n="lblOledType">OLED type</label>
         <select id="oledType">
           <option value="049" selected>0.49" (15×16)</option>
-          <option value="096">0.96" (포켓 25.5×27.3, 4홀 핀 고정)</option>
+          <option value="096" data-i18n="optOled096">0.96" (pocket 25.5×27.3, 4-hole pin mount)</option>
         </select>
       </div>
-      <div class="row"><label>OLED 위치</label>
+      <div class="row"><label data-i18n="lblOledSide">OLED position</label>
         <select id="oledSide">
-          <option value="W" selected>서쪽 벽 (USB 반대)</option>
-          <option value="N">북쪽 벽 (뒤)</option>
-          <option value="S">남쪽 벽 (앞)</option>
-          <option value="none">없음</option>
+          <option value="W" selected data-i18n="optOledW">West wall (opposite USB)</option>
+          <option value="N" data-i18n="optOledN">North wall (back)</option>
+          <option value="S" data-i18n="optOledS">South wall (front)</option>
+          <option value="none" data-i18n="optOledNone">None</option>
         </select>
       </div>
-      <div class="row"><label>OLED 돌출</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
-      <div class="row"><label>OLED 분리 포드</label><input type="checkbox" id="oledPodOn"></div>
-      <div class="row"><label>OLED 뒷면 커버</label><input type="checkbox" id="coverOn" checked></div>
-      <div class="row"><label>배선구멍 X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
-      <div class="row"><label>배선구멍 Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12"><span class="val" id="wireYv"></span></div>
-      <div class="row"><label>배선구멍 방향</label>
-        <select id="wireRot"><option value="0" selected>가로 (14×5)</option><option value="90">세로 (5×14)</option></select>
+      <div class="row"><label data-i18n="lblOledProud">OLED protrusion</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
+      <div class="row"><label data-i18n="lblOledPod">OLED separate pod</label><input type="checkbox" id="oledPodOn"></div>
+      <div class="row"><label data-i18n="lblOledCover">OLED back cover</label><input type="checkbox" id="coverOn" checked></div>
+      <div class="row"><label data-i18n="lblWireX">Wire hole X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
+      <div class="row"><label data-i18n="lblWireY">Wire hole Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12"><span class="val" id="wireYv"></span></div>
+      <div class="row"><label data-i18n="lblWireRot">Wire hole orientation</label>
+        <select id="wireRot"><option value="0" selected data-i18n="optWire0">Horizontal (14×5)</option><option value="90" data-i18n="optWire90">Vertical (5×14)</option></select>
       </div>
-      <div class="hint">배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절. <b>OLED 분리 포드</b>를 켜면 OLED 타워(창·포켓 포함)가 별도 출력 파트가 됩니다: 벽 관통 개구에 위에서 아래로 슬라이드 — 텅(전면부)이 외곽면과 플러시로 개구를 채우고, 어깨가 벽 안쪽에 걸리며, 안쪽 U자 소켓 레일이 뒤·옆을 잡습니다. 3층을 덮으면 노치가 위를 눌러 잠금. 포드·레일 모두 서포트 없이 세워서 출력.</div>
+      <div class="hint" data-i18n-html="hintLayout2">The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.</div>
     </div>
   </details>
 
   <details open>
-    <summary>부품 배치 (3층)</summary>
+    <summary data-i18n="secLayout3">Component layout (Layer 3)</summary>
     <div class="body">
-      <div class="row"><label>스위치 Boss</label><input type="checkbox" id="bossOn" checked></div>
-      <div class="row"><label>Boss 높이</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
-      <div class="row"><label>스위치 매립 깊이</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
-      <div class="row"><label>스위치 간격 (더블)</label><input type="range" id="swGap" min="22" max="36" step="0.5" value="29"><span class="val" id="swGapv"></span></div>
-      <div class="row"><label>포켓 가로 (X)</label><input type="range" id="swBodyX" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyXv"></span></div>
-      <div class="row"><label>포켓 세로 (Y)</label><input type="range" id="swBodyY" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyYv"></span></div>
-      <div class="row"><label>포켓 귀퉁이 여유</label><input type="range" id="cornerOut" min="0" max="1.5" step="0.05" value="0.4"><span class="val" id="cornerOutv"></span></div>
-      <div class="row"><label>찜통 바닥 슬랫</label><input type="checkbox" id="steamOn" checked></div>
+      <div class="row"><label data-i18n="lblBoss">Switch boss</label><input type="checkbox" id="bossOn" checked></div>
+      <div class="row"><label data-i18n="lblBossH">Boss height</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
+      <div class="row"><label data-i18n="lblSink">Switch recess depth</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
+      <div class="row"><label data-i18n="lblSwGap">Switch spacing (double)</label><input type="range" id="swGap" min="22" max="36" step="0.5" value="29"><span class="val" id="swGapv"></span></div>
+      <div class="row"><label data-i18n="lblPocketX">Pocket width (X)</label><input type="range" id="swBodyX" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyXv"></span></div>
+      <div class="row"><label data-i18n="lblPocketY">Pocket depth (Y)</label><input type="range" id="swBodyY" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyYv"></span></div>
+      <div class="row"><label data-i18n="lblCornerOut">Pocket corner clearance</label><input type="range" id="cornerOut" min="0" max="1.5" step="0.05" value="0.4"><span class="val" id="cornerOutv"></span></div>
+      <div class="row"><label data-i18n="lblSteam">Steamer floor slats</label><input type="checkbox" id="steamOn" checked></div>
       <div class="row"><label>LED</label><input type="checkbox" id="ledOn" checked></div>
-      <div class="row"><label>LED 종류</label>
+      <div class="row"><label data-i18n="lblLedType">LED type</label>
         <select id="ledType">
-          <option value="3" selected>3mm 원형 (구멍 Ø3.3, 돌출 ~1.2)</option>
-          <option value="4">4mm 원형 (구멍 Ø4.3, 돌출 ~2.6)</option>
-          <option value="5">5mm 원형 (구멍 Ø5.3, 돌출 ~4.5)</option>
-          <option value="r25">2×5 사각 투톤 3핀 (구멍 2.3×5.3, 돌출 ~3.8)</option>
+          <option value="3" selected data-i18n="optLed3">3mm round (hole Ø3.3, protrusion ~1.2)</option>
+          <option value="4" data-i18n="optLed4">4mm round (hole Ø4.3, protrusion ~2.6)</option>
+          <option value="5" data-i18n="optLed5">5mm round (hole Ø5.3, protrusion ~4.5)</option>
+          <option value="r25" data-i18n="optLedR25">2×5 rect two-tone 3-pin (hole 2.3×5.3, protrusion ~3.8)</option>
         </select>
       </div>
       <div class="row"><label>LED X</label><input type="range" id="ledX" min="-18" max="18" step="0.5" value="0"><span class="val" id="ledXv"></span></div>
       <div class="row"><label>LED Y</label><input type="range" id="ledY" min="-18" max="18" step="0.5" value="-14.5"><span class="val" id="ledYv"></span></div>
-      <div class="row"><label>부저 (Ø12 피에조)</label><input type="checkbox" id="bzOn" checked></div>
-      <div class="row"><label>부저 장착</label>
+      <div class="row"><label data-i18n="lblBz">Buzzer (Ø12 piezo)</label><input type="checkbox" id="bzOn" checked></div>
+      <div class="row"><label data-i18n="lblBzMount">Buzzer mount</label>
         <select id="bzMount">
-          <option value="f2" selected>2층 바닥 세움 (리세스 + 링)</option>
-          <option value="f2s">2층 바닥 눕힘 (반원 홈)</option>
-          <option value="f3">3층 천장 (슬리브 매달림)</option>
+          <option value="f2" selected data-i18n="optBzF2">Layer 2 floor upright (recess + ring)</option>
+          <option value="f2s" data-i18n="optBzF2s">Layer 2 floor laid down (half-round groove)</option>
+          <option value="f3" data-i18n="optBzF3">Layer 3 ceiling (sleeve hang)</option>
         </select>
       </div>
-      <div class="row"><label>부저 X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
-      <div class="row"><label>부저 Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
-      <div class="hint">MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.</div>
+      <div class="row"><label data-i18n="lblBzX">Buzzer X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
+      <div class="row"><label data-i18n="lblBzY">Buzzer Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
+      <div class="hint" data-i18n="hintLayout3">The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that doesn't pierce the top plate; if it's tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.</div>
     </div>
   </details>
 
   <details open>
-    <summary>보기</summary>
+    <summary data-i18n="secView">View</summary>
     <div class="body">
-      <div class="row"><label>분해 ⟷ 조립</label><input type="range" id="explode" min="0" max="1" step="0.01" value="0.55"><span class="val" id="explodev"></span></div>
+      <div class="row"><label data-i18n="lblExplode">Explode ⟷ Assemble</label><input type="range" id="explode" min="0" max="1" step="0.01" value="0.55"><span class="val" id="explodev"></span></div>
       <div class="btns">
-        <button id="animBtn">▶ 조립 애니메이션</button>
-        <button class="ghost" id="ghostBtn">부품 표시: 켬</button>
-        <button class="ghost" id="wiresBtn">배선 표시: 켬</button>
-        <button class="ghost" id="xrayBtn">케이스 반투명: 끔</button>
-        <button class="ghost" id="resetBtn">설정 초기화</button>
+        <button id="animBtn" data-i18n="btnAnim">▶ Assembly animation</button>
+        <button class="ghost" id="ghostBtn">Components: On</button>
+        <button class="ghost" id="wiresBtn">Wiring: On</button>
+        <button class="ghost" id="xrayBtn">Case X-ray: Off</button>
+        <button class="ghost" id="resetBtn" data-i18n="btnReset">Reset settings</button>
       </div>
     </div>
   </details>
 
   <details open>
-    <summary>STL 내보내기</summary>
+    <summary data-i18n="secExport">STL export</summary>
     <div class="body">
       <div class="btns">
-        <button id="ex1">1층.stl</button>
-        <button id="ex2">2층.stl</button>
-        <button id="ex3">3층.stl</button>
-        <button id="ex4">4층.stl</button>
-        <button id="ex5">OLED포드.stl</button>
-        <button id="ex6">OLED커버.stl</button>
-        <button class="ghost" id="exOledTest">OLED 테스트.stl</button>
+        <button id="ex1" data-i18n="btnEx1">Layer 1.stl</button>
+        <button id="ex2" data-i18n="btnEx2">Layer 2.stl</button>
+        <button id="ex3" data-i18n="btnEx3">Layer 3.stl</button>
+        <button id="ex4" data-i18n="btnEx4">Layer 4.stl</button>
+        <button id="ex5" data-i18n="btnEx5">OLED pod.stl</button>
+        <button id="ex6" data-i18n="btnEx6">OLED cover.stl</button>
+        <button class="ghost" id="exOledTest" data-i18n="btnExOledTest">OLED test.stl</button>
       </div>
-      <div class="row" style="margin-top:8px"><label>3층 출력용 뒤집기</label><input type="checkbox" id="flip3" checked></div>
-      <div class="hint">3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 2층에서 OLED 타워 주변만 잘라낸 조각으로, 전체를 뽑지 않고 포켓·창·핀 피팅을 빠르게 확인할 때 쓰세요.</div>
+      <div class="row" style="margin-top:8px"><label data-i18n="lblFlip3">Flip Layer 3 for printing</label><input type="checkbox" id="flip3" checked></div>
+      <div class="hint" data-i18n="hintExport">Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl is a piece cropped from Layer 2 around the OLED tower only — use it to quickly check the pocket, window, and pin fit without printing the whole part.</div>
     </div>
   </details>
 
   <details open>
-    <summary>프리셋 (설정 저장/불러오기)</summary>
+    <summary data-i18n="secPreset">Presets (save/load settings)</summary>
     <div class="body">
       <div class="btns">
-        <button id="presetExport">⬇ 내보내기 (.json)</button>
-        <button class="ghost" id="presetImport">⬆ 불러오기</button>
+        <button id="presetExport" data-i18n="btnPresetExport">⬇ Export (.json)</button>
+        <button class="ghost" id="presetImport" data-i18n="btnPresetImport">⬆ Import</button>
       </div>
       <input type="file" id="presetFile" accept="application/json,.json" style="display:none">
-      <div class="hint">현재 모든 설정을 .json 파일로 저장하거나, 저장해둔 파일을 불러와 그대로 복원합니다. 여러 디자인을 파일로 관리할 수 있습니다.</div>
+      <div class="hint" data-i18n="hintPreset">Save all current settings to a .json file, or load a saved file to restore them exactly. You can manage multiple designs as files.</div>
     </div>
   </details>
 
@@ -249,12 +261,12 @@
 
 <div id="viewer">
   <div id="wireOverlay">
-    <div class="wo-head">배선표</div>
+    <div class="wo-head" data-i18n="woHead">Wiring table</div>
     <div id="wireTable"></div>
-    <div class="wo-hint">현재 설정에 맞춰 자동 갱신 · 전선/라벨 우클릭으로 GPIO 변경</div>
+    <div class="wo-hint" data-i18n="woHint">Auto-updates with current settings · right-click a wire/label to change GPIO</div>
   </div>
 </div>
-<div id="status">모델 생성 중…</div>
+<div id="status" data-i18n="statusText">Building model…</div>
 
 <script type="module" src="./app.js"></script>
 </body>
