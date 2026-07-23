@@ -67,25 +67,49 @@
   #viewer { flex: 1; height: 100%; position: relative; }
   #viewer canvas { display: block; }
   .hint { font-size: 10.5px; color: #b0a68e; margin-top: 4px; line-height: 1.45; }
+
+  /* 패널 헤더 + 설정 버튼 */
+  .phead { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+  .phead .titles { min-width: 0; }
+  #panel .phead h1 { margin-bottom: 2px; }
+  #panel .phead .sub { margin-bottom: 0; }
+  .gear {
+    flex: 0 0 auto; width: 32px; height: 32px; padding: 0; font-size: 17px; line-height: 1;
+    background: #f1ead7; color: #6b5d43; border-radius: 9px;
+  }
+  .gear:hover { background: #e6d9b8; }
+
+  /* 설정 모달 (중앙 팝업) */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(40, 30, 10, .38); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: #fffdf8; border: 1px solid #e8dfc9; border-radius: 14px;
+    padding: 16px 18px 18px; width: 340px; max-width: calc(100% - 32px);
+    box-shadow: 0 12px 44px rgba(77, 58, 20, .28);
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  #settingsTitle { font-weight: 700; font-size: 15px; color: #6b5d43; }
+  .modal-x {
+    flex: 0 0 auto; width: 26px; height: 26px; padding: 0; font-size: 13px; line-height: 1;
+    background: #f1ead7; color: #6b5d43; border-radius: 7px;
+  }
+  .modal-x:hover { background: #e6d9b8; }
 </style>
-  <script type="module" crossorigin src="/assets/index-BawJdW3F.js"></script>
+  <script type="module" crossorigin src="/assets/index-C3IryATo.js"></script>
 </head>
 <body>
 <div id="panel">
-  <h1 data-i18n="appTitle">🥟 Dim Sum Clicker Configurator</h1>
-  <div class="sub" data-i18n="sub">Move the sliders to redesign the STL in real time</div>
-
-  <details>
-    <summary data-i18n="secSettings">⚙ Settings</summary>
-    <div class="body">
-      <div class="row"><label data-i18n="lblLanguage">Language</label>
-        <select id="lang">
-          <option value="en" data-i18n="optLangEn">English</option>
-          <option value="ko" data-i18n="optLangKo">한국어 (Korean)</option>
-        </select>
-      </div>
+  <div class="phead">
+    <div class="titles">
+      <h1 data-i18n="appTitle">🥟 Dim Sum Clicker Configurator</h1>
+      <div class="sub" data-i18n="sub">Move the sliders to redesign the STL in real time</div>
     </div>
-  </details>
+    <button id="settingsBtn" class="gear" data-i18n-title="secSettings" title="Settings" aria-label="Settings">⚙</button>
+  </div>
 
   <details open>
     <summary data-i18n="secOuter">Outer design</summary>
@@ -268,6 +292,21 @@
   </div>
 </div>
 <div id="status" data-i18n="statusText">Building model…</div>
+
+<div id="settingsModal" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-head">
+      <span id="settingsTitle" data-i18n="secSettings">⚙ Settings</span>
+      <button id="settingsClose" class="modal-x" aria-label="Close">✕</button>
+    </div>
+    <div class="row"><label data-i18n="lblLanguage">Language</label>
+      <select id="lang">
+        <option value="en" data-i18n="optLangEn">English</option>
+        <option value="ko" data-i18n="optLangKo">한국어 (Korean)</option>
+      </select>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

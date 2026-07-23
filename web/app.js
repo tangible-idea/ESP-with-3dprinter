@@ -2366,6 +2366,14 @@ if (langSel) {
   langSel.value = LANG;
   langSel.addEventListener('change', e => setLang(e.target.value));
 }
+// 설정 버튼 → 중앙 팝업(모달) 열기/닫기
+const settingsModal = document.getElementById('settingsModal');
+const openSettings = () => { settingsModal.hidden = false; };
+const closeSettings = () => { settingsModal.hidden = true; };
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+settingsModal.addEventListener('click', e => { if (e.target === settingsModal) closeSettings(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !settingsModal.hidden) closeSettings(); });
 applyStaticI18n();
 syncToggleLabels();
 
