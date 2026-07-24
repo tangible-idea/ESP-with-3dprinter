@@ -104,9 +104,8 @@
   body.prod-dimsum [data-product="dimsum"] { display: block; }
   body.prod-todo [data-product="todo"] { display: block; }
   #product { font-weight: 600; }
-  details.product-root { border-color: #d8c79a; background: #fbf4e2; }
 </style>
-  <script type="module" crossorigin src="/assets/index-DkkI_Y2n.js"></script>
+  <script type="module" crossorigin src="/assets/index-BSDFfZTp.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -117,19 +116,6 @@
     </div>
     <button id="settingsBtn" class="gear" data-i18n-title="secSettings" title="Settings" aria-label="Settings">⚙</button>
   </div>
-
-  <details open class="product-root">
-    <summary data-i18n="secProduct">Product</summary>
-    <div class="body">
-      <div class="row"><label data-i18n="lblProduct">Design</label>
-        <select id="product">
-          <option value="dimsum" data-i18n="optProdDimsum">Dim Sum Clicker</option>
-          <option value="todo" data-i18n="optProdTodo">Todo Supporter (iMac)</option>
-        </select>
-      </div>
-      <div class="hint" data-i18n="hintProduct">Choose which 3D design to configure. Each product has its own settings below.</div>
-    </div>
-  </details>
 
   <details open data-product="dimsum">
     <summary data-i18n="secOuter">Outer design</summary>
@@ -360,6 +346,13 @@
       <span id="settingsTitle" data-i18n="secSettings">⚙ Settings</span>
       <button id="settingsClose" class="modal-x" aria-label="Close">✕</button>
     </div>
+    <div class="row"><label data-i18n="lblProduct">Design</label>
+      <select id="product">
+        <option value="dimsum" data-i18n="optProdDimsum">Dim Sum Clicker</option>
+        <option value="todo" data-i18n="optProdTodo">Todo Supporter (iMac)</option>
+      </select>
+    </div>
+    <div class="hint" data-i18n="hintProduct" style="margin:-2px 0 8px">Choose which 3D design to configure. Each product has its own settings below.</div>
     <div class="row"><label data-i18n="lblLanguage">Language</label>
       <select id="lang">
         <option value="en" data-i18n="optLangEn">English</option>
