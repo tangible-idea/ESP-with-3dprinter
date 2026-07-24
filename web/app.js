@@ -1756,7 +1756,13 @@ function buildTodoCase() {
                             0, (potFrontY + potBackY) / 2, tBridge, r));
     const cavCy = Yb - pd / 2;
     man = sub(man, boxBrush(pw, pd, ph + 25, 0, cavCy, zEsp0, 0.05));          // 캐비티 (위 열림)
-    man = sub(man, boxBrush(12, (potFrontY - potBackY) + 2, zEsp0 + 5, 0, (potFrontY + potBackY) / 2, -2, 0.05)); // USB 아래 슬롯
+    // USB-C 구멍 — 딤섬 클리커와 동일하게 실측 나팔형 usb_c_hole 툴로 뚫음 (기존 각진 박스 슬롯 대체).
+    // 보드가 세워져 USB가 아래(−Z)를 향하므로: 나팔 입구(툴 +X)를 −Z로, 커넥터 넓은 면(툴 +Y)을 보드 폭(X)에 맞춤.
+    const usbM = new THREE.Matrix4()
+      .makeTranslation(0, cavCy, zEsp0)
+      .multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2))
+      .multiply(new THREE.Matrix4().makeRotationY(Math.PI / 2));
+    man = sub(man, meshBrush(ASSETS.usb, usbM));
     info.esp = { cy: cavCy, z0: zEsp0 }; info.tops.push(potTop);
   }
 
