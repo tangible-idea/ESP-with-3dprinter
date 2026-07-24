@@ -63,6 +63,7 @@ const I18N = {
     tgXray: (on) => `Case X-ray: ${on ? 'On' : 'Off'}`,
     // 정보줄
     infoDims: (size, total, lidTxt, ms, fitTxt) => `Total ${size} × ${total}mm (incl. boss)${lidTxt} · CSG ${ms}ms${fitTxt}`,
+    todoDims: (w, d, h, ms) => `Todo supporter ${w} × ${d} × ${h}mm · CSG ${ms}ms`,
     infoLid: (d, h) => ` · Layer 4 Ø${d} × ${h}mm`,
     fitOk: ' · no assembly interference ✓',
     fitBad: (a, b, c, d) => ` · assembly interference ${a}/${b}/${c}/${d}mm³ ⚠`,
@@ -150,6 +151,7 @@ const I18N = {
     tgWires: (on) => `배선 표시: ${on ? '켬' : '끔'}`,
     tgXray: (on) => `케이스 반투명: ${on ? '켬' : '끔'}`,
     infoDims: (size, total, lidTxt, ms, fitTxt) => `전체 ${size} × ${total}mm (보스 포함)${lidTxt} · CSG ${ms}ms${fitTxt}`,
+    todoDims: (w, d, h, ms) => `투두 서포터 ${w} × ${d} × ${h}mm · CSG ${ms}ms`,
     infoLid: (d, h) => ` · 4층 Ø${d} × ${h}mm`,
     fitOk: ' · 조립 간섭 없음 ✓',
     fitBad: (a, b, c, d) => ` · 조립 간섭 ${a}/${b}/${c}/${d}mm³ ⚠`,
@@ -259,6 +261,21 @@ const STATIC_I18N = {
     woHead: 'Wiring table',
     woHint: 'Auto-updates with current settings · right-click a wire/label to change GPIO',
     statusText: 'Building model…',
+    // 제품 선택
+    secProduct: 'Product', lblProduct: 'Design',
+    optProdDimsum: 'Dim Sum Clicker', optProdTodo: 'Todo Supporter (iMac)',
+    hintProduct: 'Choose which 3D design to configure. Each product has its own settings below.',
+    // 투두 서포터
+    secTodoClip: 'Corner clip & fit',
+    lblTWidth: 'Device width', lblTEdge: 'iMac edge thickness', lblTClr: 'Slot clearance',
+    lblTWall: 'Wall thickness', lblTBridge: 'Bottom bridge thickness', lblTRound: 'Corner rounding',
+    hintTodoClip: 'A ⊓-shaped clip that hooks over the iMac\'s bottom edge near the bottom-right corner: a front lip and back lip grip both faces, and the bottom bridge wraps under the edge. The slot depth = edge thickness + clearance. For a 24" M-series iMac the edge is about 11.5mm; increase the clearance if the fit is too tight.',
+    secTodoWalls: 'Lips (front / back)', lblTFront: 'Front lip height', lblTBack: 'Back lip height',
+    hintTodoWalls: 'The front lip sits on the screen side (keep it short so it barely covers the display) and backs the OLED housing. The back lip is hidden behind the display and holds the ESP32 pocket — make it tall enough to cover the ESP32 (24mm).',
+    secTodoComp: 'Electronics (ESP32 & OLED)', lblTEsp: 'ESP32 back pocket', lblTOled: '0.96" OLED front housing',
+    hintTodoComp: 'The ESP32-C3 supermini drops into a pocket on the back lip (hidden behind the display), USB facing down for the cable. The 0.96" OLED slides down into the front housing with its display facing the user through a window. Route the OLED wires down and around to the ESP32.',
+    secTodoExport: 'STL export', btnTEx1: 'Todo supporter.stl',
+    hintTodoExport: 'One printed part. Print it as it appears (bridge on the plate, clip opening facing up) — walls and pockets need no supports; the OLED window bridges cleanly.',
   },
   ko: {
     appTitle: '🥟 딤섬 클리커 컨피규레이터',
@@ -315,6 +332,21 @@ const STATIC_I18N = {
     woHead: '배선표',
     woHint: '현재 설정에 맞춰 자동 갱신 · 전선/라벨 우클릭으로 GPIO 변경',
     statusText: '모델 생성 중…',
+    // 제품 선택
+    secProduct: '제품', lblProduct: '디자인',
+    optProdDimsum: '딤섬 클리커', optProdTodo: '투두 서포터 (아이맥)',
+    hintProduct: '설계할 3D 디자인을 선택하세요. 제품마다 아래에 별도 설정이 있습니다.',
+    // 투두 서포터
+    secTodoClip: '코너 클립 & 물림',
+    lblTWidth: '기기 폭', lblTEdge: '아이맥 모서리 두께', lblTClr: '슬롯 유격',
+    lblTWall: '벽 두께', lblTBridge: '바닥 브릿지 두께', lblTRound: '모서리 둥글기',
+    hintTodoClip: '아이맥 우측하단 코너의 아래 가장자리에 걸쳐 끼우는 ㄷ자 클립입니다: 앞턱·뒤턱이 양쪽 면을 잡고, 바닥 브릿지가 가장자리 밑을 감쌉니다. 슬롯 깊이 = 모서리 두께 + 유격. 24" M시리즈 아이맥은 모서리가 약 11.5mm이며, 너무 빡빡하면 유격을 늘리세요.',
+    secTodoWalls: '턱 (앞/뒤)', lblTFront: '앞턱 높이', lblTBack: '뒤턱 높이',
+    hintTodoWalls: '앞턱은 화면 쪽에 위치하며(화면을 거의 가리지 않게 짧게 유지) OLED 하우징을 받쳐줍니다. 뒤턱은 화면 뒤에 숨어 ESP32 포켓을 잡습니다 — ESP32(24mm)를 덮을 만큼 충분히 높게 하세요.',
+    secTodoComp: '전자부품 (ESP32 & OLED)', lblTEsp: 'ESP32 뒷면 포켓', lblTOled: '0.96" OLED 앞면 하우징',
+    hintTodoComp: 'ESP32-C3 슈퍼미니가 뒤턱의 포켓에 꽂히고(화면 뒤에 숨김), USB는 케이블용으로 아래를 향합니다. 0.96" OLED는 앞면 하우징에 위에서 아래로 끼워지며 창을 통해 디스플레이가 사용자를 향합니다. OLED 전선은 아래로 돌려 ESP32로 연결하세요.',
+    secTodoExport: 'STL 내보내기', btnTEx1: '투두 서포터.stl',
+    hintTodoExport: '한 개의 출력 파트입니다. 보이는 그대로 출력하세요(브릿지를 바닥에, 클립 입구가 위로) — 벽과 포켓은 서포트가 필요 없고, OLED 창은 깔끔하게 브릿징됩니다.',
   },
 };
 Object.assign(I18N.en, STATIC_I18N.en);
@@ -470,6 +502,10 @@ const POCKET_CLR = 0.4;
 // 파라미터 & UI 바인딩
 // ------------------------------------------------------------------
 const P = {
+  product: 'todo',   // 'dimsum' 딤섬 클리커 | 'todo' 모니터 투두 서포터 (아이맥 코너 클립)
+  // --- 투두 서포터 (아이맥 우측하단 코너 ㄷ자 클립) ---
+  tWidth: 62, tEdge: 11.5, tClr: 0.6, tWall: 2.5, tBridge: 3, tRound: 3,
+  tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -496,7 +532,8 @@ const saveParams = () => {
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
                  'espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH','swGap',
-                 'ledX','ledY','bzX','bzY'];
+                 'ledX','ledY','bzX','bzY',
+                 'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
 let rebuildTimer = null;
 function queueRebuild() {
   saveParams();
@@ -699,6 +736,9 @@ function syncControls() {
   document.getElementById('bzMount').value = P.bzMount;
   applyBzUI();
   applyShapeUI();
+  document.getElementById('product').value = P.product;
+  document.getElementById('tEspOn').checked = P.tEspOn;
+  document.getElementById('tOledOn').checked = P.tOledOn;
 }
 
 // 프리셋 내보내기/불러오기 (전체 설정 JSON)
@@ -722,6 +762,7 @@ presetFile.addEventListener('change', e => {
       let n = 0;
       for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
       syncControls();
+      applyProductUI();
       saveParams();
       rebuild();
       document.getElementById('warnings').textContent = t('presetLoaded', n);
@@ -1682,7 +1723,101 @@ function placeGhosts() {
 // 리빌드
 // ------------------------------------------------------------------
 const status = document.getElementById('status');
+// ------------------------------------------------------------------
+// 투두 서포터 (아이맥 우측하단 코너 ㄷ자 클립) — 별도 제품
+// 좌표: X=폭(가장자리 방향), Y=화면 깊이(+Y 앞/사용자, −Y 뒤/화면 뒷면), Z=수직
+// ㄷ자 입구가 위를 향하고 바닥 브릿지가 가장자리 밑을 감쌈. 앞턱=화면 앞(OLED), 뒤턱=화면 뒤(ESP32).
+// ------------------------------------------------------------------
+let todoGeo = null;
+function buildTodoCase() {
+  const tWall = P.tWall, tBridge = P.tBridge, tFront = P.tFront, tBack = P.tBack, w = P.tWidth;
+  const slotY = P.tEdge + P.tClr;                 // 슬롯 깊이 = 모서리 두께 + 유격
+  const halfSlot = slotY / 2;
+  const totalY = slotY + 2 * tWall;
+  const cyFront = halfSlot + tWall / 2, cyBack = -(halfSlot + tWall / 2);
+  const Yf = halfSlot + tWall, Yb = -(halfSlot + tWall);   // 앞턱/뒤턱 바깥면
+  const r = Math.max(0.3, Math.min(P.tRound, tWall * 0.95, w / 2 - 1));
+
+  // 바닥 브릿지 + 앞턱 + 뒤턱 (ㄷ자)
+  let man = boxBrush(w, totalY, tBridge, 0, 0, 0, r);
+  man = add(man, boxBrush(w, tWall, tBridge + tFront, 0, cyFront, 0, r));
+  man = add(man, boxBrush(w, tWall, tBridge + tBack, 0, cyBack, 0, r));
+
+  const info = { totalY, tops: [tBridge + tFront, tBridge + tBack], esp: null, oled: null };
+
+  // --- ESP32 뒷면 포켓 (뒤턱 바깥 −Y로 돌출, 위에서 드롭인, USB 아래) ---
+  if (P.tEspOn) {
+    const eClr = 0.6;
+    const pw = ESP.w + eClr, ph = ESP.l + eClr, pd = ESP.h + eClr;   // X=18, Z=24, Y=4.2
+    const zEsp0 = tBridge + 2;
+    const potTop = zEsp0 + ph + tWall;
+    const potFrontY = Yb + 0.6, potBackY = Yb - pd - tWall;
+    man = add(man, boxBrush(pw + 2 * tWall, potFrontY - potBackY, potTop - tBridge,
+                            0, (potFrontY + potBackY) / 2, tBridge, r));
+    const cavCy = Yb - pd / 2;
+    man = sub(man, boxBrush(pw, pd, ph + 25, 0, cavCy, zEsp0, 0.05));          // 캐비티 (위 열림)
+    man = sub(man, boxBrush(12, (potFrontY - potBackY) + 2, zEsp0 + 5, 0, (potFrontY + potBackY) / 2, -2, 0.05)); // USB 아래 슬롯
+    info.esp = { cy: cavCy, z0: zEsp0 }; info.tops.push(potTop);
+  }
+
+  // --- OLED 0.96" 앞면 하우징 (앞턱 앞 +Y로 돌출, 위에서 드롭인, 창은 사용자 향함) ---
+  if (P.tOledOn) {
+    const o = OLED_TYPES['096'], oClr = 0.6;
+    const ow = o.w + oClr, oh = o.hgt + oClr, od = o.t + oClr;
+    const backT = tWall, frontT = 1.0;
+    const zO0 = tBridge + 3, oledBotZ = zO0 + tWall;
+    const housBackY = Yf - 0.6, housFrontY = housBackY + (0.6 + backT + od + frontT);
+    const housTop = oledBotZ + oh + 2;
+    man = add(man, boxBrush(ow + 2 * tWall, housFrontY - housBackY, housTop - tBridge,
+                            0, (housFrontY + housBackY) / 2, tBridge, r));
+    const cavY0 = Yf + backT, cavCy = cavY0 + od / 2;
+    man = sub(man, boxBrush(ow, od, oh + 25, 0, cavCy, oledBotZ, 0.05));       // OLED 캐비티 (위 열림)
+    man = sub(man, boxBrush(o.winW, frontT + 1.0, o.winH, 0,
+                            cavY0 + od + frontT / 2, oledBotZ + o.winC - o.winH / 2, 0.05)); // 창
+    info.oled = { cy: cavCy, botZ: oledBotZ }; info.tops.push(housTop);
+  }
+  return { man, info };
+}
+
+function rebuildTodo() {
+  status.classList.add('on');
+  setTimeout(() => {
+    try {
+      const t0 = performance.now();
+      G.forEach(g => { g.clear(); g.position.set(0, 0, 0); });
+      floorMeshes = [null, null, null, null];
+      exportGeos = [null, null, null, null];
+      const { man, info } = buildTodoCase();
+      const geo = manToGeo(man); man.delete();
+      todoGeo = geo;
+      G[0].add(new THREE.Mesh(geo, xray ? matCaseX : matCase));
+      // 고스트 (반투명 부품 박스)
+      if (info.esp) {
+        const g = new THREE.Mesh(new THREE.BoxGeometry(ESP.w, ESP.h, ESP.l), MATS.esp);
+        g.position.set(0, info.esp.cy, info.esp.z0 + ESP.l / 2 + 0.3);
+        g.userData.ghost = true; g.visible = showGhosts; G[0].add(g);
+      }
+      if (info.oled) {
+        const o = OLED_TYPES['096'];
+        const g = new THREE.Mesh(new THREE.BoxGeometry(o.w, o.t, o.hgt), MATS.oled);
+        g.position.set(0, info.oled.cy, info.oled.botZ + o.hgt / 2 + 0.3);
+        g.userData.ghost = true; g.visible = showGhosts; G[0].add(g);
+      }
+      const totalH = Math.max(...info.tops);
+      document.getElementById('dims').textContent =
+        t('todoDims', P.tWidth, info.totalY.toFixed(0), totalH.toFixed(0), (performance.now() - t0).toFixed(0));
+      document.getElementById('warnings').textContent = '';
+    } catch (e) {
+      todoGeo = null;
+      document.getElementById('warnings').textContent = t('buildErrGeneric', e.message || e);
+      console.error(e);
+    }
+    status.classList.remove('on');
+  }, 10);
+}
+
 function rebuild() {
+  if (P.product === 'todo') { rebuildTodo(); return; }
   status.classList.add('on');
   setTimeout(() => {
     const buildErrs = [];
@@ -2360,6 +2495,33 @@ document.getElementById('ex6').addEventListener('click', () => exportFloor(5, 'o
 document.getElementById('exOledTest').addEventListener('click', exportOledTest);
 
 // ------------------------------------------------------------------
+// 제품 선택(딤섬 / 투두) — 메뉴 섹션 표시 전환 + 리빌드
+function applyProductUI() {
+  document.body.classList.toggle('prod-dimsum', P.product === 'dimsum');
+  document.body.classList.toggle('prod-todo', P.product === 'todo');
+  const wo = document.getElementById('wireOverlay');
+  if (wo) wo.style.display = (P.product === 'dimsum' && wiresOn) ? '' : 'none';
+}
+const productSel = document.getElementById('product');
+productSel.value = P.product;
+productSel.addEventListener('change', e => {
+  P.product = e.target.value;
+  saveParams();
+  applyProductUI();
+  rebuild();
+});
+// 투두 체크박스
+for (const id of ['tEspOn', 'tOledOn']) {
+  const el = document.getElementById(id);
+  el.checked = P[id];
+  el.addEventListener('change', e => { P[id] = e.target.checked; queueRebuild(); });
+}
+// 투두 STL 내보내기
+document.getElementById('tEx1').addEventListener('click', () => {
+  if (todoGeo) downloadSTL(todoGeo.clone(), 'todo_supporter_imac.stl');
+});
+applyProductUI();
+
 // 언어 선택 UI 연결 + 저장된 언어로 초기 텍스트 적용 (기본 English)
 const langSel = document.getElementById('lang');
 if (langSel) {

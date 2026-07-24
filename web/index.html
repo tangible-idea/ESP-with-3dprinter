@@ -98,6 +98,13 @@
     background: #f1ead7; color: #6b5d43; border-radius: 7px;
   }
   .modal-x:hover { background: #e6d9b8; }
+
+  /* 제품별 메뉴 표시/숨김 */
+  [data-product] { display: none; }
+  body.prod-dimsum [data-product="dimsum"] { display: block; }
+  body.prod-todo [data-product="todo"] { display: block; }
+  #product { font-weight: 600; }
+  details.product-root { border-color: #d8c79a; background: #fbf4e2; }
 </style>
 </head>
 <body>
@@ -110,7 +117,20 @@
     <button id="settingsBtn" class="gear" data-i18n-title="secSettings" title="Settings" aria-label="Settings">⚙</button>
   </div>
 
-  <details open>
+  <details open class="product-root">
+    <summary data-i18n="secProduct">Product</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblProduct">Design</label>
+        <select id="product">
+          <option value="dimsum" data-i18n="optProdDimsum">Dim Sum Clicker</option>
+          <option value="todo" data-i18n="optProdTodo">Todo Supporter (iMac)</option>
+        </select>
+      </div>
+      <div class="hint" data-i18n="hintProduct">Choose which 3D design to configure. Each product has its own settings below.</div>
+    </div>
+  </details>
+
+  <details open data-product="dimsum">
     <summary data-i18n="secOuter">Outer design</summary>
     <div class="body">
       <div class="row"><label data-i18n="lblShape">Shape</label>
@@ -130,7 +150,7 @@
     </div>
   </details>
 
-  <details open>
+  <details open data-product="dimsum">
     <summary data-i18n="secLayers">Layer heights</summary>
     <div class="body">
       <div class="row"><label data-i18n="lblF1">Layer 1 (battery)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
@@ -142,7 +162,7 @@
     </div>
   </details>
 
-  <details open>
+  <details open data-product="dimsum">
     <summary data-i18n="secLayout2">Component layout (Layer 2)</summary>
     <div class="body">
       <div class="row"><label>ESP32 X</label><input type="range" id="espX" min="-18" max="18" step="0.5" value="0"><span class="val" id="espXv"></span></div>
@@ -200,7 +220,7 @@
     </div>
   </details>
 
-  <details open>
+  <details open data-product="dimsum">
     <summary data-i18n="secLayout3">Component layout (Layer 3)</summary>
     <div class="body">
       <div class="row"><label data-i18n="lblBoss">Switch boss</label><input type="checkbox" id="bossOn" checked></div>
@@ -236,6 +256,47 @@
     </div>
   </details>
 
+  <details open data-product="todo">
+    <summary data-i18n="secTodoClip">Corner clip &amp; fit</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblTWidth">Device width</label><input type="range" id="tWidth" min="40" max="120" step="1" value="62"><span class="val" id="tWidthv"></span></div>
+      <div class="row"><label data-i18n="lblTEdge">iMac edge thickness</label><input type="range" id="tEdge" min="5" max="20" step="0.5" value="11.5"><span class="val" id="tEdgev"></span></div>
+      <div class="row"><label data-i18n="lblTClr">Slot clearance</label><input type="range" id="tClr" min="0.2" max="1.5" step="0.05" value="0.6"><span class="val" id="tClrv"></span></div>
+      <div class="row"><label data-i18n="lblTWall">Wall thickness</label><input type="range" id="tWall" min="1.6" max="4" step="0.1" value="2.5"><span class="val" id="tWallv"></span></div>
+      <div class="row"><label data-i18n="lblTBridge">Bottom bridge thickness</label><input type="range" id="tBridge" min="2" max="8" step="0.5" value="3"><span class="val" id="tBridgev"></span></div>
+      <div class="row"><label data-i18n="lblTRound">Corner rounding</label><input type="range" id="tRound" min="0.5" max="8" step="0.5" value="3"><span class="val" id="tRoundv"></span></div>
+      <div class="hint" data-i18n="hintTodoClip">A ⊓-shaped clip that hooks over the iMac's bottom edge near the bottom-right corner: a front lip and back lip grip both faces, and the bottom bridge wraps under the edge. The slot depth = edge thickness + clearance. For a 24" M-series iMac the edge is about 11.5mm; increase the clearance if the fit is too tight.</div>
+    </div>
+  </details>
+
+  <details open data-product="todo">
+    <summary data-i18n="secTodoWalls">Lips (front / back)</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblTFront">Front lip height</label><input type="range" id="tFront" min="6" max="45" step="1" value="15"><span class="val" id="tFrontv"></span></div>
+      <div class="row"><label data-i18n="lblTBack">Back lip height</label><input type="range" id="tBack" min="12" max="60" step="1" value="30"><span class="val" id="tBackv"></span></div>
+      <div class="hint" data-i18n="hintTodoWalls">The front lip sits on the screen side (keep it short so it barely covers the display) and backs the OLED housing. The back lip is hidden behind the display and holds the ESP32 pocket — make it tall enough to cover the ESP32 (24mm).</div>
+    </div>
+  </details>
+
+  <details open data-product="todo">
+    <summary data-i18n="secTodoComp">Electronics (ESP32 &amp; OLED)</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblTEsp">ESP32 back pocket</label><input type="checkbox" id="tEspOn" checked></div>
+      <div class="row"><label data-i18n="lblTOled">0.96" OLED front housing</label><input type="checkbox" id="tOledOn" checked></div>
+      <div class="hint" data-i18n="hintTodoComp">The ESP32-C3 supermini drops into a pocket on the back lip (hidden behind the display), USB facing down for the cable. The 0.96" OLED slides down into the front housing with its display facing the user through a window. Route the OLED wires down and around to the ESP32.</div>
+    </div>
+  </details>
+
+  <details open data-product="todo">
+    <summary data-i18n="secTodoExport">STL export</summary>
+    <div class="body">
+      <div class="btns">
+        <button id="tEx1" data-i18n="btnTEx1">Todo supporter.stl</button>
+      </div>
+      <div class="hint" data-i18n="hintTodoExport">One printed part. Print it as it appears (bridge on the plate, clip opening facing up) — walls and pockets need no supports; the OLED window bridges cleanly.</div>
+    </div>
+  </details>
+
   <details open>
     <summary data-i18n="secView">View</summary>
     <div class="body">
@@ -250,7 +311,7 @@
     </div>
   </details>
 
-  <details open>
+  <details open data-product="dimsum">
     <summary data-i18n="secExport">STL export</summary>
     <div class="body">
       <div class="btns">
