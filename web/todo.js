@@ -37,7 +37,8 @@ export function initTodo(env) {
 
     const info = { totalY, tops: [tBridge + tFront, tBridge + tBack], esp: null, oled: null };
 
-    // --- ESP32 뒷면 포켓 (뒤턱 바깥 −Y로 돌출, 위에서 드롭인, USB 아래) ---
+    // --- ESP32 뒷면 포켓 (뒤턱 바깥 −Y로 돌출) — 딤섬처럼 안쪽에서 삽입 (위에서 드롭인 아님) ---
+    // 바깥 −Y 벽(화면 뒤쪽)은 닫고, 안쪽 +Y(슬롯 쪽)를 관통시켜 보드를 안에서 밀어 넣음. 윗면은 막음.
     if (P.tEspOn) {
       const eClr = 0.6;
       const pw = ESP.w + eClr, ph = ESP.l + eClr, pd = ESP.h + eClr;   // X=18, Z=24, Y=4.2
@@ -46,9 +47,12 @@ export function initTodo(env) {
       const potFrontY = Yb + 0.6, potBackY = Yb - pd - tWall;
       man = add(man, boxBrush(pw + 2 * tWall, potFrontY - potBackY, potTop - tBridge,
                               0, (potFrontY + potBackY) / 2, tBridge, r));
-      const cavCy = Yb - pd / 2;
-      man = sub(man, boxBrush(pw, pd, ph + 25, 0, cavCy, zEsp0, 0.05));          // 캐비티 (위 열림)
-      // USB-C 구멍 — 딤섬 클리커와 동일하게 실측 나팔형 usb_c_hole 툴로 뚫음 (기존 각진 박스 슬롯 대체).
+      const cavCy = Yb - pd / 2;               // 보드는 바깥 −Y 벽에 밀착 → 중심 Yb−pd/2
+      const cavBackY = Yb - pd;                // 닫힌 바깥 벽 (화면 뒤)
+      const cavFrontY = Yb + tWall + 1.5;      // 뒤턱을 관통해 슬롯(안쪽)으로 열림 → 안쪽에서 삽입
+      man = sub(man, boxBrush(pw, cavFrontY - cavBackY, ph + 0.6,
+                              0, (cavBackY + cavFrontY) / 2, zEsp0, 0.05));
+      // USB-C 구멍 — 딤섬 클리커와 동일하게 실측 나팔형 usb_c_hole 툴로 뚫음.
       // 보드가 세워져 USB가 아래(−Z)를 향하므로: 나팔 입구(툴 +X)를 −Z로, 커넥터 넓은 면(툴 +Y)을 보드 폭(X)에 맞춤.
       const usbM = new THREE.Matrix4()
         .makeTranslation(0, cavCy, zEsp0)
@@ -58,7 +62,8 @@ export function initTodo(env) {
       info.esp = { cy: cavCy, z0: zEsp0 }; info.tops.push(potTop);
     }
 
-    // --- OLED 0.96" 앞면 하우징 (앞턱 앞 +Y로 돌출, 위에서 드롭인, 창은 사용자 향함) ---
+    // --- OLED 0.96" 앞면 하우징 (앞턱 앞 +Y로 돌출) — 딤섬처럼 안쪽에서 삽입 (위에서 드롭인 아님) ---
+    // 디스플레이가 있는 +Y 앞벽은 창만 남기고 닫고, 안쪽 −Y(슬롯 쪽)를 관통시켜 뒤에서 밀어 넣음. 윗면 막음.
     if (P.tOledOn) {
       const o = OLED_TYPES['096'], oClr = 0.6;
       const ow = o.w + oClr, oh = o.hgt + oClr, od = o.t + oClr;
@@ -68,10 +73,13 @@ export function initTodo(env) {
       const housTop = oledBotZ + oh + 2;
       man = add(man, boxBrush(ow + 2 * tWall, housFrontY - housBackY, housTop - tBridge,
                               0, (housFrontY + housBackY) / 2, tBridge, r));
-      const cavY0 = Yf + backT, cavCy = cavY0 + od / 2;
-      man = sub(man, boxBrush(ow, od, oh + 25, 0, cavCy, oledBotZ, 0.05));       // OLED 캐비티 (위 열림)
+      const cavY0 = Yf + backT, cavCy = cavY0 + od / 2;   // 디스플레이는 앞벽에 밀착
+      const cavFrontY = cavY0 + od;            // 닫힌 앞벽 (여기 창이 뚫림) — 사용자 쪽 +Y
+      const cavBackY = Yf - tWall - 1.5;       // 앞턱을 관통해 슬롯(안쪽)으로 열림 → 안쪽에서 삽입
+      man = sub(man, boxBrush(ow, cavFrontY - cavBackY, oh + 0.6,
+                              0, (cavBackY + cavFrontY) / 2, oledBotZ, 0.05));
       man = sub(man, boxBrush(o.winW, frontT + 1.0, o.winH, 0,
-                              cavY0 + od + frontT / 2, oledBotZ + o.winC - o.winH / 2, 0.05)); // 창
+                              cavY0 + od + frontT / 2, oledBotZ + o.winC - o.winH / 2, 0.05)); // 창 (앞벽 +Y 관통)
       info.oled = { cy: cavCy, botZ: oledBotZ }; info.tops.push(housTop);
     }
     return { man, info };
