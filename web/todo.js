@@ -50,35 +50,57 @@ export function initTodo(env) {
   }
 
   function buildTodoCase() {
-    const eClr = 0.6;                               // ESP32 삽입 유격
+    const eClr = 0.6;                               // 부품 삽입 유격
     const tWall = P.tWall, tBridge = P.tBridge, tFront = P.tFront, tBack = P.tBack;
-    const w = ESP.w + eClr + 2 * tWall;             // 통일 폭 = ESP32 가로폭 + 유격 + 양쪽 벽
+    const o = OLED_TYPES['096'];
+    const ow = o.w + eClr, oh = o.hgt + eClr, od = o.t + eClr;
+    const oledOn = P.tOledOn, espOn = P.tEspOn;
+    // 통일 폭: OLED가 있으면 OLED(넓음) 기준, 없으면 ESP32(슬림) 기준 — 단차 없이 한 폭.
+    const w = (oledOn ? ow : ESP.w + eClr) + 2 * tWall;
     const slotY = P.tEdge + P.tClr;                 // 슬롯 깊이 = 모서리 두께 + 유격
     const halfSlot = slotY / 2;
     const totalY = slotY + 2 * tWall;
-    const cyFront = halfSlot + tWall / 2;
-    const Yf = halfSlot + tWall, Yb = -(halfSlot + tWall);   // 앞턱/뒤턱 바깥면
+    const Yf = halfSlot + tWall, Yb = -(halfSlot + tWall);   // 앞/뒤 그립 바깥면
     const r = Math.max(0.3, Math.min(P.tRound, tWall * 0.95, w / 2 - 1));
-    const ch = Math.min(2.0, tWall * 0.7, tFront * 0.4, tBack * 0.4);   // 상단 챔퍼 크기
+    const ch = Math.min(2.0, tWall * 0.7);          // 상단 챔퍼 크기
 
-    // ESP32 포켓 치수 & 뒷벽(뒤턱+포켓 통합) 높이 — 뒤쪽은 하나의 깔끔한 벽으로.
+    // 뒷벽 (ESP32 포켓) — 하나의 깔끔한 벽. 바깥 −Y로 포켓 깊이만큼 돌출.
     const pw = ESP.w + eClr, ph = ESP.l + eClr, pd = ESP.h + eClr;   // X=18, Z=24, Y=4.2
     const zEsp0 = tBridge + 2;
-    const espOn = P.tEspOn;
     const backTop = espOn ? Math.max(zEsp0 + ph + tWall, tBridge + tBack) : tBridge + tBack;
     const backYi = -halfSlot;                                   // 뒷벽 안쪽면 (슬롯 뒷벽)
-    const backYo = espOn ? (Yb - pd - tWall) : Yb;              // 뒷벽 바깥면 (ESP 포켓 깊이만큼 −Y로)
+    const backYo = espOn ? (Yb - pd - tWall) : Yb;              // 뒷벽 바깥면
     const backYc = (backYi + backYo) / 2;
 
-    // 바닥 브릿지 (뒷벽 바깥까지 덮도록 −Y로 확장) — 바닥이라 챔퍼 없음
-    const briBackY = backYo, briFrontY = Yf;
+    // 앞벽 (OLED 하우징) — 디스플레이가 +Y(사용자) 정면을 향함. 바깥 +Y로 돌출.
+    const frontT = 1.0;                             // OLED 앞(창) 벽 두께
+    const oledBotZ = tBridge + 3 + tWall;           // OLED 바닥 z
+    const cavY0 = Yf + tWall, cavFrontY = cavY0 + od;   // OLED 모듈 안쪽/앞(디스플레이) 면
+    const housFrontY = cavFrontY + frontT;          // 앞 하우징 바깥 +Y (여기 창이 뚫림)
+    const frontTop = oledOn ? oledBotZ + oh + 2 : tBridge + tFront;
+    const frontYi = halfSlot, frontYo = oledOn ? housFrontY : Yf;   // 앞벽 안/바깥면
+    const frontYc = (frontYi + frontYo) / 2;
+
+    // 바닥 브릿지 (앞·뒤 바깥까지 덮음) — 바닥이라 챔퍼 없음
+    const briBackY = backYo, briFrontY = frontYo;
     let man = boxBrush(w, briFrontY - briBackY, tBridge, 0, (briFrontY + briBackY) / 2, 0, r);
-    // 앞턱 (짧은 그립) — 상단 챔퍼 (union 전에 홀로 깎음)
-    man = add(man, chamferBox(w, tWall, tBridge + tFront, 0, cyFront, 0, r, ch));
-    // 뒷벽 = 뒤턱 그립 + ESP32 포켓 통합 (윗면 평평, 폭 통일) — 상단 챔퍼
+    // 앞벽 (OLED 하우징 or 짧은 그립) — 상단 챔퍼 (union 전에 홀로 깎음)
+    man = add(man, chamferBox(w, frontYo - frontYi, frontTop, 0, frontYc, 0, r, ch));
+    // 뒷벽 (ESP32 포켓) — 상단 챔퍼
     man = add(man, chamferBox(w, backYi - backYo, backTop, 0, backYc, 0, r, ch));
 
-    const info = { w, totalY: briFrontY - briBackY, tops: [tBridge + tFront, backTop], esp: null, oled: null };
+    const info = { w, totalY: briFrontY - briBackY, tops: [frontTop, backTop], esp: null, oled: null };
+
+    // OLED 파냄 — 디스플레이 +Y 정면(창), 슬롯 쪽(−Y)으로 밀어 넣어 삽입. 윗면·앞면 막음.
+    if (oledOn) {
+      const cavCy = cavY0 + od / 2;
+      const cavBackY = Yf - tWall - 1.5;            // 슬롯 쪽으로 열려 삽입
+      man = sub(man, boxBrush(ow, cavFrontY - cavBackY, oh + 0.6,
+                              0, (cavBackY + cavFrontY) / 2, oledBotZ, 0.05));
+      man = sub(man, boxBrush(o.winW, frontT + 1.0, o.winH,
+                              0, cavFrontY + frontT / 2, oledBotZ + o.winC - o.winH / 2, 0.05));   // 창 (+Y 관통)
+      info.oled = { cy: cavCy, botZ: oledBotZ };
+    }
 
     // ESP32 포켓 파냄 — 바깥 −Y 벽은 닫고 안쪽(슬롯 쪽)을 관통시켜 보드를 안에서 밀어 넣음.
     if (espOn) {
@@ -123,6 +145,12 @@ export function initTodo(env) {
           g.position.set(0, info.esp.cy, info.esp.z0 + ESP.l / 2 + 0.3);
           g.userData.ghost = true; g.visible = showGhosts; G[0].add(g);
         }
+        if (info.oled) {
+          const o = OLED_TYPES['096'];
+          const g = new THREE.Mesh(new THREE.BoxGeometry(o.w, o.t, o.hgt), MATS.oled);
+          g.position.set(0, info.oled.cy, info.oled.botZ + o.hgt / 2 + 0.3);
+          g.userData.ghost = true; g.visible = showGhosts; G[0].add(g);
+        }
         const totalH = Math.max(...info.tops);
         document.getElementById('dims').textContent =
           t('todoDims', info.w.toFixed(0), info.totalY.toFixed(0), totalH.toFixed(0), (performance.now() - t0).toFixed(0));
@@ -137,7 +165,7 @@ export function initTodo(env) {
   }
 
   // 투두 전용 UI 바인딩 (체크박스 + STL 내보내기) — 슬라이더는 app.js의 공용 바인딩이 처리
-  for (const id of ['tEspOn']) {
+  for (const id of ['tEspOn', 'tOledOn']) {
     const el = document.getElementById(id);
     el.checked = P[id];
     el.addEventListener('change', e => { P[id] = e.target.checked; queueRebuild(); });
