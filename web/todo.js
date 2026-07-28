@@ -124,6 +124,19 @@ export function initTodo(env) {
       info.esp = { cy: cavCy, z0: zEsp0 };
     }
 
+    // --- 배선 통로: OLED(앞) ↔ ESP32(뒤) — 슬롯 아래 브릿지를 관통하는 내부 통로 ---
+    // 밖에서 안 보임: 양끝 수직 통로는 캐비티 바닥(부품에 가림)으로만 열리고, 슬롯 밑 수평
+    // 통로는 완전히 브릿지 안. 하중을 받는 슬롯 바닥막은 두껍게 남기려고 통로를 낮게 깐다.
+    if (oledOn && espOn) {
+      const chX = -7, chW = 3.5, chH = 1.4;        // 통로 폭·높이 (얇은 배선 4가닥용)
+      const yF = cavY0 + od / 2;                    // 앞: OLED 모듈 아래
+      const yB = Yb + tWall - 0.5;                  // 뒤: ESP 포켓 슬롯쪽 여유
+      man = sub(man, boxBrush(chW, chW, oledBotZ, chX, yF, 0.5, 0.05));        // 앞 수직 (캐비티→브릿지)
+      man = sub(man, boxBrush(chW, chW, zEsp0 + 0.6, chX, yB, 0.5, 0.05));     // 뒤 수직 (포켓→브릿지)
+      man = sub(man, boxBrush(chW, yF - yB, chH, chX, (yF + yB) / 2, 0.5, 0.05)); // 슬롯 밑 수평 관통
+      info.wire = { x: chX, yF, yB };
+    }
+
     return { man, info };
   }
 
