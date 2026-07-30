@@ -56,6 +56,7 @@ const I18N = {
     wtGrpLedRgb: 'LED (2×5 two-tone 3-pin)',
     wtLedRed: 'LED red (pin 1)', wtLedGreen: 'LED green (pin 3)', wtLedCommon: 'LED common − (center)',
     wtResistor: '150~220Ω resistor',
+    wtResistorRed: '1kΩ recommended (brightness match)',
     wtGrpLedRound: (d) => `LED (round ${d}mm)`,
     wtLedPlusLeg: 'LED + (long leg)', wtLedMinusLeg: 'LED − (short leg)',
     wtGrpBuzzer: 'Piezo buzzer', wtBzPlus: 'Buzzer +', wtBzMinus: 'Buzzer −', wtPwmTone: 'PWM tone',
@@ -147,6 +148,8 @@ const I18N = {
     wtGrpLedRgb: 'LED (2×5 투톤 3핀)',
     wtLedRed: 'LED 빨강 (1번 핀)', wtLedGreen: 'LED 초록 (3번 핀)', wtLedCommon: 'LED 공통 − (가운데)',
     wtResistor: '저항 150~220Ω',
+    // 순방향 전압 차이(빨강 ~2.0V, 초록 ~3.0V)로 같은 저항이면 빨강이 훨씬 밝다
+    wtResistorRed: '저항 1kΩ 권장 (밝기 균형)',
     wtGrpLedRound: (d) => `LED (원형 ${d}mm)`,
     wtLedPlusLeg: 'LED + (긴 다리)', wtLedMinusLeg: 'LED − (짧은 다리)',
     wtGrpBuzzer: '피에조 부저', wtBzPlus: '부저 +', wtBzMinus: '부저 −', wtPwmTone: 'PWM 톤',
@@ -517,10 +520,13 @@ const P = {
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   oledPodOn: false, coverOn: true,
   batType: '520', batPose: 'flat', batX: -8,
-  wireX: -6, wireY: -12, wireRot: 0, swGpio: 4, sw2Gpio: 6, sdaGpio: 8, sclGpio: 9, swGap: 29,
+  // GPIO 기본값은 펌웨어(project147 wiring.html / platformio.ini build_flags)와 동일하게 맞춘다:
+  // 2=부저 3=스위치 6=LED 초록 7=LED 빨강 8=SDA 9=SCL · 여유 0·1·4·5·10·20·21
+  wireX: -6, wireY: -12, wireRot: 0, swGpio: 3, sw2Gpio: 4, sdaGpio: 8, sclGpio: 9, swGap: 29,
   lidOn: true, lidH: 6,
-  ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 3, led2Gpio: 5,
+  ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 7, led2Gpio: 6,
   bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
+  pinRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
 };
 
 // 저장된 설정 복원 (localStorage)
@@ -529,6 +535,16 @@ try {
   for (const k in saved) if (k in P) P[k] = saved[k];
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
   if (saved.batType === '650' && !('batPose' in saved)) P.batPose = 'stand';
+  // pinRev 1 → 2: 펌웨어 핀맵으로 기본값 변경. 예전 기본값을 그대로 쓰던 항목만 옮기고,
+  // 사용자가 직접 바꾼 핀은 건드리지 않는다.
+  if (!saved.pinRev) {
+    const remap = { swGpio: [4, 3], sw2Gpio: [6, 4], ledGpio: [3, 7], led2Gpio: [5, 6] };
+    for (const k in remap) {
+      const [old, next] = remap[k];
+      if (saved[k] === old) P[k] = next;
+    }
+    P.pinRev = 2;
+  }
 } catch (e) { /* 무시 */ }
 const saveParams = () => {
   try { localStorage.setItem('dimsum-params', JSON.stringify(P)); } catch (e) { /* 무시 */ }
@@ -1892,7 +1908,7 @@ function renderWireTable() {
   if (P.ledOn) {
     if (ledSpec().rect) {
       grp(t('wtGrpLedRgb'));
-      row(WIRE_COLORS.led, t('wtLedRed'), 'GPIO ' + P.ledGpio, t('wtResistor'));
+      row(WIRE_COLORS.led, t('wtLedRed'), 'GPIO ' + P.ledGpio, t('wtResistorRed'));
       row(WIRE_COLORS.led2, t('wtLedGreen'), 'GPIO ' + P.led2Gpio, t('wtResistor'));
       row(WIRE_COLORS.minus, t('wtLedCommon'), t('wtEspGnd'));
     } else {
@@ -2046,7 +2062,7 @@ function updateWires() {
            { oy: P.swGap / 2, gpio: P.sw2Gpio, tag: 'gpio2', lb: t('spSw2') }]
         : [{ oy: 0, gpio: P.swGpio, tag: 'gpio', lb: t('spSw') }];
       for (const c of swCfg) {
-        const pinSw = espPin(...(ESP_PINS[c.gpio] || ESP_PINS[4]));
+        const pinSw = espPin(...(ESP_PINS[c.gpio] || ESP_PINS[3]));
         const pinA = [3.8, c.oy - 2.7], pinB = [-2.7, c.oy - 5.2];   // 홀더 구리선 구멍 = 스위치 핀 위치
         addWire([[...pinA, seatZ3 + 1], [...pinA, below], dropMid(pinA, pinSw), pinSw],
                 WIRE_COLORS.gpio, c.lb, 'G' + c.gpio, c.tag);
@@ -2061,10 +2077,10 @@ function updateWires() {
       const s = ledSpec();
       const z3b = G[2].position.z;
       const under = z3b + P.f3H - F3_PLATE - 1.2;   // 플랜지(몸통 바닥) 바로 아래
-      const pinLed = espPin(...(ESP_PINS[P.ledGpio] || ESP_PINS[3]));
+      const pinLed = espPin(...(ESP_PINS[P.ledGpio] || ESP_PINS[7]));
       const dm = (p, dst) => [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (p[2] + dst[2]) / 2];
       if (s.rect) {
-        const pinLed2 = espPin(...(ESP_PINS[P.led2Gpio] || ESP_PINS[5]));
+        const pinLed2 = espPin(...(ESP_PINS[P.led2Gpio] || ESP_PINS[6]));
         const legR = [P.ledX - s.pitch, P.ledY, under];
         const legC = [P.ledX, P.ledY, under];
         const legG = [P.ledX + s.pitch, P.ledY, under];
