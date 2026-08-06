@@ -44,6 +44,23 @@
   button.ghost { background: #f1ead7; color: #6b5d43; }
   #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
   #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; }
+  /* 3D 뷰 좌상단 보기 토글 아이콘 (부품·배선·반투명·치수) */
+  #viewTools {
+    position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; gap: 4px;
+    background: rgba(255,253,248,.9); border: 1px solid #e8dfc9; border-radius: 11px;
+    padding: 4px; backdrop-filter: blur(3px); box-shadow: 0 2px 10px rgba(77,58,20,.08);
+  }
+  #viewTools button {
+    width: 32px; height: 32px; padding: 0; border-radius: 8px;
+    display: grid; place-items: center; background: transparent; color: #b6ab92;
+  }
+  #viewTools button:hover { background: #f1ead7; color: #6b5d43; }
+  #viewTools button.on { background: #e9b95f; color: #4d3a14; }
+  #viewTools #rulerBtn.on { background: #f0b3ad; color: #8e3b32; }   /* 치수는 룰러와 같은 연붉은색 */
+  #viewTools svg {
+    width: 19px; height: 19px; fill: none; stroke: currentColor;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
   #wireOverlay {
     position: absolute; top: 12px; right: 12px; width: 238px; max-height: calc(100% - 24px);
     overflow-y: auto; background: rgba(255,253,248,.93); border: 1px solid #e8dfc9;
@@ -289,11 +306,9 @@
       <div class="row"><label data-i18n="lblExplode">Explode ⟷ Assemble</label><input type="range" id="explode" min="0" max="1" step="0.01" value="0.55"><span class="val" id="explodev"></span></div>
       <div class="btns">
         <button id="animBtn" data-i18n="btnAnim">▶ Assembly animation</button>
-        <button class="ghost" id="ghostBtn">Components: On</button>
-        <button class="ghost" id="wiresBtn">Wiring: On</button>
-        <button class="ghost" id="xrayBtn">Case X-ray: Off</button>
         <button class="ghost" id="resetBtn" data-i18n="btnReset">Reset settings</button>
       </div>
+      <div class="hint" data-i18n="hintViewTools">Components, wiring, X-ray and dimension toggles sit as icons in the top-left corner of the 3D view.</div>
     </div>
   </details>
 
@@ -331,6 +346,20 @@
 </div>
 
 <div id="viewer">
+  <div id="viewTools">
+    <button id="ghostBtn" aria-pressed="true">
+      <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/></svg>
+    </button>
+    <button id="wiresBtn" aria-pressed="true">
+      <svg viewBox="0 0 24 24"><path d="M3.5 17.5c3.5 0 3-11 6.5-11s3 11 6.5 11 2.5-5 2.5-5"/><circle cx="3.5" cy="17.5" r="1.5"/><circle cx="19" cy="12.5" r="1.5"/></svg>
+    </button>
+    <button id="xrayBtn" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M2.5 12S6.1 6 12 6s9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+    </button>
+    <button id="rulerBtn" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M5 4.5v15M19 4.5v15M5 12h14"/><path d="M8.5 8.5 5 12l3.5 3.5M15.5 8.5 19 12l-3.5 3.5"/></svg>
+    </button>
+  </div>
   <div id="wireOverlay">
     <div class="wo-head" data-i18n="woHead">Wiring table</div>
     <div id="wireTable"></div>

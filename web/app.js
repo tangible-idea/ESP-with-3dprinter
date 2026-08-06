@@ -66,6 +66,7 @@ const I18N = {
     tgGhost: (on) => `Components: ${on ? 'On' : 'Off'}`,
     tgWires: (on) => `Wiring: ${on ? 'On' : 'Off'}`,
     tgXray: (on) => `Case X-ray: ${on ? 'On' : 'Off'}`,
+    tgRuler: (on) => `Dimensions: ${on ? 'On' : 'Off'}`,
     // 정보줄
     infoDims: (size, total, lidTxt, ms, fitTxt) => `Total ${size} × ${total}mm (incl. boss)${lidTxt} · CSG ${ms}ms${fitTxt}`,
     todoDims: (w, d, h, ms) => `Todo supporter ${w} × ${d} × ${h}mm · CSG ${ms}ms`,
@@ -157,6 +158,7 @@ const I18N = {
     tgGhost: (on) => `부품 표시: ${on ? '켬' : '끔'}`,
     tgWires: (on) => `배선 표시: ${on ? '켬' : '끔'}`,
     tgXray: (on) => `케이스 반투명: ${on ? '켬' : '끔'}`,
+    tgRuler: (on) => `치수 표시: ${on ? '켬' : '끔'}`,
     infoDims: (size, total, lidTxt, ms, fitTxt) => `전체 ${size} × ${total}mm (보스 포함)${lidTxt} · CSG ${ms}ms${fitTxt}`,
     todoDims: (w, d, h, ms) => `투두 서포터 ${w} × ${d} × ${h}mm · CSG ${ms}ms`,
     infoLid: (d, h) => ` · 4층 Ø${d} × ${h}mm`,
@@ -257,6 +259,7 @@ const STATIC_I18N = {
     optBzF3: 'Layer 3 ceiling (sleeve hang)', lblBzX: 'Buzzer X', lblBzY: 'Buzzer Y',
     hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that does not pierce the top plate; if it is tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.',
     secView: 'View', lblExplode: 'Explode ⟷ Assemble', btnAnim: '▶ Assembly animation', btnReset: 'Reset settings',
+    hintViewTools: 'Components, wiring, X-ray and dimension toggles sit as icons in the top-left corner of the 3D view.',
     secExport: 'STL export',
     btnEx1: 'Layer 1.stl', btnEx2: 'Layer 2.stl', btnEx3: 'Layer 3.stl', btnEx4: 'Layer 4.stl',
     btnEx5: 'OLED pod.stl', btnEx6: 'OLED cover.stl', btnExOledTest: 'OLED test.stl',
@@ -328,6 +331,7 @@ const STATIC_I18N = {
     optBzF3: '3층 천장 (슬리브 매달림)', lblBzX: '부저 X', lblBzY: '부저 Y',
     hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.',
     secView: '보기', lblExplode: '분해 ⟷ 조립', btnAnim: '▶ 조립 애니메이션', btnReset: '설정 초기화',
+    hintViewTools: '부품·배선·반투명·치수 표시 토글은 3D 뷰 왼쪽 위 아이콘에 있습니다.',
     secExport: 'STL 내보내기',
     btnEx1: '1층.stl', btnEx2: '2층.stl', btnEx3: '3층.stl', btnEx4: '4층.stl',
     btnEx5: 'OLED포드.stl', btnEx6: 'OLED커버.stl', btnExOledTest: 'OLED 테스트.stl',
@@ -373,11 +377,23 @@ function applyStaticI18n() {
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
 }
-// 상태 의존 토글 버튼 라벨 (켬/끔 상태를 반영)
+// 3D 뷰 좌상단 아이콘 토글 — 켬/끔은 색으로, 설명은 툴팁(i18n)으로 보여준다
+const VIEW_TOGGLES = [
+  ['ghostBtn', 'tgGhost', () => showGhosts],
+  ['wiresBtn', 'tgWires', () => wiresOn],
+  ['xrayBtn',  'tgXray',  () => xray],
+  ['rulerBtn', 'tgRuler', () => rulersOn],
+];
 function syncToggleLabels() {
-  const g = document.getElementById('ghostBtn'); if (g) g.textContent = t('tgGhost', showGhosts);
-  const w = document.getElementById('wiresBtn'); if (w) w.textContent = t('tgWires', wiresOn);
-  const x = document.getElementById('xrayBtn'); if (x) x.textContent = t('tgXray', xray);
+  for (const [id, key, get] of VIEW_TOGGLES) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const on = get();
+    el.classList.toggle('on', on);
+    el.title = t(key, on);
+    el.setAttribute('aria-label', el.title);
+    el.setAttribute('aria-pressed', String(on));
+  }
 }
 // 언어 전환 — 정적/동적 텍스트 모두 갱신 후 저장. 파라미터·모델은 그대로 유지.
 function setLang(l) {
@@ -1834,11 +1850,138 @@ function applyExplode() {
   // OLED 뒷면 커버: 조립 시 3층 홈에 안착(3층과 같은 기준), 분해 시 3층 위로 떠오름
   G[4].position.z = P.f1H + P.f2H + gap * 2 + gap * 0.8;
   updateWires();
+  markRulers();
 }
 document.getElementById('explode').addEventListener('input', () => {
   document.getElementById('explodev').textContent = (+document.getElementById('explode').value).toFixed(2);
   applyExplode();
 });
+
+// ------------------------------------------------------------------
+// 치수 룰러: 각 층·주요 지점의 실측 크기를 연붉은색 치수선으로 표시 (토글)
+// 층 높이/전체 폭·깊이는 실제 메시 바운딩박스에서 자동 산출 → 제품이 바뀌어도 그대로 동작.
+// 제품별 추가 치수(슬롯 깊이 등)는 rulerExtras로 등록받는다.
+// ------------------------------------------------------------------
+let rulersOn = false;
+const rulerGroup = new THREE.Group();
+rulerGroup.visible = false;
+scene.add(rulerGroup);
+const RULER_COLOR = 0xe0736b;                    // 연붉은색
+const rulerMat = new THREE.LineBasicMaterial({ color: RULER_COLOR, depthTest: false, transparent: true, opacity: 0.95 });
+const RULER_OFF = 9;                             // 모델 바깥으로 띄우는 거리 (mm)
+let rulerExtras = { product: null, list: [] };   // 제품별 추가 치수 (todo.js 등이 등록)
+
+// 라벨 텍스처 캐시 — 분해 슬라이더를 드래그해도 텍스트가 같으면 캔버스를 다시 굽지 않는다
+const rulerLabelCache = new Map();
+function rulerLabelMat(text) {
+  let e = rulerLabelCache.get(text);
+  if (!e) {
+    if (rulerLabelCache.size > 200) { rulerLabelCache.forEach(v => { v.mat.map.dispose(); v.mat.dispose(); }); rulerLabelCache.clear(); }
+    const fs = 30, pad = 9;
+    const c = document.createElement('canvas');
+    let g = c.getContext('2d');
+    g.font = `bold ${fs}px sans-serif`;
+    const w = Math.ceil(g.measureText(text).width) + pad * 2, h = fs + pad;
+    c.width = w; c.height = h;
+    g = c.getContext('2d');
+    g.fillStyle = 'rgba(255,250,249,0.93)'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#e8a9a3'; g.lineWidth = 3; g.strokeRect(0, 0, w, h);
+    g.fillStyle = '#c8564c';
+    g.font = `bold ${fs}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text, w / 2, h / 2 + 1);
+    // sizeAttenuation:false → 확대/축소해도 라벨은 화면상 같은 크기 (룰러 눈금처럼 읽힌다)
+    const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true, sizeAttenuation: false });
+    e = { mat, w, h };
+    rulerLabelCache.set(text, e);
+  }
+  return e;
+}
+
+// 치수선 하나: a→b 본선 + 양끝 슬래시 눈금 + (선택) 모델 지점까지의 연장선 + 값 라벨.
+// tick = 라벨/눈금이 뻗는 방향, extA/extB = 실제 모델 위 대응 지점, at = 선 위 라벨 위치(0~1).
+function dimLine(a, b, label, tick, extA, extB, at = 0.5) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
+  const len = A.distanceTo(B);
+  if (len < 0.15) return;
+  const u = B.clone().sub(A).divideScalar(len);
+  const tk = new THREE.Vector3(...tick).normalize();
+  const s = u.clone().multiplyScalar(1.5), tv = tk.clone().multiplyScalar(1.5);
+  const pts = [A, B,
+    A.clone().sub(s).sub(tv), A.clone().add(s).add(tv),      // 끝단 슬래시
+    B.clone().sub(s).sub(tv), B.clone().add(s).add(tv)];
+  if (extA) { const e = new THREE.Vector3(...extA); pts.push(e, A.clone().add(A.clone().sub(e).setLength(1.5))); }
+  if (extB) { const e = new THREE.Vector3(...extB); pts.push(e, B.clone().add(B.clone().sub(e).setLength(1.5))); }
+  const line = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), rulerMat);
+  line.renderOrder = 998;
+  rulerGroup.add(line);
+  if (!label) return;
+  const { mat, w, h } = rulerLabelMat(label);
+  const sp = new THREE.Sprite(mat);
+  const sh = 0.019;                                          // 라벨 높이 = 뷰포트 높이의 1.9%
+  sp.scale.set(sh * w / h, sh, 1);
+  sp.position.copy(A).addScaledVector(B.clone().sub(A), at).add(tk.clone().multiplyScalar(3.4));
+  sp.renderOrder = 999;
+  rulerGroup.add(sp);
+}
+
+const rlFmt = v => (Math.round(v * 10) / 10).toFixed(1);
+// 층 그룹의 실제 케이스 부피 상자 (고스트 부품·배선은 제외)
+function rulerGroupBox(g) {
+  const box = new THREE.Box3();
+  let has = false;
+  g.traverse(o => {
+    if (!o.isMesh || o.userData.ghost) return;
+    box.union(new THREE.Box3().setFromObject(o));
+    has = true;
+  });
+  return has ? box : null;
+}
+
+function updateRulers() {
+  rulerGroup.children.forEach(o => { if (o.isLineSegments) o.geometry.dispose(); });
+  rulerGroup.clear();
+  if (!rulersOn) return;
+  const boxes = [];
+  for (let i = 0; i < G.length; i++) {
+    const b = rulerGroupBox(G[i]);
+    if (b && b.max.z - b.min.z > 0.2) boxes.push({ i, b });
+  }
+  if (!boxes.length) return;
+  const all = new THREE.Box3();
+  boxes.forEach(x => all.union(x.b));
+  const rx = all.max.x + RULER_OFF;    // 폭·깊이 치수선이 놓이는 X/Y
+  const ry = all.min.y - RULER_OFF;
+  // 층 높이는 오른쪽 앞 코너에서 더 멀리 — 카메라에서 모델 위에 겹치지 않도록
+  const vx = all.max.x + RULER_OFF * 1.6, vy = all.min.y - RULER_OFF * 1.6;
+  const z0 = all.min.z;
+  // 층별 높이 — 분해 위치를 그대로 따라간다
+  for (const { b } of boxes)
+    dimLine([vx, vy, b.min.z], [vx, vy, b.max.z], rlFmt(b.max.z - b.min.z), [1, 0, 0],
+            [b.max.x, b.min.y, b.min.z], [b.max.x, b.min.y, b.max.z]);
+  // 전체 폭(X) / 깊이(Y) — 바닥 높이에서
+  dimLine([all.min.x, ry, z0], [all.max.x, ry, z0], rlFmt(all.max.x - all.min.x), [0, -1, 0],
+          [all.min.x, all.min.y, z0], [all.max.x, all.min.y, z0]);
+  dimLine([rx, all.min.y, z0], [rx, all.max.y, z0], rlFmt(all.max.y - all.min.y), [1, 0, 0],
+          [all.max.x, all.min.y, z0], [all.max.x, all.max.y, z0]);
+  // 조립 상태(분해 0)에서만 총 높이 — 분해 중에는 층 사이 간격이 섞여 의미가 없다
+  if (boxes.length > 1 && +document.getElementById('explode').value < 0.02) {
+    const tx = all.max.x + RULER_OFF * 2.7, ty = all.min.y - RULER_OFF * 2.7;
+    dimLine([tx, ty, all.min.z], [tx, ty, all.max.z], rlFmt(all.max.z - all.min.z),
+            [1, 0, 0], null, null, 0.82);
+  }
+  // 제품별 추가 치수
+  if (rulerExtras.product === P.product)
+    for (const e of rulerExtras.list) dimLine(e.a, e.b, e.label, e.tick || [1, 0, 0], e.extA, e.extB, e.at);
+}
+
+// 분해 애니메이션/슬라이더 중에도 프레임당 한 번만 다시 그린다
+let rulerPending = false;
+function markRulers() {
+  if (!rulersOn || rulerPending) return;
+  rulerPending = true;
+  requestAnimationFrame(() => { rulerPending = false; updateRulers(); });
+}
+function setRulerExtras(product, list) { rulerExtras = { product, list: list || [] }; }
 
 // ------------------------------------------------------------------
 // 배선 시각화: 배터리 → 충전모듈 → ESP32 → OLED (실제 핀 배치 기반)
@@ -2114,9 +2257,9 @@ function updateWires() {
     }
   } catch (e) { /* 초기화 전 호출 등은 무시 */ }
 }
-document.getElementById('wiresBtn').addEventListener('click', e => {
+document.getElementById('wiresBtn').addEventListener('click', () => {
   wiresOn = !wiresOn;
-  e.target.textContent = t('tgWires', wiresOn);
+  syncToggleLabels();
   document.getElementById('wireOverlay').style.display = wiresOn ? '' : 'none';   // 배선표 오버레이도 함께
   updateWires();
 });
@@ -2200,15 +2343,21 @@ document.getElementById('animBtn').addEventListener('click', () => {
   })(t0);
 });
 
-document.getElementById('ghostBtn').addEventListener('click', e => {
+document.getElementById('ghostBtn').addEventListener('click', () => {
   showGhosts = !showGhosts;
-  e.target.textContent = t('tgGhost', showGhosts);
+  syncToggleLabels();
   G.forEach(g => g.traverse(o => { if (o.userData.ghost) o.visible = showGhosts; }));
 });
-document.getElementById('xrayBtn').addEventListener('click', e => {
+document.getElementById('xrayBtn').addEventListener('click', () => {
   xray = !xray;
-  e.target.textContent = t('tgXray', xray);
+  syncToggleLabels();
   floorMeshes.forEach(m => { if (m) m.material = xray ? matCaseX : matCase; });
+});
+document.getElementById('rulerBtn').addEventListener('click', () => {
+  rulersOn = !rulersOn;
+  syncToggleLabels();
+  rulerGroup.visible = rulersOn;
+  updateRulers();
 });
 
 // ------------------------------------------------------------------
@@ -2443,6 +2592,7 @@ productSel.addEventListener('change', e => {
 ({ rebuildTodo } = initTodo({
   THREE, P, t, G, MATS, matCase, matCaseX, ASSETS, ESP, OLED_TYPES,
   boxBrush, add, sub, meshBrush, manToGeo, downloadSTL, status, queueRebuild,
+  markRulers, setRulerExtras,
   getView: () => ({ xray, showGhosts }),
   clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
 }));

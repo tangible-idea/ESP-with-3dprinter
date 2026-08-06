@@ -16,7 +16,7 @@ export function initTodo(env) {
   const {
     THREE, P, t, G, MATS, matCase, matCaseX, ASSETS, ESP, OLED_TYPES,
     boxBrush, add, sub, meshBrush, manToGeo, downloadSTL, status,
-    queueRebuild, getView, clearFloors,
+    queueRebuild, getView, clearFloors, markRulers, setRulerExtras,
   } = env;
 
   let todoGeo = null;
@@ -90,6 +90,8 @@ export function initTodo(env) {
     man = add(man, chamferBox(w, backYi - backYo, backTop, 0, backYc, 0, r, ch));
 
     const info = { w, totalY: briFrontY - briBackY, tops: [frontTop, backTop], esp: null, oled: null };
+    // 룰러용 주요 지점 — 바깥 bbox로는 알 수 없는 내부 치수들
+    info.ruler = { w, slotY, halfSlot, tBridge, frontTop, backTop, frontYo, backYo, win: null };
 
     // OLED 파냄 — 디스플레이 +Y 정면(창), 슬롯 쪽(−Y)으로 밀어 넣어 삽입. 윗면·앞면 막음.
     if (oledOn) {
@@ -100,6 +102,7 @@ export function initTodo(env) {
       man = sub(man, boxBrush(o.winW, frontT + 1.0, o.winH,
                               0, cavFrontY + frontT / 2, oledBotZ + o.winC - o.winH / 2, 0.05));   // 창 (+Y 관통)
       info.oled = { cy: cavCy, botZ: oledBotZ };
+      info.ruler.win = { w: o.winW, h: o.winH, y: cavFrontY + frontT, cz: oledBotZ + o.winC };
     }
 
     // ESP32 포켓 파냄 — 바깥 −Y 벽은 닫고 안쪽(슬롯 쪽)을 관통시켜 보드를 안에서 밀어 넣음.
@@ -140,6 +143,41 @@ export function initTodo(env) {
     return { man, info };
   }
 
+  // 룰러 추가 치수 — 바깥 상자만으로는 안 보이는 내부 치수를 왼쪽(−X)에 세워 표시.
+  // 좌표는 월드 그대로 (투두는 G[0]가 원점에 있음).
+  function todoRulerDims(r) {
+    const f = v => (Math.round(v * 10) / 10).toFixed(1);
+    const xFar = -r.w / 2 - 9, xNear = -r.w / 2 - 3, xEdge = -r.w / 2;
+    const topZ = Math.max(r.frontTop, r.backTop);
+    const d = [
+      // 앞턱/뒤턱은 카메라에서 겹치기 쉬워 라벨을 선 위 서로 다른 높이에 붙인다
+      { a: [xFar, r.frontYo, 0], b: [xFar, r.frontYo, r.frontTop], tick: [-1, 0, 0], at: 0.78,
+        label: f(r.frontTop),
+        extA: [xEdge, r.frontYo, 0], extB: [xEdge, r.frontYo, r.frontTop] },
+      { a: [xFar, r.backYo, 0], b: [xFar, r.backYo, r.backTop], tick: [-1, 0, 0], at: 0.3,
+        label: f(r.backTop),
+        extA: [xEdge, r.backYo, 0], extB: [xEdge, r.backYo, r.backTop] },
+      { a: [xNear, 0, 0], b: [xNear, 0, r.tBridge], tick: [-1, 0, 0],
+        label: f(r.tBridge),
+        extA: [xEdge, 0, 0], extB: [xEdge, 0, r.tBridge] },
+      // 슬롯(모서리가 끼는 틈) 깊이 — 위에서 내려다보이도록 상단 위에 띄운다
+      { a: [xNear, -r.halfSlot, topZ + 6], b: [xNear, r.halfSlot, topZ + 6], tick: [0, 0, 1],
+        label: f(r.slotY),
+        extA: [xEdge, -r.halfSlot, r.tBridge], extB: [xEdge, r.halfSlot, r.tBridge] },
+    ];
+    if (r.win) {
+      const wz = r.win.cz + r.win.h / 2;
+      d.push(
+        { a: [-r.win.w / 2, r.win.y, wz + 5], b: [r.win.w / 2, r.win.y, wz + 5], tick: [0, 0, 1],
+          label: f(r.win.w),
+          extA: [-r.win.w / 2, r.win.y, wz], extB: [r.win.w / 2, r.win.y, wz] },
+        { a: [xNear, r.win.y, r.win.cz - r.win.h / 2], b: [xNear, r.win.y, wz], tick: [-1, 0, 0], at: 0.35,
+          label: f(r.win.h),
+          extA: [-r.win.w / 2, r.win.y, r.win.cz - r.win.h / 2], extB: [-r.win.w / 2, r.win.y, wz] });
+    }
+    return d;
+  }
+
   function rebuildTodo() {
     const { xray, showGhosts } = getView();
     status.classList.add('on');
@@ -164,6 +202,8 @@ export function initTodo(env) {
           g.position.set(0, info.oled.cy, info.oled.botZ + o.hgt / 2 + 0.3);
           g.userData.ghost = true; g.visible = showGhosts; G[0].add(g);
         }
+        setRulerExtras('todo', todoRulerDims(info.ruler));
+        markRulers();
         const totalH = Math.max(...info.tops);
         document.getElementById('dims').textContent =
           t('todoDims', info.w.toFixed(0), info.totalY.toFixed(0), totalH.toFixed(0), (performance.now() - t0).toFixed(0));
