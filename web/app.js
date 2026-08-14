@@ -75,6 +75,7 @@ const I18N = {
     fitBad: (a, b, c, d) => ` · assembly interference ${a}/${b}/${c}/${d}mm³ ⚠`,
     // 경고
     wFit: '⚠ Layers overlap when assembled — adjust component layout or layer heights',
+    wSnapWeak: a => `⚠ Snap detent engagement is only ${a}mm — it will barely click. Raise the detent height or lower the fit clearance`,
     wBatFit: (l, w) => `⚠ Battery (${l}×${w}) doesn't fit in Layer 1 — increase W/D or reduce the corner`,
     wBatStandFit: (tk, l) => `⚠ Upright battery (${tk}×${l}) doesn't fit in Layer 2 — increase depth D or move Battery X`,
     wBatStandEsp: '⚠ Upright battery overlaps the ESP32',
@@ -165,6 +166,7 @@ const I18N = {
     fitOk: ' · 조립 간섭 없음 ✓',
     fitBad: (a, b, c, d) => ` · 조립 간섭 ${a}/${b}/${c}/${d}mm³ ⚠`,
     wFit: '⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요',
+    wSnapWeak: a => `⚠ 딸각 걸림량이 ${a}mm뿐이라 거의 안 걸립니다 — 돌기 높이를 올리거나 결합 유격을 낮추세요`,
     wBatFit: (l, w) => `⚠ 배터리(${l}×${w})가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요`,
     wBatStandFit: (tk, l) => `⚠ 세운 배터리(${tk}×${l})가 2층에 안 들어갑니다 — 세로 D를 키우거나 배터리 X를 옮기세요`,
     wBatStandEsp: '⚠ 세운 배터리가 ESP32와 겹칩니다',
@@ -225,7 +227,8 @@ const STATIC_I18N = {
     optCircle: 'Full circle (dim sum steamer)',
     lblW: 'Width W / diameter', lblD: 'Depth D', lblCorner: 'Corner rounding',
     lblWall: 'Wall thickness', lblFit: 'Fit clearance', lblBands: 'Decorative grooves',
-    hintOuter: 'Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.',
+    lblSnap: 'Snap-fit click', lblSnapD: 'Detent height',
+    hintOuter: 'Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Snap-fit click adds four hemispherical detents at the middle of each side of the tab, with matching dimples in the groove: the thin 0.7mm outer lip flexes out and clicks back in as the layer seats. Detent height is the interference (detent height − fit clearance); raise it for a firmer click, lower it if the layers are hard to separate or the outer skin gets too thin. Settings are saved automatically.',
     secLayers: 'Layer heights',
     lblF1: 'Layer 1 (battery)', lblF2: 'Layer 2 (board)', lblF3: 'Layer 3 (switch)',
     lblLid: 'Layer 4 (dim sum lid)', lblLidH: 'Layer 4 band height',
@@ -297,7 +300,8 @@ const STATIC_I18N = {
     optCircle: '완전 원형 (딤섬 찜기)',
     lblW: '가로 W / 지름', lblD: '세로 D', lblCorner: '모서리 둥글기',
     lblWall: '벽 두께', lblFit: '결합 유격', lblBands: '장식 홈',
-    hintOuter: '층간·4층 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 설정은 자동 저장됩니다.',
+    lblSnap: '딸각 결합', lblSnapD: '돌기 높이',
+    hintOuter: '층간·4층 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 딸각 결합을 켜면 턱 네 변 중앙에 반구 돌기가, 홈 쪽 같은 자리에 딤플이 생겨 층이 내려앉을 때 바깥 살(0.7mm)이 살짝 벌어졌다가 물립니다. 실제 걸림량 = 돌기 높이 − 결합 유격 — 더 확실한 딸각은 올리고, 잘 안 빠지거나 바깥 살이 얇으면 내리세요. 설정은 자동 저장됩니다.',
     secLayers: '층 높이',
     lblF1: '1층 (배터리)', lblF2: '2층 (보드)', lblF3: '3층 (스위치)',
     lblLid: '4층 (딤섬 뚜껑)', lblLidH: '4층 밴드 높이',
@@ -519,6 +523,9 @@ const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 결합 턱 높이/폭 (사각 단면)
 const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — 턱 바깥면 inset = RABBET.out + fitClr
+// 딸각(스냅) 결합: 턱 바깥면의 반구 돌기 ↔ 홈 바깥 살의 딤플. 네 변 중앙(원형이면 0/90/180/270°)
+// SNAP_Z = 두 층이 맞닿는 안착면에서 턱 끝 방향으로 잰 돌기 중심 높이 (턱 1.5·홈 1.8 안에 물림)
+const SNAP_Z = 0.95, SNAP_CLR = 0.06;
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
@@ -530,7 +537,7 @@ const P = {
   tWidth: 62, tEdge: 11.5, tClr: 0.6, tWall: 2.5, tBridge: 3, tRound: 3,
   tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
-  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
+  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, snapOn: true, snapD: 0.3,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
@@ -567,7 +574,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'snapD','espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
 let rebuildTimer = null;
@@ -737,6 +744,13 @@ document.getElementById('oledPodOn').addEventListener('change', e => { P.oledPod
 document.getElementById('coverOn').checked = P.coverOn;
 document.getElementById('coverOn').addEventListener('change', e => { P.coverOn = e.target.checked; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
+document.getElementById('snapOn').checked = P.snapOn;
+document.getElementById('snapD').disabled = !P.snapOn;
+document.getElementById('snapOn').addEventListener('change', e => {
+  P.snapOn = e.target.checked;
+  document.getElementById('snapD').disabled = !P.snapOn;
+  queueRebuild();
+});
 document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.removeItem('dimsum-params');
   location.reload();
@@ -760,6 +774,8 @@ function syncControls() {
   document.getElementById('batType').value = P.batType;
   document.getElementById('batPose').value = P.batPose;
   document.getElementById('bands').checked = P.bands;
+  document.getElementById('snapOn').checked = P.snapOn;
+  document.getElementById('snapD').disabled = !P.snapOn;
   document.getElementById('bossOn').checked = P.bossOn;
   document.getElementById('bossH').disabled = !P.bossOn;
   document.getElementById('steamOn').checked = P.steamOn;
@@ -951,14 +967,31 @@ function cylBrush(r, h, z0, seg = 96) {   // 원기둥 (뚜껑 스커트/안착 
   g.deleteAttribute('uv');
   return toMan(g);
 }
+function ballBrush(r, x, y, z, seg = 20) {   // 구 (스냅 돌기/딤플)
+  const g = new THREE.SphereGeometry(r, seg, seg / 2);
+  g.deleteAttribute('uv');
+  g.translate(x, y, z);
+  return toMan(g);
+}
+// 스냅 돌기 위치 — 외곽 inset i 기준 네 변 중앙. 원형이면 D=W·R=W/2라 0/90/180/270°가 된다.
+const snapSites = i => [[P.W / 2 - i, 0], [-(P.W / 2 - i), 0], [0, effD() / 2 - i], [0, -(effD() / 2 - i)]];
+// 돌기 반지름 = 턱 바깥면에서의 돌출량(snapD). 딤플은 돌기와 같은 자리를 중심으로 SNAP_CLR 크게
+// 파서, 완전히 안착하면 돌기가 딤플 안에 여유를 두고 잠긴다(= 조립 간섭 0, 걸림은 삽입 중에만).
+const snapBalls = (r, z, sites) => sites
+  .map(([x, y]) => ballBrush(r, x, y, z))
+  .reduce((a, s) => a ? add(a, s) : s, null);
+
 // 결합부 — 사각 단면 턱·홈 (턱 1.2×1.5가 홈 1.8 깊이에 꽂힘, fitClr로 유격 조절)
-function topRidge(z) {   // 아래층 상단 턱
+function topRidge(z) {   // 아래층 상단 턱 (+ 딸각 돌기)
   const o = RABBET.out + P.fitClr;
-  return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+  const r = ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+  return P.snapOn ? add(r, snapBalls(P.snapD, z + SNAP_Z, snapSites(o))) : r;
 }
 
-function bottomJointCut(b) {   // 위층 바닥 홈
-  return sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+function bottomJointCut(b) {   // 위층 바닥 홈 (+ 딸각 딤플)
+  b = sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+  if (!P.snapOn) return b;
+  return sub(b, snapBalls(P.snapD + SNAP_CLR, SNAP_Z, snapSites(RABBET.out + P.fitClr)));
 }
 const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r; };
 const add = (a, b) => csgOp(a, b, 'add');
@@ -1593,14 +1626,24 @@ function bzTube(r, h, z0) {
 // Ø41 케이스면 홈이 벽 상단을 지나며 바깥 살 0.7이 남음 — 층간 결합부와 동일한 형태.
 // 재료가 없는 곳은 no-op이라 케이스 크기와 무관하게 항상 컷.
 function lidJointGroove(b) {
-  return sub(b, cylRing(LID.r - RABBET.out, LID.r - LID.bandW - 0.6, RABBET.d + 0.05,
-                        P.f3H - RABBET.d));
+  b = sub(b, cylRing(LID.r - RABBET.out, LID.r - LID.bandW - 0.6, RABBET.d + 0.05,
+                     P.f3H - RABBET.d));
+  if (!P.snapOn) return b;
+  // 안착면 = 3층 상판(z = f3H) → 딤플은 거기서 홈 안쪽으로 SNAP_Z. Ø41 밖(±Y)은 재료가 없어 no-op.
+  return sub(b, snapBalls(P.snapD + SNAP_CLR, P.f3H - SNAP_Z, lidSnapSites()));
 }
+// 뚜껑 결합부의 스냅 위치 — 턱 바깥면(반지름 LID.r − o) 위 네 방향
+const lidSnapSites = () => {
+  const R = LID.r - (RABBET.out + P.fitClr);
+  return [[R, 0], [-R, 0], [0, R], [0, -R]];
+};
 
 // 뚜껑 밑면의 결합 턱: topRidge와 동일한 사각 프로파일, 아래로 내림 미러 (z0~RIDGE_H, 림 밑면 = RIDGE_H)
 function lidJointRidge() {
   const o = RABBET.out + P.fitClr;
-  return cylRing(LID.r - o, LID.r - o - RIDGE_W, RIDGE_H, 0);
+  const r = cylRing(LID.r - o, LID.r - o - RIDGE_W, RIDGE_H, 0);
+  // 안착면 = 림 밑면(뚜껑 local z = RIDGE_H) → 돌기는 거기서 턱 끝(아래) 방향으로 SNAP_Z
+  return P.snapOn ? add(r, snapBalls(P.snapD, RIDGE_H - SNAP_Z, lidSnapSites())) : r;
 }
 
 // 딤섬 뚜껑: 결합 턱(z0~1.5) + 스트레이트 밴드(높이 lidH, 벽 2.3) + bun_lid 디자인 원본.
@@ -2383,6 +2426,7 @@ function updateInfo(ms, fit) {
     t('infoDims', sizeTxt, total.toFixed(1), lidTxt, ms.toFixed(0), fitTxt);
   const warn = [];
   if (fit && !fit.ok) warn.push(t('wFit'));
+  if (P.snapOn && P.snapD - P.fitClr < 0.12) warn.push(t('wSnapWeak', (P.snapD - P.fitClr).toFixed(2)));
   if (!noBat() && !batStand() && !insideInner(batSpec().L / 2 + 0.4, batSpec().W / 2 + 0.4))
     warn.push(t('wBatFit', batSpec().L, batSpec().W));
   const ef = espFoot();
