@@ -121,6 +121,10 @@ const I18N = {
     wBzLayCup: '⚠ Laid-down buzzer carves into the Layer 3 holder cup (watch for thin cup walls)',
     wBzCupBelow: '⚠ Buzzer touches under the Layer 3 switch holder cup — move X/Y',
     wBzTop: '⚠ Buzzer touches the Layer 3 top plate — increase layer heights',
+    wEspOutWall: (left) => `⚠ USB push-out leaves only ${left}mm of wall around the connector — pull it back or thicken the wall`,
+    wEspGripRoom: (room) => `⚠ Finger notches have only ${room}mm of room — the pocket sits too close to the wall, move the ESP32 toward the center`,
+    wSnapWeak: (bite) => `⚠ Snap bite is only ${bite}mm — raise the bead height or lower the fit clearance, or it won't click`,
+    wSnapTab: (left) => `⚠ Snap dimple leaves the Layer 2 tab only ${left}mm thick — lower the bead height`,
     wNfcThick: (plate, room) => `⚠ NFC pocket breaks through the Layer 2 floor plate (${plate}) — keep the depth at ${room} or less, or lower the pocket floor`,
     wNfcWall: (d) => `⚠ NFC pocket (Ø${d}) runs into the wall / bottom joint groove — shrink it or move it toward the center`,
     wNfcWire: '⚠ NFC pocket overlaps the wire hole — the pocket opens into the slot; move the NFC X/Y or the wire hole',
@@ -214,6 +218,10 @@ const I18N = {
     wBzLayCup: '⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)',
     wBzCupBelow: '⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요',
     wBzTop: '⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요',
+    wEspOutWall: (left) => `⚠ USB 내밀기 때문에 커넥터 둘레 벽살이 ${left}mm만 남습니다 — 내밀기를 줄이거나 벽을 두껍게 하세요`,
+    wEspGripRoom: (room) => `⚠ 집게 홈 여유가 ${room}mm뿐입니다 — 포켓이 벽에 너무 붙어 있으니 ESP32를 중앙 쪽으로 옮기세요`,
+    wSnapWeak: (bite) => `⚠ 딸각 걸림량이 ${bite}mm뿐입니다 — 돌기를 키우거나 결합 유격을 줄이지 않으면 안 걸립니다`,
+    wSnapTab: (left) => `⚠ 딤플 때문에 2층 턱이 ${left}mm만 남습니다 — 돌기 높이를 낮추세요`,
     wNfcThick: (plate, room) => `⚠ NFC 포켓이 2층 바닥판(${plate})을 뚫습니다 — 깊이를 ${room} 이하로 줄이거나 아래 살을 낮추세요`,
     wNfcWall: (d) => `⚠ NFC 포켓(Ø${d})이 벽·바닥 결합 홈에 닿습니다 — 지름을 줄이거나 중앙 쪽으로 옮기세요`,
     wNfcWire: '⚠ NFC 포켓이 배선구멍과 겹칩니다 — 포켓이 슬롯으로 뚫립니다. NFC X/Y 또는 배선구멍을 옮기세요',
@@ -231,6 +239,8 @@ const STATIC_I18N = {
     optCircle: 'Full circle (dim sum steamer)',
     lblW: 'Width W / diameter', lblD: 'Depth D', lblCorner: 'Corner rounding',
     lblWall: 'Wall thickness', lblFit: 'Fit clearance', lblBands: 'Decorative grooves',
+    lblSnap: 'Snap-fit (Layer 2↔3)', lblSnapP: 'Snap bead height',
+    hintSnap: 'Snap-fit puts four small beads on the Layer 3 skirt and matching dimples on the Layer 2 tab (mid-wall, all four sides). Both ramps are 45°, so they print without supports, and once seated the bead sits inside the dimple with no interference. What you actually feel is the bead height minus the fit clearance — raise the bead or drop the clearance for a firmer click.',
     hintOuter: 'Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.',
     secLayers: 'Layer heights',
     lblF1: 'Layer 1 (battery)', lblF2: 'Layer 2 (board)', lblF3: 'Layer 3 (switch)',
@@ -243,6 +253,7 @@ const STATIC_I18N = {
     optEspS0: 'Upright-wide (24×5, h18)', optEspS90: 'Upright-tall (5×24, h18)',
     optEspU0: 'Upright-USB down (18×5, h24)', optEspU90: 'Upright-USB down tall (5×18, h24)',
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune', lblModY: 'Charge module Y',
+    lblEspOut: 'USB push-out (no battery)', lblEspGrip: 'Finger notches in pocket',
     lblBatType: 'Battery capacity', optBatNone: 'No battery (ESP32 direct USB)',
     lblBatPose: 'Battery placement', optBatFlat: 'Flat on Layer 1', optBatStand: 'Upright on Layer 2 (slot-in)',
     lblBatX: 'Battery X (upright)',
@@ -306,6 +317,8 @@ const STATIC_I18N = {
     optCircle: '완전 원형 (딤섬 찜기)',
     lblW: '가로 W / 지름', lblD: '세로 D', lblCorner: '모서리 둥글기',
     lblWall: '벽 두께', lblFit: '결합 유격', lblBands: '장식 홈',
+    lblSnap: '딸각 결합 (2↔3층)', lblSnapP: '스냅 돌기 높이',
+    hintSnap: '딸각 결합은 3층 스커트에 작은 비드 4개, 2층 턱에 같은 자리 딤플을 냅니다 (네 벽 중앙). 위아래 램프가 모두 45°라 서포트 없이 뽑히고, 다 앉으면 비드가 딤플 안에 들어가 간섭이 없습니다. 실제로 손에 걸리는 양은 돌기 높이 − 결합 유격이므로, 더 단단하게 물리려면 돌기를 키우거나 유격을 줄이세요.',
     hintOuter: '층간·4층 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 설정은 자동 저장됩니다.',
     secLayers: '층 높이',
     lblF1: '1층 (배터리)', lblF2: '2층 (보드)', lblF3: '3층 (스위치)',
@@ -318,6 +331,7 @@ const STATIC_I18N = {
     optEspS0: '세움-가로 (24×5, 높이 18)', optEspS90: '세움-세로 (5×24, 높이 18)',
     optEspU0: '세움-USB아래 (18×5, 높이 24)', optEspU90: '세움-USB아래-세로 (5×18, 높이 24)',
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정', lblModY: '충전모듈 Y',
+    lblEspOut: 'USB 내밀기 (배터리 없음)', lblEspGrip: '포켓 집게 홈',
     lblBatType: '배터리 용량', optBatNone: '배터리 없음 (ESP32 USB 직결)',
     lblBatPose: '배터리 배치', optBatFlat: '눕혀서 1층', optBatStand: '세워서 2층 (홈에 꽂기)',
     lblBatX: '배터리 X (세움)',
@@ -543,9 +557,11 @@ const P = {
   tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
+  snapOn: true, snapP: 0.35,   // 2↔3층 딸각 결합 비드 (돌출량) — 실제 걸림량은 snapP − fitClr
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
+  espOut: 0.8, espGripOn: true,   // 도킹 시 보드를 벽 쪽으로 더 밀기 / 손으로 빼는 집게 홈
   oledPodOn: false, coverOn: true,
   batType: '520', batPose: 'flat', batX: -8,
   // GPIO 기본값은 펌웨어(project147 wiring.html / platformio.ini build_flags)와 동일하게 맞춘다:
@@ -584,8 +600,8 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH','swGap',
-                 'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY',
+                 'espX','espY','espLift','espZ','espOut','modY','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY','snapP',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
 let rebuildTimer = null;
 function queueRebuild() {
@@ -643,6 +659,8 @@ function applyBatUI() {
   document.getElementById('espYCenter').disabled = nb && circ;
   document.getElementById('espRot').disabled = nb;
   document.getElementById('espLift').disabled = nb || espStand();
+  document.getElementById('espOut').disabled = !nb;          // USB 직결(도킹)일 때만 의미 있음
+  document.getElementById('espGripOn').disabled = espStand();
   document.getElementById('modY').disabled = nb || circ;   // 원형: 충전모듈은 항상 중앙 고정
   for (const id of ['wireX', 'wireY', 'wireRot']) document.getElementById(id).disabled = nb;
 }
@@ -754,6 +772,18 @@ document.getElementById('oledPodOn').addEventListener('change', e => { P.oledPod
 document.getElementById('coverOn').checked = P.coverOn;
 document.getElementById('coverOn').addEventListener('change', e => { P.coverOn = e.target.checked; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
+document.getElementById('espGripOn').checked = P.espGripOn;
+document.getElementById('espGripOn').addEventListener('change', e => {
+  P.espGripOn = e.target.checked;
+  queueRebuild();
+});
+document.getElementById('snapOn').checked = P.snapOn;
+document.getElementById('snapP').disabled = !P.snapOn;
+document.getElementById('snapOn').addEventListener('change', e => {
+  P.snapOn = e.target.checked;
+  document.getElementById('snapP').disabled = !P.snapOn;
+  queueRebuild();
+});
 const applyNfcUI = () => {
   for (const id of ['nfcD', 'nfcT', 'nfcBase', 'nfcX', 'nfcY'])
     document.getElementById(id).disabled = !P.nfcOn;
@@ -801,6 +831,9 @@ function syncControls() {
   applyBzUI();
   document.getElementById('nfcOn').checked = P.nfcOn;
   applyNfcUI();
+  document.getElementById('snapOn').checked = P.snapOn;
+  document.getElementById('snapP').disabled = !P.snapOn;
+  document.getElementById('espGripOn').checked = P.espGripOn;
   applyShapeUI();
   document.getElementById('product').value = P.product;
   document.getElementById('tEspOn').checked = P.tEspOn;
@@ -993,6 +1026,33 @@ function topRidge(z) {   // 아래층 상단 턱
 function bottomJointCut(b) {   // 위층 바닥 홈
   return sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
 }
+
+// 딸각 결합 (2층 ↔ 3층): 3층 홈 바깥 스커트 안쪽면에 비드 4개, 2층 상단 턱 바깥면에 같은 자리 딤플.
+// 단면은 45° 다이아몬드 — 위아래 램프가 모두 45°라 서포트 없이 뽑히고, 내려오는 턱이 아랫 램프를
+// 타고 올라가다 딤플에 떨어지며 딸각 걸린다. 다 앉으면 비드가 딤플에 쏙 들어가 간섭 0.
+// 비드(추가)를 스커트 0.7 쪽에, 딤플(제거)을 턱 1.2 쪽에 둬서 얇아지는 벽이 생기지 않는다.
+const SNAP = { len: 6, clr: 0.12 };   // 비드 길이 / 딤플 사방 여유
+const snapZ = () => RIDGE_H / 2;      // 턱 높이 중앙 (3층 로컬 z = 2층 f2H 기준 오프셋과 동일)
+// z = 비드 중심 높이, inset = 비드 중심이 놓이는 외곽 inset, grow > 0 이면 딤플용으로 사방 확대
+function snapBeads(z, inset, grow = 0) {
+  const p = P.snapP + grow;               // 다이아몬드 반대각 = 돌출량
+  const half = SNAP.len / 2 + grow;
+  const s = p * Math.SQRT2;               // 45° 회전 전 정사각 한 변
+  const hx = P.W / 2 - inset, hy = effD() / 2 - inset;
+  const bar = (alongX, cx, cy) => {
+    const g = alongX ? new THREE.BoxGeometry(half * 2, s, s)
+                     : new THREE.BoxGeometry(s, half * 2, s);
+    if (alongX) g.rotateX(Math.PI / 4); else g.rotateY(Math.PI / 4);
+    g.translate(cx, cy, z);
+    g.deleteAttribute('uv');
+    return toMan(g);
+  };
+  let m = bar(true, 0, hy);
+  m = add(m, bar(true, 0, -hy));
+  m = add(m, bar(false, hx, 0));
+  m = add(m, bar(false, -hx, 0));
+  return m;
+}
 const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r; };
 const add = (a, b) => csgOp(a, b, 'add');
 const sub = (a, b) => csgOp(a, b, 'subtract');
@@ -1156,14 +1216,40 @@ function modCenter() {
   return { x: edgeX - 0.2 - MOD.l / 2, y: P.modY, edgeX };
 }
 // 배터리 없음: ESP32가 충전모듈 자리(동쪽 벽)에 도킹 — USB가 벽 구멍으로 직결 (180° 회전)
+// espOut: 보드를 벽 쪽으로 더 밀어 넣는 양. 포켓도 같이 벽을 파고 들어가 커넥터가 벽 두께
+// 안쪽에 자리잡으므로, USB 플러그가 벽을 그만큼 덜 파고들어도 꽂힌다 (남는 벽살 = wall − espOut).
 function espDock() {
+  const out = noBat() ? P.espOut : 0;
   if (P.shape === 'circle') {
     const edgeX = flatPadX() - 2.5;
-    return { x: edgeX - 0.2 - ESP.l / 2, y: 0, edgeX };
+    return { x: edgeX - 0.2 - ESP.l / 2 + out, y: 0, edgeX };
   }
   const edgeX = surfAt(Math.abs(P.espY) + ESP.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
-  return { x: edgeX - 0.2 - ESP.l / 2, y: P.espY, edgeX };
+  return { x: edgeX - 0.2 - ESP.l / 2 + out, y: P.espY, edgeX };
 }
+// ESP32 집게 홈: 포켓 마주 보는 두 벽을 터서 보드 옆면(두께 4.2)을 손가락이 직접 잡게 한다.
+// 여유가 더 넓은 축을 골라 파고, 어떤 경우에도 케이스 벽을 뚫지 않도록 내부 외곽선으로 잘라낸다.
+const GRIP = { w: 11, out: 4 };   // 홈 폭 / 포켓 바깥으로 파는 깊이
+function espGripRoom(cx, cy, w, d) {
+  return {
+    y: Math.min(innerHalfD() - (cy + d / 2), (cy - d / 2) + innerHalfD()),
+    x: Math.min(innerHalfW() - (cx + w / 2), (cx - w / 2) + innerHalfW()),
+  };
+}
+function espGripCut(cx, cy, w, d) {
+  const room = espGripRoom(cx, cy, w, d);
+  const useY = room.y >= room.x;
+  const h = F2_PLATFORM + 2, z0 = F2_PLATE + P.espZ;
+  let g = null;
+  for (const s of [-1, 1]) {
+    const box = useY
+      ? boxBrush(GRIP.w, GRIP.out * 2, h, cx, cy + s * d / 2, z0, 1.5)
+      : boxBrush(GRIP.out * 2, GRIP.w, h, cx + s * w / 2, cy, z0, 1.5);
+    g = g ? add(g, box) : box;
+  }
+  return inter(g, extrude(baseShape(P.wall), h + 1, z0 - 0.5));   // 벽 관통 방지
+}
+
 function oledFrame() {
   // OLED 그룹 로컬(+Y벽) → 월드 변환
   const side = P.oledSide;
@@ -1186,6 +1272,8 @@ function buildFloor2() {
   let b = extrude(baseShape(0), F2_PLATE);
   b = add(b, ringBrush(0, P.wall, P.f2H - F2_PLATE, F2_PLATE));
   b = add(b, topRidge(P.f2H));
+  // 딸각 결합: 턱 바깥면에 딤플 (3층 스커트의 비드가 여기 떨어져 걸림)
+  if (P.snapOn) b = sub(b, snapBeads(P.f2H + snapZ(), RABBET.out + P.fitClr, SNAP.clr));
   b = add(b, extrude(baseShape(P.wall), F2_PLATFORM, F2_PLATE));  // 포켓 플랫폼
 
   // 원형 모드: 동쪽 벽에 플랫 USB 패드 (사진 참조 디자인) — 곡면을 깎고 평평한 벽 세그먼트로 대체
@@ -1203,12 +1291,15 @@ function buildFloor2() {
   const espLifted = !noBat() && !espStand() && P.espLift > 0;   // 2.5층: 레일 홈에 끼워 공중 배치
   // 세움: 실물 메시(USB 모양 포함)를 팽창시켜 그대로 절삭 → 꽂아서 고정
   // 배터리 없음: 충전모듈 자리에 도킹 (USB 끝이 벽 안쪽면에 붙음)
-  const espPocket = () => noBat()
-    ? boxBrush(ESP.l + POCKET_CLR, ESP.w + POCKET_CLR, F2_PLATFORM + 2,
-               espDock().x, espDock().y, F2_PLATE + P.espZ, 1.5)
-    : espStand()
-    ? meshBrush(espStandGeo(true), new THREE.Matrix4().makeTranslation(P.espX, P.espY, espBaseZ()))
-    : boxBrush(ef.w, ef.d, F2_PLATFORM + 2, P.espX, P.espY, F2_PLATE + P.espZ, 1.5);
+  const espPocket = () => {
+    if (espStand())   // 세움은 보드가 이미 드러나 있어 집게 홈 불필요
+      return meshBrush(espStandGeo(true), new THREE.Matrix4().makeTranslation(P.espX, P.espY, espBaseZ()));
+    const dk = noBat() ? espDock() : null;
+    const cx = dk ? dk.x : P.espX, cy = dk ? dk.y : P.espY;
+    const w = dk ? ESP.l + POCKET_CLR : ef.w, d = dk ? ESP.w + POCKET_CLR : ef.d;
+    const pocket = boxBrush(w, d, F2_PLATFORM + 2, cx, cy, F2_PLATE + P.espZ, 1.5);
+    return P.espGripOn ? add(pocket, espGripCut(cx, cy, w, d)) : pocket;
+  };
   if (!espLifted) b = sub(b, espPocket());
 
   // 2.5층 받침 선(빔): 벽에서 벽까지 한 줄로 가로지르고, 보드 자리만 24mm 홈을 파냄 —
@@ -1537,6 +1628,8 @@ function buildFloor3() {
   if (P.steamOn) b = steamerFloor(b);
 
   b = bottomJointCut(b);
+  // 딸각 결합: 홈을 판 뒤 스커트 안쪽면에 비드를 얹는다 (순서 반대면 홈이 비드를 지운다)
+  if (P.snapOn) b = add(b, snapBeads(snapZ(), RABBET.out));
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
@@ -2582,6 +2675,26 @@ function updateInfo(ms, fit) {
           warn.push(t('wBzTop'));
       }
     }
+  }
+  // ESP32 USB 내밀기: 포켓이 벽을 파고 들어간 만큼 벽살이 얇아진다
+  if (noBat() && P.espOut > 0) {
+    const left = P.wall - P.espOut;
+    if (left < 0.8) warn.push(t('wEspOutWall', left.toFixed(1)));
+  }
+  // ESP32 집게 홈: 벽에 막혀 클립되면 손가락이 안 들어간다
+  if (P.espGripOn && !espStand() && !espLifted) {
+    const dk = noBat() ? espDock() : null;
+    const gw = dk ? ESP.l + POCKET_CLR : ef.w, gd = dk ? ESP.w + POCKET_CLR : ef.d;
+    const room = espGripRoom(dk ? dk.x : P.espX, dk ? dk.y : P.espY, gw, gd);
+    const best = Math.max(room.x, room.y);
+    if (best < 2) warn.push(t('wEspGripRoom', best.toFixed(1)));
+  }
+  // 딸각 결합: 실제 걸림량 = 돌기 − 유격. 너무 작으면 안 걸리고, 너무 크면 턱이 얇아진다
+  if (P.snapOn) {
+    const bite = P.snapP - P.fitClr;
+    if (bite < 0.12) warn.push(t('wSnapWeak', bite.toFixed(2)));
+    const tabLeft = RIDGE_W - (P.snapP + SNAP.clr);
+    if (tabLeft < 0.5) warn.push(t('wSnapTab', tabLeft.toFixed(2)));
   }
   // NFC 스티커 포켓: 바닥판 안에 완전히 묻혀야 하고(위·아래 살), 바닥 결합 홈·배선구멍과 겹치면 안 됨
   if (P.nfcOn) {

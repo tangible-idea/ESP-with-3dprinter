@@ -122,7 +122,7 @@
   body.prod-todo [data-product="todo"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-k4OvCqkN.js"></script>
+  <script type="module" crossorigin src="/assets/index-BcUrcsX9.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -149,7 +149,10 @@
       <div class="row"><label data-i18n="lblCorner">Corner rounding</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
       <div class="row"><label data-i18n="lblWall">Wall thickness</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
       <div class="row"><label data-i18n="lblFit">Fit clearance</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
+      <div class="row"><label data-i18n="lblSnap">Snap-fit (Layer 2↔3)</label><input type="checkbox" id="snapOn" checked></div>
+      <div class="row"><label data-i18n="lblSnapP">Snap bead height</label><input type="range" id="snapP" min="0.15" max="0.6" step="0.05" value="0.35"><span class="val" id="snapPv"></span></div>
       <div class="row"><label data-i18n="lblBands">Decorative grooves</label><input type="checkbox" id="bands" checked></div>
+      <div class="hint" data-i18n="hintSnap">Snap-fit puts four small beads on the Layer 3 skirt and matching dimples on the Layer 2 tab (mid-wall, all four sides). Both ramps are 45°, so they print without supports, and once seated the bead sits inside the dimple with no interference. What you actually feel is the bead height minus the fit clearance — raise the bead or drop the clearance for a firmer click.</div>
       <div class="hint" data-i18n="hintOuter">Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.</div>
     </div>
   </details>
@@ -183,6 +186,8 @@
       </div>
       <div class="row"><label data-i18n="lblEspLift">ESP32 lift (Layer 2.5)</label><input type="range" id="espLift" min="0" max="12" step="0.5" value="0"><span class="val" id="espLiftv"></span></div>
       <div class="row"><label data-i18n="lblEspZ">ESP32 Z fine-tune</label><input type="range" id="espZ" min="-1" max="2" step="0.1" value="0"><span class="val" id="espZv"></span></div>
+      <div class="row"><label data-i18n="lblEspOut">USB push-out (no battery)</label><input type="range" id="espOut" min="0" max="2" step="0.1" value="0.8"><span class="val" id="espOutv"></span></div>
+      <div class="row"><label data-i18n="lblEspGrip">Finger notches in pocket</label><input type="checkbox" id="espGripOn" checked></div>
       <div class="row"><label data-i18n="lblModY">Charge module Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
       <div class="row"><label data-i18n="lblBatType">Battery capacity</label>
         <select id="batType">
