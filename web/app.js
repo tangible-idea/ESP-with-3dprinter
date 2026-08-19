@@ -121,6 +121,9 @@ const I18N = {
     wBzLayCup: '⚠ Laid-down buzzer carves into the Layer 3 holder cup (watch for thin cup walls)',
     wBzCupBelow: '⚠ Buzzer touches under the Layer 3 switch holder cup — move X/Y',
     wBzTop: '⚠ Buzzer touches the Layer 3 top plate — increase layer heights',
+    wNfcThick: (plate, room) => `⚠ NFC pocket breaks through the Layer 2 floor plate (${plate}) — keep the depth at ${room} or less, or lower the pocket floor`,
+    wNfcWall: (d) => `⚠ NFC pocket (Ø${d}) runs into the wall / bottom joint groove — shrink it or move it toward the center`,
+    wNfcWire: '⚠ NFC pocket overlaps the wire hole — the pocket opens into the slot; move the NFC X/Y or the wire hole',
   },
   ko: {
     title: '🥟 딤섬 클리커 컨피규레이터',
@@ -211,6 +214,9 @@ const I18N = {
     wBzLayCup: '⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)',
     wBzCupBelow: '⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요',
     wBzTop: '⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요',
+    wNfcThick: (plate, room) => `⚠ NFC 포켓이 2층 바닥판(${plate})을 뚫습니다 — 깊이를 ${room} 이하로 줄이거나 아래 살을 낮추세요`,
+    wNfcWall: (d) => `⚠ NFC 포켓(Ø${d})이 벽·바닥 결합 홈에 닿습니다 — 지름을 줄이거나 중앙 쪽으로 옮기세요`,
+    wNfcWire: '⚠ NFC 포켓이 배선구멍과 겹칩니다 — 포켓이 슬롯으로 뚫립니다. NFC X/Y 또는 배선구멍을 옮기세요',
   },
 };
 // 정적 UI 텍스트 (index.html의 data-i18n / data-i18n-html / data-i18n-title 키) — I18N에 병합
@@ -245,6 +251,9 @@ const STATIC_I18N = {
     optOledS: 'South wall (front)', optOledNone: 'None',
     lblOledProud: 'OLED protrusion', lblOledPod: 'OLED separate pod', lblOledCover: 'OLED back cover',
     lblWireX: 'Wire hole X', lblWireY: 'Wire hole Y', lblWireRot: 'Wire hole orientation',
+    lblNfc: 'NFC sticker pocket', lblNfcD: 'Pocket Ø', lblNfcT: 'Pocket depth',
+    lblNfcBase: 'Pocket floor (pause here)',
+    hintNfc: 'A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more. At Ø26.6 the pocket nearly fills the floor, so it sits off-center by default to clear the battery wire slot — the warnings tell you if it runs into the slot or the bottom joint groove.',
     optWire0: 'Horizontal (14×5)', optWire90: 'Vertical (5×14)',
     hintLayout2: 'The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.',
     secLayout3: 'Component layout (Layer 3)',
@@ -317,6 +326,9 @@ const STATIC_I18N = {
     optOledS: '남쪽 벽 (앞)', optOledNone: '없음',
     lblOledProud: 'OLED 돌출', lblOledPod: 'OLED 분리 포드', lblOledCover: 'OLED 뒷면 커버',
     lblWireX: '배선구멍 X', lblWireY: '배선구멍 Y', lblWireRot: '배선구멍 방향',
+    lblNfc: 'NFC 스티커 포켓', lblNfcD: '포켓 지름 Ø', lblNfcT: '포켓 깊이',
+    lblNfcBase: '포켓 아래 살 (일시정지 높이)',
+    hintNfc: 'NFC 스티커를 넣는 원형 자리를 2층 바닥판 속에 파묻습니다 — 밖에서는 아무것도 보이지 않습니다. 노즐이 포켓 아래 살 높이에 도달하면 출력을 일시정지하고 스티커를 눕혀 넣은 뒤 재개하세요. 포켓 깊이를 스티커 두께에 맞추면(0.4 → 0.5) 다음 레이어가 빈 공간을 건너지 않고 스티커 위에 바로 얹힙니다. 아래 살 높이가 곧 일시정지 지점입니다: 레이어 높이 0.2 기준 0.6 = 3레이어, 0.8 = 4레이어. Ø26.6은 원형 Ø26 스티커용이며, 정사각 26×26 스티커라면 Ø37 이상이 필요합니다. Ø26.6은 바닥을 거의 채우기 때문에 기본 위치가 중앙이 아니라 배터리 배선구멍을 피해 살짝 치우쳐 있습니다 — 배선구멍이나 바닥 결합 홈에 닿으면 경고로 알려줍니다.',
     optWire0: '가로 (14×5)', optWire90: '세로 (5×14)',
     hintLayout2: '배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절. <b>OLED 분리 포드</b>를 켜면 OLED 타워(창·포켓 포함)가 별도 출력 파트가 됩니다: 벽 관통 개구에 위에서 아래로 슬라이드 — 텅(전면부)이 외곽면과 플러시로 개구를 채우고, 어깨가 벽 안쪽에 걸리며, 안쪽 U자 소켓 레일이 뒤·옆을 잡습니다. 3층을 덮으면 노치가 위를 눌러 잠금. 포드·레일 모두 서포트 없이 세워서 출력.',
     secLayout3: '부품 배치 (3층)',
@@ -542,6 +554,11 @@ const P = {
   lidOn: true, lidH: 6,
   ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 7, led2Gpio: 6,
   bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
+  // NFC 스티커 포켓 (2층 바닥에 파묻는 원형 자리) — 출력 중 일시정지해서 스티커를 넣고 덮는다.
+  // nfcBase = 포켓 아래 살 두께(= 넣을 레이어 높이), nfcT = 포켓 깊이(스티커 두께 + 여유)
+  // 기본 위치가 중앙이 아닌 이유: Ø26.6 포켓이 44×39 바닥을 거의 채워서, 중앙에 두면
+  // 바닥을 관통하는 배터리 배선구멍(기본 -6,-12)과 겹쳐 포켓 바닥에 구멍이 뚫린다.
+  nfcOn: true, nfcD: 26.6, nfcT: 0.5, nfcBase: 0.6, nfcX: 5.5, nfcY: 3,
   pinRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
 };
 
@@ -568,7 +585,7 @@ const saveParams = () => {
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
                  'espX','espY','espLift','espZ','modY','oledProud','batX','wireX','wireY','lidH','swGap',
-                 'ledX','ledY','bzX','bzY',
+                 'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
 let rebuildTimer = null;
 function queueRebuild() {
@@ -737,6 +754,17 @@ document.getElementById('oledPodOn').addEventListener('change', e => { P.oledPod
 document.getElementById('coverOn').checked = P.coverOn;
 document.getElementById('coverOn').addEventListener('change', e => { P.coverOn = e.target.checked; queueRebuild(); });
 document.getElementById('bands').addEventListener('change', e => { P.bands = e.target.checked; queueRebuild(); });
+const applyNfcUI = () => {
+  for (const id of ['nfcD', 'nfcT', 'nfcBase', 'nfcX', 'nfcY'])
+    document.getElementById(id).disabled = !P.nfcOn;
+};
+document.getElementById('nfcOn').checked = P.nfcOn;
+applyNfcUI();
+document.getElementById('nfcOn').addEventListener('change', e => {
+  P.nfcOn = e.target.checked;
+  applyNfcUI();
+  queueRebuild();
+});
 document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.removeItem('dimsum-params');
   location.reload();
@@ -771,6 +799,8 @@ function syncControls() {
   document.getElementById('bzOn').checked = P.bzOn;
   document.getElementById('bzMount').value = P.bzMount;
   applyBzUI();
+  document.getElementById('nfcOn').checked = P.nfcOn;
+  applyNfcUI();
   applyShapeUI();
   document.getElementById('product').value = P.product;
   document.getElementById('tEspOn').checked = P.tEspOn;
@@ -862,7 +892,7 @@ const MATS = {
     emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
   ledG: new THREE.MeshStandardMaterial({ color: 0xdff3e2, emissive: 0x3ca35a,   // 투톤 초록 반쪽
     emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
-  bz: partMat(0x23272e),
+  bz: partMat(0x23272e), nfc: partMat(0xb98f3f),
 };
 
 // 층 그룹 (분해/조립용) — [0..2] = 1~3층, [3] = 딤섬 뚜껑, [4] = OLED 뒷면 커버(자체 분해 이동)
@@ -923,6 +953,9 @@ const effD = () => P.shape === 'circle' ? P.W : P.D;
 const effR = () => P.shape === 'circle' ? P.W / 2 : P.R;
 // 둥근 네모 더블: 스위치 홀더 2개 (y ±swGap/2), 세로 D 60 이상 권장. Ø41 뚜껑(4층)은 비활성
 const dbl = () => P.shape === 'rect2';
+// NFC 포켓 윗면 z (2층 로컬) — F2_PLATE 를 넘으면 바닥판을 뚫으므로 포켓을 만들지 않는다
+const nfcTop = () => P.nfcBase + P.nfcT;
+const NFC_T = 0.4;   // 스티커 실측 두께 (고스트 표시용)
 const swOffsets = () => dbl() ? [-P.swGap / 2, P.swGap / 2] : [0];
 // 외곽 base 의 inset 버전 (둥근 모서리 유지)
 const baseShape  = i => rrShape(P.W - 2 * i, effD() - 2 * i, effR() - i);
@@ -1308,6 +1341,18 @@ function buildFloor2() {
     const c = new THREE.CylinderGeometry(BZ.d / 2 + BZ.clr, BZ.d / 2 + BZ.clr, BZ.h + 0.5, 48);
     c.rotateZ(Math.PI / 2);
     c.translate(P.bzX, P.bzY, zc);
+    c.deleteAttribute('uv');
+    b = sub(b, toMan(c));
+  }
+
+  // NFC 스티커 포켓: 2층 바닥판 속에 파묻는 원형 자리 (바깥으로 뚫리지 않는 내부 공동).
+  // 아래 살 nfcBase 만큼 깔고 → 포켓 nfcT → 나머지가 천장. 출력 중 nfcBase 높이에서 일시정지해
+  // 스티커를 눕혀 넣고 그대로 덮으면 된다. 포켓 깊이를 스티커 두께에 맞추면 다음 레이어가
+  // 스티커 위에 바로 얹혀서 브릿지가 거의 생기지 않는다.
+  if (P.nfcOn && nfcTop() < F2_PLATE - 0.05) {
+    const c = new THREE.CylinderGeometry(P.nfcD / 2, P.nfcD / 2, P.nfcT, 96);
+    c.rotateX(Math.PI / 2);
+    c.translate(P.nfcX, P.nfcY, P.nfcBase + P.nfcT / 2);
     c.deleteAttribute('uv');
     b = sub(b, toMan(c));
   }
@@ -1752,6 +1797,13 @@ function placeGhosts() {
     hole.translate(P.bzX, P.bzY, zc);
     for (const g of [body, hole]) g.deleteAttribute('uv');
     G[f3m ? 2 : 1].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, hole]), MATS.bz));
+  }
+  // NFC 스티커: 포켓 바닥에 눕혀 놓인 얇은 원판 (케이스 반투명으로 봐야 보임)
+  if (P.nfcOn && nfcTop() < F2_PLATE - 0.05) {
+    const g = new THREE.CylinderGeometry(P.nfcD / 2 - 0.3, P.nfcD / 2 - 0.3, NFC_T, 64);
+    g.rotateX(Math.PI / 2);
+    g.deleteAttribute('uv');
+    G[1].add(ghostMesh(g, MATS.nfc, T(P.nfcX, P.nfcY, P.nfcBase + NFC_T / 2)));
   }
 }
 
@@ -2372,6 +2424,19 @@ function insideInner(hx, hy) {   // (±hx, ±hy) 사각형이 내부 rrect/원 �
 function rectsOverlap(a, b) {
   return Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.y - b.y) * 2 < a.d + b.d;
 }
+// 원판(중심 cx,cy · 반지름 rr)이 외곽 inset 안쪽 둥근네모/원 에 완전히 들어가는지.
+// 둥근네모를 반지름 rr 로 침식하면 (반폭−rr, 모서리R−rr) 인 둥근네모가 되고,
+// 모서리R ≤ rr 이면 침식 결과가 각진 사각형이 된다 — 원판이라 사각 바운딩박스보다 여유가 크다.
+function circleInsideInset(cx, cy, rr, inset) {
+  const HW = P.W / 2 - inset - rr, HD = effD() / 2 - inset - rr;
+  if (HW < 0 || HD < 0) return false;
+  const ax = Math.abs(cx), ay = Math.abs(cy);
+  if (ax > HW || ay > HD) return false;
+  const CR = effR() - inset - rr;
+  if (CR <= 0) return true;
+  const dx = ax - (HW - CR), dy = ay - (HD - CR);
+  return !(dx > 0 && dy > 0 && dx * dx + dy * dy > CR * CR);
+}
 function updateInfo(ms, fit) {
   const total = P.f1H + P.f2H + P.f3H + effBossH();
   const fitTxt = fit
@@ -2516,6 +2581,21 @@ function updateInfo(ms, fit) {
         else if (bzTop > P.f2H + P.f3H - F3_PLATE - 0.3)
           warn.push(t('wBzTop'));
       }
+    }
+  }
+  // NFC 스티커 포켓: 바닥판 안에 완전히 묻혀야 하고(위·아래 살), 바닥 결합 홈·배선구멍과 겹치면 안 됨
+  if (P.nfcOn) {
+    const nr = P.nfcD / 2;
+    if (nfcTop() > F2_PLATE - 0.4)
+      warn.push(t('wNfcThick', F2_PLATE.toFixed(1), (F2_PLATE - 0.4 - P.nfcBase).toFixed(1)));
+    // 결합 홈(rabbet)은 외곽 inset wall+0.6 까지 z1.75 를 파낸다 — 포켓이 거기 닿으면 옆이 뚫림
+    if (!circleInsideInset(P.nfcX, P.nfcY, nr, P.wall + 0.6))
+      warn.push(t('wNfcWall', P.nfcD.toFixed(1)));
+    if (!noBat()) {
+      const ww = P.wireRot === 90 ? 5 : 14, wd = P.wireRot === 90 ? 14 : 5;
+      if (rectsOverlap({ x: P.nfcX, y: P.nfcY, w: P.nfcD, d: P.nfcD },
+                       { x: P.wireX, y: P.wireY, w: ww, d: wd }))
+        warn.push(t('wNfcWire'));
     }
   }
   document.getElementById('warnings').textContent = warn.join('\n');

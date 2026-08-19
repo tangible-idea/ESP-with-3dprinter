@@ -122,7 +122,7 @@
   body.prod-todo [data-product="todo"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-0TNFif5c.js"></script>
+  <script type="module" crossorigin src="/assets/index-k4OvCqkN.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -220,6 +220,13 @@
       <div class="row"><label data-i18n="lblWireRot">Wire hole orientation</label>
         <select id="wireRot"><option value="0" selected data-i18n="optWire0">Horizontal (14×5)</option><option value="90" data-i18n="optWire90">Vertical (5×14)</option></select>
       </div>
+      <div class="row"><label data-i18n="lblNfc">NFC sticker pocket</label><input type="checkbox" id="nfcOn" checked></div>
+      <div class="row"><label data-i18n="lblNfcD">Pocket Ø</label><input type="range" id="nfcD" min="14" max="40" step="0.2" value="26.6"><span class="val" id="nfcDv"></span></div>
+      <div class="row"><label data-i18n="lblNfcT">Pocket depth</label><input type="range" id="nfcT" min="0.3" max="1.6" step="0.1" value="0.5"><span class="val" id="nfcTv"></span></div>
+      <div class="row"><label data-i18n="lblNfcBase">Pocket floor (pause here)</label><input type="range" id="nfcBase" min="0.2" max="1.4" step="0.2" value="0.6"><span class="val" id="nfcBasev"></span></div>
+      <div class="row"><label>NFC X</label><input type="range" id="nfcX" min="-14" max="14" step="0.5" value="5.5"><span class="val" id="nfcXv"></span></div>
+      <div class="row"><label>NFC Y</label><input type="range" id="nfcY" min="-14" max="14" step="0.5" value="3"><span class="val" id="nfcYv"></span></div>
+      <div class="hint" data-i18n="hintNfc">A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more.</div>
       <div class="hint" data-i18n-html="hintLayout2">The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.</div>
     </div>
   </details>
