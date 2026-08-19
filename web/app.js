@@ -121,6 +121,9 @@ const I18N = {
     wBzLayCup: '⚠ Laid-down buzzer carves into the Layer 3 holder cup (watch for thin cup walls)',
     wBzCupBelow: '⚠ Buzzer touches under the Layer 3 switch holder cup — move X/Y',
     wBzTop: '⚠ Buzzer touches the Layer 3 top plate — increase layer heights',
+    wSolderFloor: (left) => `⚠ Solder relief leaves only ${left}mm of Layer 2 floor under the channel — make it shallower`,
+    wSolderNfcHit: (over) => `⚠ Solder relief cuts ${over}mm into the NFC pocket below — the sticker seat is breached, make the relief shallower or move the NFC pocket`,
+    wSolderNfc: (skin) => `⚠ Only ${skin}mm between the solder relief and the NFC pocket below — make the relief shallower or move the NFC pocket`,
     wEspOutWall: (left) => `⚠ USB push-out leaves only ${left}mm of wall around the connector — pull it back or thicken the wall`,
     wEspGripRoom: (room) => `⚠ Finger notches have only ${room}mm of room — the pocket sits too close to the wall, move the ESP32 toward the center`,
     wSnapWeak: (bite) => `⚠ Snap bite is only ${bite}mm — raise the bead height or lower the fit clearance, or it won't click`,
@@ -218,6 +221,9 @@ const I18N = {
     wBzLayCup: '⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)',
     wBzCupBelow: '⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요',
     wBzTop: '⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요',
+    wSolderFloor: (left) => `⚠ 납땜 릴리프 아래 2층 바닥이 ${left}mm만 남습니다 — 릴리프를 얕게 하세요`,
+    wSolderNfcHit: (over) => `⚠ 납땜 릴리프가 아래 NFC 포켓을 ${over}mm 뚫고 들어갑니다 — 스티커 자리가 깨집니다. 릴리프를 얕게 하거나 NFC 포켓을 옮기세요`,
+    wSolderNfc: (skin) => `⚠ 납땜 릴리프와 아래 NFC 포켓 사이가 ${skin}mm뿐입니다 — 릴리프를 얕게 하거나 NFC 포켓을 옮기세요`,
     wEspOutWall: (left) => `⚠ USB 내밀기 때문에 커넥터 둘레 벽살이 ${left}mm만 남습니다 — 내밀기를 줄이거나 벽을 두껍게 하세요`,
     wEspGripRoom: (room) => `⚠ 집게 홈 여유가 ${room}mm뿐입니다 — 포켓이 벽에 너무 붙어 있으니 ESP32를 중앙 쪽으로 옮기세요`,
     wSnapWeak: (bite) => `⚠ 딸각 걸림량이 ${bite}mm뿐입니다 — 돌기를 키우거나 결합 유격을 줄이지 않으면 안 걸립니다`,
@@ -254,6 +260,7 @@ const STATIC_I18N = {
     optEspU0: 'Upright-USB down (18×5, h24)', optEspU90: 'Upright-USB down tall (5×18, h24)',
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune', lblModY: 'Charge module Y',
     lblEspOut: 'USB push-out (no battery)', lblEspGrip: 'Finger notches in pocket',
+    lblSolder: 'Solder relief (pin rows)', lblSolderD: 'Relief depth',
     lblBatType: 'Battery capacity', optBatNone: 'No battery (ESP32 direct USB)',
     lblBatPose: 'Battery placement', optBatFlat: 'Flat on Layer 1', optBatStand: 'Upright on Layer 2 (slot-in)',
     lblBatX: 'Battery X (upright)',
@@ -332,6 +339,7 @@ const STATIC_I18N = {
     optEspU0: '세움-USB아래 (18×5, 높이 24)', optEspU90: '세움-USB아래-세로 (5×18, 높이 24)',
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정', lblModY: '충전모듈 Y',
     lblEspOut: 'USB 내밀기 (배터리 없음)', lblEspGrip: '포켓 집게 홈',
+    lblSolder: '납땜 릴리프 (핀 2열)', lblSolderD: '릴리프 깊이',
     lblBatType: '배터리 용량', optBatNone: '배터리 없음 (ESP32 USB 직결)',
     lblBatPose: '배터리 배치', optBatFlat: '눕혀서 1층', optBatStand: '세워서 2층 (홈에 꽂기)',
     lblBatX: '배터리 X (세움)',
@@ -562,6 +570,7 @@ const P = {
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   espOut: 0.8, espGripOn: true,   // 도킹 시 보드를 벽 쪽으로 더 밀기 / 손으로 빼는 집게 홈
+  solderOn: true, solderD: 0.5,   // 핀 2열 아래 납땜 릴리프 채널 (깊이)
   oledPodOn: false, coverOn: true,
   batType: '520', batPose: 'flat', batX: -8,
   // GPIO 기본값은 펌웨어(project147 wiring.html / platformio.ini build_flags)와 동일하게 맞춘다:
@@ -600,7 +609,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','espOut','modY','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'espX','espY','espLift','espZ','espOut','solderD','modY','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY','snapP',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
 let rebuildTimer = null;
@@ -777,6 +786,13 @@ document.getElementById('espGripOn').addEventListener('change', e => {
   P.espGripOn = e.target.checked;
   queueRebuild();
 });
+document.getElementById('solderOn').checked = P.solderOn;
+document.getElementById('solderD').disabled = !P.solderOn;
+document.getElementById('solderOn').addEventListener('change', e => {
+  P.solderOn = e.target.checked;
+  document.getElementById('solderD').disabled = !P.solderOn;
+  queueRebuild();
+});
 document.getElementById('snapOn').checked = P.snapOn;
 document.getElementById('snapP').disabled = !P.snapOn;
 document.getElementById('snapOn').addEventListener('change', e => {
@@ -834,6 +850,8 @@ function syncControls() {
   document.getElementById('snapOn').checked = P.snapOn;
   document.getElementById('snapP').disabled = !P.snapOn;
   document.getElementById('espGripOn').checked = P.espGripOn;
+  document.getElementById('solderOn').checked = P.solderOn;
+  document.getElementById('solderD').disabled = !P.solderOn;
   applyShapeUI();
   document.getElementById('product').value = P.product;
   document.getElementById('tEspOn').checked = P.tEspOn;
@@ -1236,6 +1254,47 @@ function espGripRoom(cx, cy, w, d) {
     x: Math.min(innerHalfW() - (cx + w / 2), (cx - w / 2) + innerHalfW()),
   };
 }
+// ESP32 핀 납땜 릴리프: 핀 2열(보드 중심 ±8, ESP_PINS 기준) 안쪽 경계에서 바깥으로 쭉 파낸다.
+// 포켓 옆벽을 뚫고 나가므로 납이 옆으로 빠질 길이 생기고, 가운데 넓은 바닥(±6.5)은 그대로 남아
+// 보드를 받친다. 케이스 벽은 절대 뚫지 않도록 내부 외곽선에서 잘라낸다.
+const SOLDER = { off: 8, w: 3, len: 20 };   // 핀열 오프셋 / 핀열 폭 / 길이 (핀 x범위 −9~8.5 커버)
+const solderInner = () => SOLDER.off - SOLDER.w / 2;   // 릴리프 안쪽 경계 (보드 중심 기준)
+// 릴리프가 실제로 덮는 사각형들 (내부 외곽선에서 잘린 뒤 기준) — 경고 계산과 공유
+function espSolderRects(cx, cy, alongX) {
+  const lim = alongX ? innerHalfD() : innerHalfW();
+  const base = alongX ? cy : cx;
+  const rects = [];
+  for (const s of [-1, 1]) {
+    const a = base + s * solderInner(), edge = s * lim;
+    if (s > 0 ? a >= edge : a <= edge) continue;   // 그쪽은 이미 벽 밖 → 슬롯 없음
+    const lo = Math.min(a, edge), hi = Math.max(a, edge);
+    rects.push(alongX
+      ? { x: cx, y: (lo + hi) / 2, w: SOLDER.len, d: hi - lo }
+      : { x: (lo + hi) / 2, y: cy, w: hi - lo, d: SOLDER.len });
+  }
+  return rects;
+}
+function espSolderCut(cx, cy, alongX) {
+  const z0 = F2_PLATE + P.espZ - P.solderD;
+  const h = P.solderD + 0.05;               // 포켓 바닥과 확실히 이어지게 살짝 겹침
+  const span = P.W + effD();                // 넉넉히 뻗어두고 내부 외곽선으로 잘라낸다
+  let g = null;
+  for (const s of [-1, 1]) {
+    const off = s * (solderInner() + span / 2);
+    const c = alongX
+      ? boxBrush(SOLDER.len, span, h, cx, cy + off, z0, 1.2)
+      : boxBrush(span, SOLDER.len, h, cx + off, cy, z0, 1.2);
+    g = g ? add(g, c) : c;
+  }
+  return inter(g, extrude(baseShape(P.wall), h + 1, z0 - 0.5));   // 케이스 벽 관통 방지
+}
+// 원(중심 cx,cy · 반지름 r)과 축정렬 사각형이 겹치는지
+function circleRectOverlap(cx, cy, r, rect) {
+  const dx = Math.max(Math.abs(cx - rect.x) - rect.w / 2, 0);
+  const dy = Math.max(Math.abs(cy - rect.y) - rect.d / 2, 0);
+  return dx * dx + dy * dy < r * r;
+}
+
 function espGripCut(cx, cy, w, d) {
   const room = espGripRoom(cx, cy, w, d);
   const useY = room.y >= room.x;
@@ -1297,8 +1356,11 @@ function buildFloor2() {
     const dk = noBat() ? espDock() : null;
     const cx = dk ? dk.x : P.espX, cy = dk ? dk.y : P.espY;
     const w = dk ? ESP.l + POCKET_CLR : ef.w, d = dk ? ESP.w + POCKET_CLR : ef.d;
-    const pocket = boxBrush(w, d, F2_PLATFORM + 2, cx, cy, F2_PLATE + P.espZ, 1.5);
-    return P.espGripOn ? add(pocket, espGripCut(cx, cy, w, d)) : pocket;
+    let cut = boxBrush(w, d, F2_PLATFORM + 2, cx, cy, F2_PLATE + P.espZ, 1.5);
+    if (P.espGripOn) cut = add(cut, espGripCut(cx, cy, w, d));
+    // 핀 2열은 보드 길이축을 따라간다 (도킹은 항상 X축, 평면 배치는 회전 반영)
+    if (P.solderOn) cut = add(cut, espSolderCut(cx, cy, dk ? true : P.espRot !== 90));
+    return cut;
   };
   if (!espLifted) b = sub(b, espPocket());
 
@@ -2688,6 +2750,24 @@ function updateInfo(ms, fit) {
     const room = espGripRoom(dk ? dk.x : P.espX, dk ? dk.y : P.espY, gw, gd);
     const best = Math.max(room.x, room.y);
     if (best < 2) warn.push(t('wEspGripRoom', best.toFixed(1)));
+  }
+  // 납땜 릴리프: 바닥판을 더 파므로 남는 살 + 아래 NFC 포켓과의 막 두께를 본다
+  if (P.solderOn && !espStand() && !espLifted) {
+    const chBot = F2_PLATE + P.espZ - P.solderD;   // 채널 바닥 z
+    if (chBot < 0.8) warn.push(t('wSolderFloor', chBot.toFixed(2)));
+    if (P.nfcOn && nfcTop() < F2_PLATE - 0.05) {
+      const dk = noBat() ? espDock() : null;
+      const cx = dk ? dk.x : P.espX, cy = dk ? dk.y : P.espY;
+      const alongX = dk ? true : P.espRot !== 90;
+      for (const rect of espSolderRects(cx, cy, alongX)) {
+        if (circleRectOverlap(P.nfcX, P.nfcY, P.nfcD / 2, rect)) {
+          const skin = chBot - nfcTop();
+          if (skin <= 0) warn.push(t('wSolderNfcHit', (-skin).toFixed(2)));
+          else if (skin < 0.39) warn.push(t('wSolderNfc', skin.toFixed(2)));
+          break;
+        }
+      }
+    }
   }
   // 딸각 결합: 실제 걸림량 = 돌기 − 유격. 너무 작으면 안 걸리고, 너무 크면 턱이 얇아진다
   if (P.snapOn) {
