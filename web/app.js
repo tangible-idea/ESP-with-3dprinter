@@ -258,6 +258,7 @@ const STATIC_I18N = {
     hintLayers: 'Layer 4 = the bun_lid design (Ø41) placed as-is as the dim sum lid. Adjust the total height with the band height; the joint uses the same square tab and groove as Layers 1·2·3 (fit clearance applied), with the groove on the Layer 3 top plate and the tab on the Layer 4 underside. To fully cover the character (21.6), use at least the band height shown in the warnings.',
     secLayout2: 'Component layout (Layer 2)',
     tCenter: 'Center', tCenterTitle: 'Center (Y=0)',
+    tNfcCenter: 'Center NFC pocket', tNfcCenterTitle: 'Center the NFC pocket (X=0, Y=0)',
     lblEspRot: 'ESP32 rotation',
     optEsp0: 'Flat (24×18)', optEsp90: 'Flat rotated (18×24)',
     optEspS0: 'Upright-wide (24×5, h18)', optEspS90: 'Upright-tall (5×24, h18)',
@@ -265,7 +266,7 @@ const STATIC_I18N = {
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune', lblModY: 'Charge module Y',
     lblEspOut: 'USB push-out (no battery)', lblEspGrip: 'Finger notches in pocket',
     lblSolder: 'Solder relief (pin rows)', lblSolderD: 'Relief depth',
-    lblEspAutoDock: 'Auto-dock to wall', lblUsbThin: 'Thin wall at USB port', lblUsbWallT: 'Wall left at port',
+    lblEspAutoDock: 'Auto-dock to wall', lblUsbThin: 'Thin wall at USB port', lblUsbWallT: 'Wall left at port', lblUsbPadOut: 'USB pad outward', lblUsbThroat: 'USB throat setback',
     lblBatType: 'Battery capacity', optBatNone: 'No battery (ESP32 direct USB)',
     lblBatPose: 'Battery placement', optBatFlat: 'Flat on Layer 1', optBatStand: 'Upright on Layer 2 (slot-in)',
     lblBatX: 'Battery X (upright)',
@@ -338,6 +339,7 @@ const STATIC_I18N = {
     hintLayers: '4층 = bun_lid 디자인(Ø41)이 그대로 올라간 딤섬 뚜껑. 밴드 높이로 전체 높이를 조절하고, 결합부는 1·2·3층과 동일한 사각 턱·홈(결합 유격 적용)으로 홈이 3층 상판에, 턱이 4층 밑면에 있습니다. 캐릭터(21.6)를 완전히 덮으려면 경고에 표시되는 밴드 높이가 필요합니다.',
     secLayout2: '부품 배치 (2층)',
     tCenter: '중앙', tCenterTitle: '중앙 정렬 (Y=0)',
+    tNfcCenter: 'NFC 포켓 중앙으로', tNfcCenterTitle: 'NFC 포켓을 바닥 중앙으로 (X=0, Y=0)',
     lblEspRot: 'ESP32 회전',
     optEsp0: '가로 (24×18)', optEsp90: '세로 (18×24)',
     optEspS0: '세움-가로 (24×5, 높이 18)', optEspS90: '세움-세로 (5×24, 높이 18)',
@@ -345,7 +347,7 @@ const STATIC_I18N = {
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정', lblModY: '충전모듈 Y',
     lblEspOut: 'USB 내밀기 (배터리 없음)', lblEspGrip: '포켓 집게 홈',
     lblSolder: '납땜 릴리프 (핀 2열)', lblSolderD: '릴리프 깊이',
-    lblEspAutoDock: '벽에 자동 도킹', lblUsbThin: 'USB 포트 벽 얇게', lblUsbWallT: '포트 둘레 남길 벽',
+    lblEspAutoDock: '벽에 자동 도킹', lblUsbThin: 'USB 포트 벽 얇게', lblUsbWallT: '포트 둘레 남길 벽', lblUsbPadOut: 'USB 패드 바깥으로', lblUsbThroat: 'USB 목 뒤로 (0=최대 전진)',
     lblBatType: '배터리 용량', optBatNone: '배터리 없음 (ESP32 USB 직결)',
     lblBatPose: '배터리 배치', optBatFlat: '눕혀서 1층', optBatStand: '세워서 2층 (홈에 꽂기)',
     lblBatX: '배터리 X (세움)',
@@ -560,7 +562,7 @@ const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 결합 턱 높이/폭 (사각 단면)
 const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — 턱 바깥면 inset = RABBET.out + fitClr
 const USB_PAD = { t: 2.5, w: 18 };    // 원형 모드 동쪽 평면 USB 패드 (두께 × 폭)
-const USB_REC = { w: 13, h: 7 };      // USB 벽 얇게 리세스 (폭 × 높이) — USB-C 오버몰드보다 약간 크게
+const USB_REC = { w: 13 };            // USB 벽 얇게 패널 폭 (높이는 결합부 한계까지 자동 확장)
 const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두께
 const POCKET_CLR = 0.4;
 
@@ -580,7 +582,9 @@ const P = {
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
   espOut: 0.8, espGripOn: true,   // 도킹 시 보드를 벽 쪽으로 더 밀기 / 손으로 빼는 집게 홈
   espAutoDock: true,              // 끄면 배터리 없음에서도 espX/espY 자유 배치
-  usbThin: true, usbWallT: 1.2,   // USB 포트 둘레 벽만 얇게 (남길 두께)
+  usbThin: true, usbWallT: 1.5,   // USB 포트 둘레 벽만 얇게 (남길 두께)
+  usbPadOut: 1.0,                 // USB 패드를 바깥으로 (안쪽면 고정 → 그만큼 두꺼워짐)
+  usbThroat: 0,                   // 깔때기 목이 벽 안쪽면보다 얼마나 더 안쪽인지 (0 = 최대 전진)
   solderOn: true, solderD: 0.5,   // 핀 2열 아래 납땜 릴리프 채널 (깊이)
   oledPodOn: false, coverOn: true,
   batType: '520', batPose: 'flat', batX: -8,
@@ -620,7 +624,7 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','espOut','solderD','usbWallT','modY','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbPadOut','usbThroat','modY','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY','snapP',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
 let rebuildTimer = null;
@@ -683,6 +687,7 @@ function applyBatUI() {
   document.getElementById('espAutoDock').disabled = !nb;
   document.getElementById('espOut').disabled = !autoDock;    // 자동 도킹으로 벽에 붙일 때만 의미 있음
   document.getElementById('usbWallT').disabled = !P.usbThin;
+  document.getElementById('usbPadOut').disabled = P.shape !== 'circle';
   document.getElementById('espGripOn').disabled = espStand();
   document.getElementById('modY').disabled = nb || circ;   // 원형: 충전모듈은 항상 중앙 고정
   for (const id of ['wireX', 'wireY', 'wireRot']) document.getElementById(id).disabled = nb;
@@ -782,6 +787,16 @@ document.getElementById('espYCenter').addEventListener('click', () => {
   document.getElementById('espYv').textContent = '0.0';
   queueRebuild();
 });
+// NFC 포켓을 바닥 중앙으로 (기본값은 배선구멍을 피해 치우쳐 있음 — 중앙이 필요할 때 한 번에)
+document.getElementById('nfcCenter').addEventListener('click', () => {
+  if (!P.nfcOn) return;
+  for (const k of ['nfcX', 'nfcY']) {
+    P[k] = 0;
+    document.getElementById(k).value = 0;
+    document.getElementById(k + 'v').textContent = '0.0';
+  }
+  queueRebuild();
+});
 document.getElementById('espRot').addEventListener('change', e => {
   const v = e.target.value;
   P.espRot = (v === '0' || v === '90') ? +v : v;   // 's0'/'s90'/'u0'/'u90' = 세움
@@ -810,6 +825,7 @@ document.getElementById('usbThin').checked = P.usbThin;
 document.getElementById('usbThin').addEventListener('change', e => {
   P.usbThin = e.target.checked;
   document.getElementById('usbWallT').disabled = !P.usbThin;
+  document.getElementById('usbPadOut').disabled = P.shape !== 'circle';
   queueRebuild();
 });
 document.getElementById('solderOn').checked = P.solderOn;
@@ -827,7 +843,7 @@ document.getElementById('snapOn').addEventListener('change', e => {
   queueRebuild();
 });
 const applyNfcUI = () => {
-  for (const id of ['nfcD', 'nfcT', 'nfcBase', 'nfcX', 'nfcY'])
+  for (const id of ['nfcD', 'nfcT', 'nfcBase', 'nfcX', 'nfcY', 'nfcCenter'])
     document.getElementById(id).disabled = !P.nfcOn;
 };
 document.getElementById('nfcOn').checked = P.nfcOn;
@@ -1250,6 +1266,10 @@ function espStandGeo(inflate = false) {
 }
 // 원형 모드: 동쪽 벽의 플랫 USB 패드 (반폭 9) 외면 x 좌표
 const flatPadX = () => Math.sqrt(Math.max((P.W / 2) ** 2 - 81, 1));
+// USB 패드를 바깥으로 밀어내기 — 안쪽면(= ESP32 도킹 기준면)은 그대로 두고 바깥면만 나가므로
+// 결과적으로 패드가 그만큼 두꺼워진다. 원통 표면(W/2)을 넘으면 살짝 튀어나온 보스가 된다.
+const padOuterX = () => flatPadX() + P.usbPadOut;
+const padThick  = () => USB_PAD.t + P.usbPadOut;
 
 function modCenter() {
   if (P.shape === 'circle') {
@@ -1369,12 +1389,12 @@ function buildFloor2() {
 
   // 원형 모드: 동쪽 벽에 플랫 USB 패드 (사진 참조 디자인) — 곡면을 깎고 평평한 벽 세그먼트로 대체
   if (P.shape === 'circle') {
-    const fx = flatPadX();
+    const fxo = padOuterX(), pt = padThick();
     const padTop = Math.max(8, P.f2H - 2.5);   // USB 구멍(상단 7.2)을 덮되 상단 림은 원형 유지
     // 평평한 벽 세그먼트: 바닥(z0)까지 내림 — 하단 결합 홈이 자연스럽게 관통해 박편이 안 생김
-    b = add(b, boxBrush(USB_PAD.t, USB_PAD.w, padTop, fx - USB_PAD.t / 2, 0, 0));
+    b = add(b, boxBrush(pt, USB_PAD.w, padTop, fxo - pt / 2, 0, 0));
     // 곡면 컷은 결합부(z<2.0) 위에서만 → 하단 링·스커트 온전히 보존
-    b = sub(b, boxBrush(10, USB_PAD.w, padTop - 2.0, fx + 5, 0, 2.0));
+    b = sub(b, boxBrush(10, USB_PAD.w, padTop - 2.0, fxo + 5, 0, 2.0));
   }
 
   // 포켓
@@ -1491,11 +1511,13 @@ function buildFloor2() {
     const dk = noBat() ? espDock() : modCenter();
     const usbZ = noBat() ? ESP.usbZ + P.espZ : MOD.usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
     const outerX = P.shape === 'circle'
-      ? flatPadX()
+      ? padOuterX()
       : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
-    // 깔때기 목구멍 = 커넥터 바로 앞. 도킹은 보드 끝을 따라가므로 espOut/자유배치에 맞춰 길이가 준다
-    const throat = noBat() ? (dk.x + ESP.l / 2 - 1.5) : (dk.edgeX - 1.5);
-    const L = Math.max(5.4, outerX + 0.4 - throat);   // 원본 툴 길이 9 기준
+    // 깔때기 목구멍(가장 좁은 지점) 위치 — usbThroat 이 0이면 벽 안쪽면에 딱 맞춰 최대한 전진,
+    // 값을 키우면 그만큼 안쪽으로 물러난다. 목이 앞으로 나올수록 그 뒤가 뻥 뚫려서
+    // 플러그 오버몰드가 들어갈 자리가 생긴다. 벽 안쪽면보다 더 나가면 구멍이 안 뚫리므로 상한.
+    const throat = dk.edgeX - P.usbThroat;
+    const L = Math.max(3.0, outerX + 0.4 - throat);   // 원본 툴 길이 9 기준
     // z 스케일: 툴 조임부 실측 3.8 → 3.5 (셸 3.2 + 0.3) — 보드가 포켓 바닥에 앉아 위쪽만 뜨는 것 교정
     const usbM = new THREE.Matrix4()
       .makeTranslation(outerX + 0.4 - L / 2, dk.y, F2_PLATE + usbZ)
@@ -1507,13 +1529,15 @@ function buildFloor2() {
     // ★ 아래 결합 홈 구간(z < RABBET.d)은 바깥 스커트가 0.7밖에 안 남아서 파면 그대로 뚫린다.
     //   위 결합 턱도 마찬가지 — 그 사이 구간으로만 판다. 원형은 평면 패드(2.5×18) 안에서만.
     const circ = P.shape === 'circle';
-    const wallAtPort = circ ? USB_PAD.t : P.wall;
+    const wallAtPort = circ ? padThick() : P.wall;
     const depth = Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL);
     const zc = F2_PLATE + usbZ;
     const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
                          circ ? Math.max(8, P.f2H - 2.5) - 0.4 : Infinity);
-    const rz0 = Math.max(zc - USB_REC.h / 2, RABBET.d + 0.5);
-    const rz1 = Math.min(zc + USB_REC.h / 2, zHi);
+    // 패널은 결합부에 닿기 직전까지 위아래로 최대한 넓힌다 — 중간에 끊긴 단(경계선)이 안 생기게.
+    // 아래는 결합 홈(스커트 0.7)이, 위는 결합 턱/패드 상단이 한계선이라 그 이상은 못 넓힌다.
+    const rz0 = RABBET.d + 0.5;
+    const rz1 = zHi;
     const rw = circ ? Math.min(USB_REC.w, USB_PAD.w - 4) : USB_REC.w;   // 패드 양옆 살 2씩 확보
     if (P.usbThin && depth > 0.05 && rz1 - rz0 >= 3) {
       const rh = rz1 - rz0;
@@ -2798,11 +2822,12 @@ function updateInfo(ms, fit) {
     }
   }
   // ESP32 USB 내밀기: 포켓이 벽을 파고 들어간 만큼 벽살이 얇아진다 (USB 벽 얇게와 겹쳐서 계산)
-  const wallAtPort = P.shape === 'circle' ? USB_PAD.t : P.wall;
+  const wallAtPort = P.shape === 'circle' ? padThick() : P.wall;
+  // 패널을 판 뒤 남는 살에서 다시 espOut 만큼 안쪽이 파이므로, 둘을 겹쳐서 실제 남는 두께를 본다
   const usbWall = P.usbThin ? Math.max(USB_MIN_WALL, Math.min(wallAtPort, P.usbWallT)) : wallAtPort;
   if (noBat() && P.espAutoDock && P.espOut > 0) {
     const left = usbWall - P.espOut;
-    if (left < 0.3) warn.push(t('wEspOutWall', left.toFixed(1)));
+    if (left < 0.8) warn.push(t('wEspOutWall', left.toFixed(1)));
   }
   // 자동 도킹을 끈 상태: 커넥터가 벽에서 멀면 케이블이 안 닿는다
   if (noBat() && !P.espAutoDock) {
