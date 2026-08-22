@@ -11,12 +11,13 @@
 // env = app.js가 주입하는 공용 엔진:
 //   THREE, P, t, G, MATS, matCase, matCaseX, ASSETS, ESP, OLED_TYPES,
 //   boxBrush, add, sub, meshBrush, manToGeo, downloadSTL, status,
-//   queueRebuild, getView()->{xray,showGhosts}, clearFloors()
+//   queueRebuild, getView()->{xray,showGhosts}, clearFloors(), texturize(geo)
 export function initTodo(env) {
   const {
     THREE, P, t, G, MATS, matCase, matCaseX, ASSETS, ESP, OLED_TYPES,
     boxBrush, add, sub, meshBrush, manToGeo, downloadSTL, status,
     queueRebuild, getView, clearFloors, markRulers, setRulerExtras,
+    texturize,
   } = env;
 
   let todoGeo = null;
@@ -188,8 +189,8 @@ export function initTodo(env) {
         clearFloors();
         const { man, info } = buildTodoCase();
         const geo = manToGeo(man); man.delete();
-        todoGeo = geo;
-        G[0].add(new THREE.Mesh(geo, xray ? matCaseX : matCase));
+        todoGeo = texturize(geo);   // 측면 텍스처(Weave)가 켜져 있으면 무늬를 새긴 지오메트리
+        G[0].add(new THREE.Mesh(todoGeo, xray ? matCaseX : matCase));
         // 고스트 (반투명 부품 박스)
         if (info.esp) {
           const g = new THREE.Mesh(new THREE.BoxGeometry(ESP.w, ESP.h, ESP.l), MATS.esp);

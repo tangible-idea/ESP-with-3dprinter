@@ -18,6 +18,7 @@ import bunLidUrl from '../my_designs/bun_lid_clean.stl?url';
 // 투두 서포터는 별도 소스(todo.js)로 분리됨 — 아래 initTodo(env)로 엔진만 주입한다.
 // (todo.js는 app.js를 import하지 않으므로 순환/누락 import로 깨질 위험이 없음)
 import { initTodo } from './todo.js';
+import { TEXTURES, loadHeightMap, applySideTexture } from './texture.js';
 let rebuildTodo = () => {};   // initTodo(env) 실행 후 실제 함수로 채워짐 (rebuild()에서 호출)
 
 // ------------------------------------------------------------------
@@ -31,6 +32,7 @@ const I18N = {
     // 층 이름 (STL 빌드 오류 메시지용)
     layerNames: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4', 'OLED pod', 'OLED cover'],
     buildErr: (name, msg) => `⚠ ${name} build error: ${msg}`,
+    texErr: name => `⚠ Could not load the "${name}" texture image.`,
     buildErrGeneric: (msg) => `⚠ Build error: ${msg}`,
     initError: (e) => `⚠ Initialization failed: ${e}\nCheck that you ran it with \`npm run dev\`.`,
     presetLoaded: (n) => `✓ Preset loaded (${n} items applied)`,
@@ -138,6 +140,7 @@ const I18N = {
     title: '🥟 딤섬 클리커 컨피규레이터',
     layerNames: ['1층', '2층', '3층', '4층', 'OLED 포드', 'OLED 커버'],
     buildErr: (name, msg) => `⚠ ${name} 생성 오류: ${msg}`,
+    texErr: name => `⚠ "${name}" 텍스처 이미지를 불러오지 못했습니다.`,
     buildErrGeneric: (msg) => `⚠ 생성 오류: ${msg}`,
     initError: (e) => `⚠ 초기화 실패: ${e}\n\`npm run dev\` 로 실행했는지 확인하세요.`,
     presetLoaded: (n) => `✓ 프리셋 불러옴 (${n}개 항목 적용)`,
@@ -266,7 +269,7 @@ const STATIC_I18N = {
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune', lblModY: 'Charge module Y',
     lblEspOut: 'USB push-out (no battery)', lblEspGrip: 'Finger notches in pocket',
     lblSolder: 'Solder relief (pin rows)', lblSolderD: 'Relief depth',
-    lblEspAutoDock: 'Auto-dock to wall', lblUsbThin: 'Thin wall at USB port', lblUsbWallT: 'Wall left at port', lblUsbPadOut: 'USB pad outward', lblUsbThroat: 'USB throat setback',
+    lblEspAutoDock: 'Auto-dock to wall', lblUsbThin: 'Thin wall at USB port', lblUsbWallT: 'Wall left at port', lblUsbThroat: 'USB throat setback',
     lblBatType: 'Battery capacity', optBatNone: 'No battery (ESP32 direct USB)',
     lblBatPose: 'Battery placement', optBatFlat: 'Flat on Layer 1', optBatStand: 'Upright on Layer 2 (slot-in)',
     lblBatX: 'Battery X (upright)',
@@ -291,6 +294,9 @@ const STATIC_I18N = {
     optBzF2: 'Layer 2 floor upright (recess + ring)', optBzF2s: 'Layer 2 floor laid down (half-round groove)',
     optBzF3: 'Layer 3 ceiling (sleeve hang)', lblBzX: 'Buzzer X', lblBzY: 'Buzzer Y',
     hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that does not pierce the top plate; if it is tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.',
+    secTex: 'Side texture', btnTexNone: 'None',
+    lblTexDepth: 'Depth', lblTexTile: 'Pattern size', lblTexRes: 'Detail (mm/triangle)',
+    hintTex: 'Carves the texture into the outer side walls only — top and bottom faces, joint ridges and pocket walls stay untouched, so layers still stack and parts still fit. The pattern is only cut inward, so outer dimensions never grow. Smaller "Detail" means finer relief but many more triangles (slower rebuild, bigger STL). Textures from CNCKitchen/stlTexturizer.',
     secView: 'View', lblExplode: 'Explode ⟷ Assemble', btnAnim: '▶ Assembly animation', btnReset: 'Reset settings',
     hintViewTools: 'Components, wiring, X-ray and dimension toggles sit as icons in the top-left corner of the 3D view.',
     secExport: 'STL export',
@@ -347,7 +353,7 @@ const STATIC_I18N = {
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정', lblModY: '충전모듈 Y',
     lblEspOut: 'USB 내밀기 (배터리 없음)', lblEspGrip: '포켓 집게 홈',
     lblSolder: '납땜 릴리프 (핀 2열)', lblSolderD: '릴리프 깊이',
-    lblEspAutoDock: '벽에 자동 도킹', lblUsbThin: 'USB 포트 벽 얇게', lblUsbWallT: '포트 둘레 남길 벽', lblUsbPadOut: 'USB 패드 바깥으로', lblUsbThroat: 'USB 목 뒤로 (0=최대 전진)',
+    lblEspAutoDock: '벽에 자동 도킹', lblUsbThin: 'USB 포트 벽 얇게', lblUsbWallT: '포트 둘레 남길 벽', lblUsbThroat: 'USB 목 뒤로 (0=최대 전진)',
     lblBatType: '배터리 용량', optBatNone: '배터리 없음 (ESP32 USB 직결)',
     lblBatPose: '배터리 배치', optBatFlat: '눕혀서 1층', optBatStand: '세워서 2층 (홈에 꽂기)',
     lblBatX: '배터리 X (세움)',
@@ -372,6 +378,9 @@ const STATIC_I18N = {
     optBzF2: '2층 바닥 세움 (리세스 + 링)', optBzF2s: '2층 바닥 눕힘 (반원 홈)',
     optBzF3: '3층 천장 (슬리브 매달림)', lblBzX: '부저 X', lblBzY: '부저 Y',
     hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.',
+    secTex: '측면 텍스처', btnTexNone: '없음',
+    lblTexDepth: '깊이', lblTexTile: '무늬 크기', lblTexRes: '디테일 (mm/삼각형)',
+    hintTex: '바깥쪽 옆면에만 무늬를 새깁니다 — 위·아래 면, 결합 턱/홈, 포켓 안쪽 벽은 건드리지 않아서 층 결합과 부품 끼움이 그대로 유지됩니다. 무늬는 안쪽으로만 파내므로 바깥 치수가 커지지 않습니다. \'디테일\' 값이 작을수록 무늬가 선명해지지만 삼각형이 크게 늘어나 리빌드가 느려지고 STL이 커집니다. 텍스처 이미지 출처: CNCKitchen/stlTexturizer.',
     secView: '보기', lblExplode: '분해 ⟷ 조립', btnAnim: '▶ 조립 애니메이션', btnReset: '설정 초기화',
     hintViewTools: '부품·배선·반투명·치수 표시 토글은 3D 뷰 왼쪽 위 아이콘에 있습니다.',
     secExport: 'STL 내보내기',
@@ -583,7 +592,6 @@ const P = {
   espOut: 0.8, espGripOn: true,   // 도킹 시 보드를 벽 쪽으로 더 밀기 / 손으로 빼는 집게 홈
   espAutoDock: true,              // 끄면 배터리 없음에서도 espX/espY 자유 배치
   usbThin: true, usbWallT: 1.5,   // USB 포트 둘레 벽만 얇게 (남길 두께)
-  usbPadOut: 1.0,                 // USB 패드를 바깥으로 (안쪽면 고정 → 그만큼 두꺼워짐)
   usbThroat: 0,                   // 깔때기 목이 벽 안쪽면보다 얼마나 더 안쪽인지 (0 = 최대 전진)
   solderOn: true, solderD: 0.5,   // 핀 2열 아래 납땜 릴리프 채널 (깊이)
   oledPodOn: false, coverOn: true,
@@ -599,6 +607,8 @@ const P = {
   // 기본 위치가 중앙이 아닌 이유: Ø26.6 포켓이 44×39 바닥을 거의 채워서, 중앙에 두면
   // 바닥을 관통하는 배터리 배선구멍(기본 -6,-12)과 겹쳐 포켓 바닥에 구멍이 뚫린다.
   nfcOn: true, nfcD: 26.6, nfcT: 0.5, nfcBase: 0.6, nfcX: 5.5, nfcY: 3,
+  // 측면 텍스처 (Weave 1·2·3) — 바깥 옆면에만 무늬를 새김. texture.js 참고
+  texKey: 'none', texDepth: 0.4, texTile: 12, texRes: 0.45,
   pinRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
 };
 
@@ -624,13 +634,20 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbPadOut','usbThroat','modY','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY','snapP',
-                 'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack'];
+                 'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
+                 'texDepth','texTile','texRes'];
 let rebuildTimer = null;
+let retexTimer = null;
+// 슬라이더를 드래그하는 동안에는 측면 텍스처를 건너뛰고 형상만 빠르게 다시 만든다.
+// 손을 떼고 잠깐 지나면 retexture()가 무늬만 다시 입힌다 (CSG를 다시 돌리지 않음).
+let texSkip = false;
 function queueRebuild() {
   saveParams();
   clearTimeout(rebuildTimer);
+  clearTimeout(retexTimer);
+  texSkip = P.texKey !== 'none';
   rebuildTimer = setTimeout(rebuild, 250);
 }
 for (const k of sliders) {
@@ -687,7 +704,6 @@ function applyBatUI() {
   document.getElementById('espAutoDock').disabled = !nb;
   document.getElementById('espOut').disabled = !autoDock;    // 자동 도킹으로 벽에 붙일 때만 의미 있음
   document.getElementById('usbWallT').disabled = !P.usbThin;
-  document.getElementById('usbPadOut').disabled = P.shape !== 'circle';
   document.getElementById('espGripOn').disabled = espStand();
   document.getElementById('modY').disabled = nb || circ;   // 원형: 충전모듈은 항상 중앙 고정
   for (const id of ['wireX', 'wireY', 'wireRot']) document.getElementById(id).disabled = nb;
@@ -825,7 +841,6 @@ document.getElementById('usbThin').checked = P.usbThin;
 document.getElementById('usbThin').addEventListener('change', e => {
   P.usbThin = e.target.checked;
   document.getElementById('usbWallT').disabled = !P.usbThin;
-  document.getElementById('usbPadOut').disabled = P.shape !== 'circle';
   queueRebuild();
 });
 document.getElementById('solderOn').checked = P.solderOn;
@@ -900,6 +915,7 @@ function syncControls() {
   document.getElementById('product').value = P.product;
   document.getElementById('tEspOn').checked = P.tEspOn;
   document.getElementById('tOledOn').checked = P.tOledOn;
+  syncTexBtns();
 }
 
 // 프리셋 내보내기/불러오기 (전체 설정 JSON)
@@ -995,6 +1011,9 @@ const G = [new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Gr
 G.forEach(g => scene.add(g));
 let floorMeshes = [null, null, null, null];
 let exportGeos = [null, null, null, null];
+// 측면 텍스처가 적용된 표시/내보내기용 지오메트리. exportGeos 는 항상 무늬 없는 원본을
+// 유지한다 — 간섭 체크(CSG)는 삼각형이 적은 원본으로 해야 빠르고 정확하기 때문.
+let texGeos = [null, null, null, null];
 
 // ------------------------------------------------------------------
 // 셰이프 헬퍼 (CSG: manifold WASM — 파이썬 생성기와 동일 엔진)
@@ -1266,10 +1285,6 @@ function espStandGeo(inflate = false) {
 }
 // 원형 모드: 동쪽 벽의 플랫 USB 패드 (반폭 9) 외면 x 좌표
 const flatPadX = () => Math.sqrt(Math.max((P.W / 2) ** 2 - 81, 1));
-// USB 패드를 바깥으로 밀어내기 — 안쪽면(= ESP32 도킹 기준면)은 그대로 두고 바깥면만 나가므로
-// 결과적으로 패드가 그만큼 두꺼워진다. 원통 표면(W/2)을 넘으면 살짝 튀어나온 보스가 된다.
-const padOuterX = () => flatPadX() + P.usbPadOut;
-const padThick  = () => USB_PAD.t + P.usbPadOut;
 
 function modCenter() {
   if (P.shape === 'circle') {
@@ -1389,12 +1404,12 @@ function buildFloor2() {
 
   // 원형 모드: 동쪽 벽에 플랫 USB 패드 (사진 참조 디자인) — 곡면을 깎고 평평한 벽 세그먼트로 대체
   if (P.shape === 'circle') {
-    const fxo = padOuterX(), pt = padThick();
+    const fx = flatPadX();
     const padTop = Math.max(8, P.f2H - 2.5);   // USB 구멍(상단 7.2)을 덮되 상단 림은 원형 유지
     // 평평한 벽 세그먼트: 바닥(z0)까지 내림 — 하단 결합 홈이 자연스럽게 관통해 박편이 안 생김
-    b = add(b, boxBrush(pt, USB_PAD.w, padTop, fxo - pt / 2, 0, 0));
+    b = add(b, boxBrush(USB_PAD.t, USB_PAD.w, padTop, fx - USB_PAD.t / 2, 0, 0));
     // 곡면 컷은 결합부(z<2.0) 위에서만 → 하단 링·스커트 온전히 보존
-    b = sub(b, boxBrush(10, USB_PAD.w, padTop - 2.0, fxo + 5, 0, 2.0));
+    b = sub(b, boxBrush(10, USB_PAD.w, padTop - 2.0, fx + 5, 0, 2.0));
   }
 
   // 포켓
@@ -1511,7 +1526,7 @@ function buildFloor2() {
     const dk = noBat() ? espDock() : modCenter();
     const usbZ = noBat() ? ESP.usbZ + P.espZ : MOD.usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
     const outerX = P.shape === 'circle'
-      ? padOuterX()
+      ? flatPadX()
       : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
     // 깔때기 목구멍(가장 좁은 지점) 위치 — usbThroat 이 0이면 벽 안쪽면에 딱 맞춰 최대한 전진,
     // 값을 키우면 그만큼 안쪽으로 물러난다. 목이 앞으로 나올수록 그 뒤가 뻥 뚫려서
@@ -1529,7 +1544,7 @@ function buildFloor2() {
     // ★ 아래 결합 홈 구간(z < RABBET.d)은 바깥 스커트가 0.7밖에 안 남아서 파면 그대로 뚫린다.
     //   위 결합 턱도 마찬가지 — 그 사이 구간으로만 판다. 원형은 평면 패드(2.5×18) 안에서만.
     const circ = P.shape === 'circle';
-    const wallAtPort = circ ? padThick() : P.wall;
+    const wallAtPort = circ ? USB_PAD.t : P.wall;
     const depth = Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL);
     const zc = F2_PLATE + usbZ;
     const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
@@ -2051,6 +2066,77 @@ function placeGhosts() {
 const status = document.getElementById('status');
 // 투두 서포터(buildTodoCase/rebuildTodo)는 todo.js로 분리됨 — 파일 하단에서 initTodo(env)로 연결.
 
+// ------------------------------------------------------------------
+// 측면 텍스처 (Weave 1·2·3) — texture.js 의 순수 함수를 호출하는 얇은 연결부
+// ------------------------------------------------------------------
+let texMap = null;      // 현재 로드된 높이맵
+let texMapKey = 'none'; // texMap 이 어떤 텍스처인지
+
+/** 무늬가 켜져 있으면 옆면에 새긴 새 지오메트리를, 아니면 원본을 그대로 돌려준다. */
+function texturize(geo) {
+  if (texSkip || !geo || P.texKey === 'none' || !texMap || texMapKey !== P.texKey) return geo;
+  try {
+    return applySideTexture(geo, texMap, { depth: P.texDepth, tile: P.texTile, res: P.texRes });
+  } catch (e) {
+    console.error('side texture', e);
+    return geo;
+  }
+}
+
+function syncTexBtns() {
+  document.querySelectorAll('#texBtns button').forEach(b => {
+    b.classList.toggle('on', b.dataset.tex === P.texKey);
+  });
+  for (const id of ['texDepth', 'texTile', 'texRes'])
+    document.getElementById(id).disabled = P.texKey === 'none';
+}
+
+/** 텍스처 선택 → 필요하면 이미지를 굽고(캐시됨) 리빌드 */
+async function setTexture(key) {
+  P.texKey = key;
+  texSkip = false;
+  clearTimeout(retexTimer);
+  saveParams();
+  syncTexBtns();
+  if (key === 'none') { texMap = null; texMapKey = 'none'; rebuild(); return; }
+  if (texMapKey !== key) {
+    status.classList.add('on');
+    try {
+      texMap = await loadHeightMap(key);
+      texMapKey = key;
+    } catch (e) {
+      texMap = null; texMapKey = 'none';
+      document.getElementById('warnings').textContent = t('texErr', TEXTURES[key]?.name || key);
+      console.error(e);
+    }
+    status.classList.remove('on');
+  }
+  rebuild();
+}
+document.querySelectorAll('#texBtns button').forEach(b => {
+  b.addEventListener('click', () => setTexture(b.dataset.tex));
+});
+syncTexBtns();
+
+/** CSG는 그대로 두고 측면 텍스처만 다시 입힌다 (드래그가 끝난 뒤 호출) */
+function retexture() {
+  if (P.product === 'todo') { rebuildTodo(); return; }
+  if (P.texKey === 'none' || !texMap) return;
+  status.classList.add('on');
+  setTimeout(() => {
+    for (let i = 0; i < 6; i++) {
+      if (!exportGeos[i] || !floorMeshes[i]) continue;
+      const shown = texturize(exportGeos[i]);
+      if (shown === exportGeos[i]) continue;
+      const old = floorMeshes[i].geometry;
+      texGeos[i] = shown;
+      floorMeshes[i].geometry = shown;
+      if (old && old !== exportGeos[i]) old.dispose();
+    }
+    status.classList.remove('on');
+  }, 10);
+}
+
 function rebuild() {
   if (P.product === 'todo') { rebuildTodo(); return; }
   status.classList.add('on');
@@ -2063,21 +2149,24 @@ function rebuild() {
       for (let i = 0; i < 6; i++) {
         if (i < 4) G[i].clear();        // 포드(i=4)는 G[1]에 얹혀 2층과 함께 움직임
         else if (i === 5) G[4].clear(); // 커버(i=5)는 자체 그룹 G[4] — 분해 애니메이션 참여
-        if (i === 3 && (!P.lidOn || dbl())) { exportGeos[3] = null; floorMeshes[3] = null; continue; }
+        if (i === 3 && (!P.lidOn || dbl())) { exportGeos[3] = texGeos[3] = null; floorMeshes[3] = null; continue; }
         if (i === 4 && !(P.oledSide !== 'none' && P.oledPodOn)) {
-          exportGeos[4] = null; floorMeshes[4] = null; continue;
+          exportGeos[4] = texGeos[4] = null; floorMeshes[4] = null; continue;
         }
-        if (i === 5 && !oledCoverNeeded()) { exportGeos[5] = null; floorMeshes[5] = null; continue; }
+        if (i === 5 && !oledCoverNeeded()) { exportGeos[5] = texGeos[5] = null; floorMeshes[5] = null; continue; }
         try {   // 한 층이 실패해도 나머지 층은 유지
           const man = builders[i]();
           const geo = manToGeo(man);
           man.delete();
           exportGeos[i] = geo;
-          const mesh = new THREE.Mesh(geo, xray ? matCaseX : matCase);
+          const shown = texturize(geo);
+          texGeos[i] = shown === geo ? null : shown;
+          const mesh = new THREE.Mesh(shown, xray ? matCaseX : matCase);
           floorMeshes[i] = mesh;
           G[i === 4 ? 1 : i === 5 ? 4 : i].add(mesh);
         } catch (e) {
           exportGeos[i] = null;
+          texGeos[i] = null;
           floorMeshes[i] = null;
           buildErrs.push(t('buildErr', names[i], e.message || e));
           console.error(names[i], e);
@@ -2095,6 +2184,10 @@ function rebuild() {
       w.textContent = buildErrs.join('\n') + (w.textContent ? '\n' + w.textContent : '');
     }
     status.classList.remove('on');
+    if (texSkip) {   // 드래그 중이라 무늬를 건너뛴 상태 → 잠시 뒤 무늬만 입힌다
+      clearTimeout(retexTimer);
+      retexTimer = setTimeout(() => { if (texSkip) { texSkip = false; retexture(); } }, 600);
+    }
   }, 10);
 }
 
@@ -2822,7 +2915,7 @@ function updateInfo(ms, fit) {
     }
   }
   // ESP32 USB 내밀기: 포켓이 벽을 파고 들어간 만큼 벽살이 얇아진다 (USB 벽 얇게와 겹쳐서 계산)
-  const wallAtPort = P.shape === 'circle' ? padThick() : P.wall;
+  const wallAtPort = P.shape === 'circle' ? USB_PAD.t : P.wall;
   // 패널을 판 뒤 남는 살에서 다시 espOut 만큼 안쪽이 파이므로, 둘을 겹쳐서 실제 남는 두께를 본다
   const usbWall = P.usbThin ? Math.max(USB_MIN_WALL, Math.min(wallAtPort, P.usbWallT)) : wallAtPort;
   if (noBat() && P.espAutoDock && P.espOut > 0) {
@@ -2906,7 +2999,7 @@ function downloadSTL(geo, name) {
 
 function exportFloor(i, name) {
   if (!exportGeos[i]) return;
-  let geo = exportGeos[i].clone();
+  let geo = (texGeos[i] || exportGeos[i]).clone();   // 무늬가 켜져 있으면 무늬 있는 쪽
   if (i === 2 && document.getElementById('flip3').checked) {
     geo.rotateX(Math.PI);
     geo.computeBoundingBox();
@@ -2960,7 +3053,8 @@ productSel.addEventListener('change', e => {
   boxBrush, add, sub, meshBrush, manToGeo, downloadSTL, status, queueRebuild,
   markRulers, setRulerExtras,
   getView: () => ({ xray, showGhosts }),
-  clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
+  clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; texGeos = [null, null, null, null]; },
+  texturize,
 }));
 applyProductUI();
 
@@ -2985,7 +3079,7 @@ syncToggleLabels();
 Promise.all([
   loadAssets(),
   ManifoldModule({ locateFile: () => manifoldWasmUrl }).then(w => { w.setup(); M = w; }),
-]).then(rebuild).catch(e => {
+]).then(() => (P.texKey !== 'none' ? setTexture(P.texKey) : rebuild())).catch(e => {
   document.getElementById('warnings').textContent = t('initError', e);
   console.error(e);
 });
