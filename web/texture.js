@@ -24,10 +24,14 @@ import weave2Url from './textures/weave_02.jpg?url';
 import weave3Url from './textures/weave_03.jpg?url';
 
 // 텍스처 이미지 3장은 CNCKitchen/stlTexturizer (AGPL-3.0) 저장소의 displacement map 이다.
+// tile/res 는 텍스처를 고를 때 자동으로 들어가는 기본값 — 이미지마다 한 장 안에 무늬가
+// 반복되는 횟수가 달라서(Weave1 8회, Weave2 6회, Weave3 12회) 같은 tile 을 쓰면
+// Weave3 는 무늬 한 칸이 1mm까지 작아져 삼각형보다 잘아지고 뭉개진다.
+// 무늬 한 칸이 대략 1.5~2mm 가 되도록 이미지별로 맞춰 둔다.
 export const TEXTURES = {
-  weave1: { name: 'Weave 1', url: weave1Url, tile: 12 },   // tile: 기본 무늬 한 칸 크기(mm)
-  weave2: { name: 'Weave 2', url: weave2Url, tile: 12 },
-  weave3: { name: 'Weave 3', url: weave3Url, tile: 12 },
+  weave1: { name: 'Weave 1', url: weave1Url, tile: 12, res: 0.45 },
+  weave2: { name: 'Weave 2', url: weave2Url, tile: 12, res: 0.45 },
+  weave3: { name: 'Weave 3', url: weave3Url, tile: 22, res: 0.35 },
 };
 
 const MAP_SIZE = 512;   // 높이맵 샘플링 해상도 (stlTexturizer 와 동일)
@@ -49,18 +53,26 @@ export function loadHeightMap(key) {
       const ctx = c.getContext('2d', { willReadFrequently: true });
       ctx.drawImage(img, 0, 0, w, h);
       const px = ctx.getImageData(0, 0, w, h).data;
-      const data = new Float32Array(w * h);
-      let lo = 1, hi = 0;
-      for (let i = 0, n = w * h; i < n; i++) {
+      const n = w * h;
+      const data = new Float32Array(n);
+      const hist = new Int32Array(256);
+      for (let i = 0; i < n; i++) {
         // Rec.709 휘도
         const v = (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255;
         data[i] = v;
-        if (v < lo) lo = v;
-        if (v > hi) hi = v;
+        hist[Math.min(255, Math.round(v * 255))]++;
       }
-      // 대비 정규화 — 이미지마다 밝기 범위가 달라서 그대로 쓰면 깊이가 들쭉날쭉하다
+      // 대비 정규화 — 최소/최대가 아니라 2%/98% 지점을 기준으로 잡는다. JPEG 압축 잡티나
+      // 하이라이트 몇 픽셀이 범위를 다 잡아먹어서 정작 무늬 대비가 죽는 것을 막는다.
+      const pct = (frac) => {
+        let acc = 0; const want = n * frac;
+        for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= want) return i / 255; }
+        return 1;
+      };
+      const lo = pct(0.02), hi = pct(0.98);
       const span = hi - lo;
-      if (span > 1e-3) for (let i = 0; i < data.length; i++) data[i] = (data[i] - lo) / span;
+      if (span > 1e-3)
+        for (let i = 0; i < n; i++) data[i] = Math.min(1, Math.max(0, (data[i] - lo) / span));
       res({ w, h, data });
     };
     img.onerror = () => rej(new Error('texture load failed: ' + spec.url));
