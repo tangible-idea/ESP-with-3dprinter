@@ -282,7 +282,7 @@ const STATIC_I18N = {
     lblNfcBase: 'Pocket floor (pause here)',
     hintNfc: 'A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more. At Ø26.6 the pocket nearly fills the floor, so it sits off-center by default to clear the battery wire slot — the warnings tell you if it runs into the slot or the bottom joint groove.',
     optWire0: 'Horizontal (14×5)', optWire90: 'Vertical (5×14)',
-    hintLayout2: 'The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.',
+    hintLayout2: 'The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports. The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that does not pierce the top plate; if it is tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.',
     secLayout3: 'Component layout (Layer 3)',
     lblBoss: 'Switch boss', lblBossH: 'Boss height', lblSink: 'Switch recess depth',
     lblSwGap: 'Switch spacing (double)', lblPocketX: 'Pocket width (X)', lblPocketY: 'Pocket depth (Y)',
@@ -293,7 +293,7 @@ const STATIC_I18N = {
     lblBz: 'Buzzer (Ø12 piezo)', lblBzMount: 'Buzzer mount',
     optBzF2: 'Layer 2 floor upright (recess + ring)', optBzF2s: 'Layer 2 floor laid down (half-round groove)',
     optBzF3: 'Layer 3 ceiling (sleeve hang)', lblBzX: 'Buzzer X', lblBzY: 'Buzzer Y',
-    hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that does not pierce the top plate; if it is tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.',
+    hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The OLED back cover is a separate part that plugs its tongue into a groove in the Layer 3 top plate — it only appears when the OLED tower rises above Layer 3 and leaves the pocket back exposed.',
     secTex: 'Side texture', btnTexNone: 'None',
     lblTexDepth: 'Depth', lblTexTile: 'Pattern size', lblTexRes: 'Detail (mm/triangle)',
     hintTex: 'Carves the texture into the outer side walls only — top and bottom faces, joint ridges and pocket walls stay untouched, so layers still stack and parts still fit. The pattern is only cut inward, so outer dimensions never grow. Picking a texture loads the pattern size and detail that suit that image (each one repeats a different number of times), so tune them after choosing. Smaller "Detail" means finer relief but many more triangles (slower rebuild, bigger STL). Textures from CNCKitchen/stlTexturizer.',
@@ -366,7 +366,7 @@ const STATIC_I18N = {
     lblNfcBase: '포켓 아래 살 (일시정지 높이)',
     hintNfc: 'NFC 스티커를 넣는 원형 자리를 2층 바닥판 속에 파묻습니다 — 밖에서는 아무것도 보이지 않습니다. 노즐이 포켓 아래 살 높이에 도달하면 출력을 일시정지하고 스티커를 눕혀 넣은 뒤 재개하세요. 포켓 깊이를 스티커 두께에 맞추면(0.4 → 0.5) 다음 레이어가 빈 공간을 건너지 않고 스티커 위에 바로 얹힙니다. 아래 살 높이가 곧 일시정지 지점입니다: 레이어 높이 0.2 기준 0.6 = 3레이어, 0.8 = 4레이어. Ø26.6은 원형 Ø26 스티커용이며, 정사각 26×26 스티커라면 Ø37 이상이 필요합니다. Ø26.6은 바닥을 거의 채우기 때문에 기본 위치가 중앙이 아니라 배터리 배선구멍을 피해 살짝 치우쳐 있습니다 — 배선구멍이나 바닥 결합 홈에 닿으면 경고로 알려줍니다.',
     optWire0: '가로 (14×5)', optWire90: '세로 (5×14)',
-    hintLayout2: '배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절. <b>OLED 분리 포드</b>를 켜면 OLED 타워(창·포켓 포함)가 별도 출력 파트가 됩니다: 벽 관통 개구에 위에서 아래로 슬라이드 — 텅(전면부)이 외곽면과 플러시로 개구를 채우고, 어깨가 벽 안쪽에 걸리며, 안쪽 U자 소켓 레일이 뒤·옆을 잡습니다. 3층을 덮으면 노치가 위를 눌러 잠금. 포드·레일 모두 서포트 없이 세워서 출력.',
+    hintLayout2: '배선구멍은 배터리 +/− 두 가닥이 함께 지나가는 긴 슬롯입니다. OLED는 타워 뒤(내부)에서 통째로 밀어 넣습니다 — 뒷면 완전 개방, 앞은 벽+창이 잡아줌. OLED 돌출을 올리면 포드가 외곽선 밖으로 나오며, 네모/원형 외곽 곡선을 그대로 따라갑니다. 충전모듈 USB는 항상 오른쪽(동쪽) 벽. <b>배터리 없음</b>을 선택하면 배터리·충전모듈이 빠지고 ESP32가 동쪽 벽에 도킹되어 USB를 바로 꽂습니다 — 위아래 위치는 ESP32 Y로 조절. <b>OLED 분리 포드</b>를 켜면 OLED 타워(창·포켓 포함)가 별도 출력 파트가 됩니다: 벽 관통 개구에 위에서 아래로 슬라이드 — 텅(전면부)이 외곽면과 플러시로 개구를 채우고, 어깨가 벽 안쪽에 걸리며, 안쪽 U자 소켓 레일이 뒤·옆을 잡습니다. 3층을 덮으면 노치가 위를 눌러 잠금. 포드·레일 모두 서포트 없이 세워서 출력. 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.',
     secLayout3: '부품 배치 (3층)',
     lblBoss: '스위치 Boss', lblBossH: 'Boss 높이', lblSink: '스위치 매립 깊이',
     lblSwGap: '스위치 간격 (더블)', lblPocketX: '포켓 가로 (X)', lblPocketY: '포켓 세로 (Y)',
@@ -377,7 +377,7 @@ const STATIC_I18N = {
     lblBz: '부저 (Ø12 피에조)', lblBzMount: '부저 장착',
     optBzF2: '2층 바닥 세움 (리세스 + 링)', optBzF2s: '2층 바닥 눕힘 (반원 홈)',
     optBzF3: '3층 천장 (슬리브 매달림)', lblBzX: '부저 X', lblBzY: '부저 Y',
-    hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). 부저(Ø12×8.3 수동 피에조)는 소켓에 꽂아 GPIO PWM으로 울립니다 — 3층 천장은 상판을 뚫지 않는 슬리브에 매달고, 좁아서 스위치 홀더와 겹치면 2층 바닥(리세스+가이드 링, 남쪽 전선 노치)을 쓰세요. 눕힘(축 가로)은 ESP32 포켓처럼 플랫폼에 반원 홈(깊이 2.5)만 파여 안착하고, 부저 위(Ø12)가 2층 높이를 넘으면 3층의 겹치는 부분(컵·상판 밑면)이 자동으로 같이 파입니다. 핑크 전선 우클릭으로 핀 변경.',
+    hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). OLED 뒷면 커버는 3층 상판 홈에 텅을 꽂는 별도 출력 파트입니다 — OLED 타워가 3층 위로 올라와 포켓 뒷면이 노출될 때만 나타납니다.',
     secTex: '측면 텍스처', btnTexNone: '없음',
     lblTexDepth: '깊이', lblTexTile: '무늬 크기', lblTexRes: '디테일 (mm/삼각형)',
     hintTex: '바깥쪽 옆면에만 무늬를 새깁니다 — 위·아래 면, 결합 턱/홈, 포켓 안쪽 벽은 건드리지 않아서 층 결합과 부품 끼움이 그대로 유지됩니다. 무늬는 안쪽으로만 파내므로 바깥 치수가 커지지 않습니다. 무늬를 고르면 그 이미지에 맞는 무늬 크기·디테일이 자동으로 들어가니(이미지마다 반복 횟수가 다릅니다) 조절은 고른 뒤에 하세요. \'디테일\' 값이 작을수록 무늬가 선명해지지만 삼각형이 크게 늘어나 리빌드가 느려지고 STL이 커집니다. 텍스처 이미지 출처: CNCKitchen/stlTexturizer.',
@@ -2072,11 +2072,32 @@ const status = document.getElementById('status');
 let texMap = null;      // 현재 로드된 높이맵
 let texMapKey = 'none'; // texMap 이 어떤 텍스처인지
 
+// 무늬는 "케이스 외곽선(원통) 위에 있는 면"에만 넣는다. 외곽선에서 벗어난 것 —
+// OLED 타워/커버, 플랫 USB 패드, 결합 턱·홈처럼 안으로 물러났거나 밖으로 튀어나온 면 —
+// 은 전부 매끈하게 남는다. 얇은 OLED 앞벽(0.6mm)이 파여 뚫리는 문제도 이걸로 같이 해결.
+const TEX_OUTLINE_TOL = 0.35;   // 외곽선에서 이만큼 안에 있어야 "원통 위"로 본다 (mm)
+
+// 둥근 사각형(원형 포함) 부호거리 — 안이면 음수, 밖이면 양수
+function outlineSDF(x, y, hw, hd, r) {
+  const qx = Math.abs(x) - (hw - r), qy = Math.abs(y) - (hd - r);
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+}
+
+// 층별 무늬 규칙. 4(OLED 포드)·5(OLED 커버)는 부품 전체가 OLED 하우징이라 아예 안 넣는다.
+function texSkipFor(i) {
+  if (i === 4 || i === 5) return 'all';
+  // 4층 뚜껑은 P.W 와 무관하게 항상 Ø41 밴드 (그 위 딤섬 캐릭터는 외곽선 밖이라 자동 제외)
+  const [hw, hd, r] = (i === 3)
+    ? [LID.r, LID.r, LID.r]
+    : [P.W / 2, effD() / 2, effR()];
+  return (x, y) => Math.abs(outlineSDF(x, y, hw, hd, r)) > TEX_OUTLINE_TOL;
+}
+
 /** 무늬가 켜져 있으면 옆면에 새긴 새 지오메트리를, 아니면 원본을 그대로 돌려준다. */
-function texturize(geo) {
+function texturize(geo, skip) {
   if (texSkip || !geo || P.texKey === 'none' || !texMap || texMapKey !== P.texKey) return geo;
   try {
-    return applySideTexture(geo, texMap, { depth: P.texDepth, tile: P.texTile, res: P.texRes });
+    return applySideTexture(geo, texMap, { depth: P.texDepth, tile: P.texTile, res: P.texRes, skip });
   } catch (e) {
     console.error('side texture', e);
     return geo;
@@ -2091,8 +2112,15 @@ function syncTexBtns() {
     document.getElementById(id).disabled = P.texKey === 'none';
 }
 
+// 텍스처 요청 번호 — setTexture 는 중간에 이미지 로딩을 await 하므로, 로딩이 끝나기 전에
+// 다른 무늬를 누르면 두 요청이 겹친다. 그때 늦게 도착한 쪽(= 먼저 누른 쪽)이 texMapKey 를
+// 덮어쓰면 P.texKey 와 어긋나서 texturize 가 무늬 없는 원본을 그대로 돌려주고, 그 상태로
+// 리빌드가 끝나버린다(= "바꿔도 적용이 안 됨"). 마지막 요청만 상태를 건드리게 막는다.
+let texReq = 0;
+
 /** 텍스처 선택 → 필요하면 이미지를 굽고(캐시됨) 리빌드 */
 async function setTexture(key) {
+  const req = ++texReq;
   const changed = P.texKey !== key;
   P.texKey = key;
   texSkip = false;
@@ -2114,14 +2142,21 @@ async function setTexture(key) {
   if (key === 'none') { texMap = null; texMapKey = 'none'; rebuild(); return; }
   if (texMapKey !== key) {
     status.classList.add('on');
+    let map = null;
     try {
-      texMap = await loadHeightMap(key);
-      texMapKey = key;
+      map = await loadHeightMap(key);
     } catch (e) {
+      if (req !== texReq) return;   // 이미 다른 무늬로 넘어갔으면 이 실패는 무시
       texMap = null; texMapKey = 'none';
+      status.classList.remove('on');
       document.getElementById('warnings').textContent = t('texErr', TEXTURES[key]?.name || key);
       console.error(e);
+      return;
     }
+    // 로딩 중에 다른 무늬를 눌렀다 → 이 요청은 버린다 (마지막 요청만 상태를 건드린다)
+    if (req !== texReq) { status.classList.remove('on'); return; }
+    texMap = map;
+    texMapKey = key;
     status.classList.remove('on');
   }
   rebuild();
@@ -2139,7 +2174,8 @@ function retexture() {
   setTimeout(() => {
     for (let i = 0; i < 6; i++) {
       if (!exportGeos[i] || !floorMeshes[i]) continue;
-      const shown = texturize(exportGeos[i]);
+      const sk = texSkipFor(i);
+      const shown = sk === 'all' ? exportGeos[i] : texturize(exportGeos[i], sk);
       if (shown === exportGeos[i]) continue;
       const old = floorMeshes[i].geometry;
       texGeos[i] = shown;
@@ -2172,7 +2208,8 @@ function rebuild() {
           const geo = manToGeo(man);
           man.delete();
           exportGeos[i] = geo;
-          const shown = texturize(geo);
+          const sk = texSkipFor(i);
+          const shown = sk === 'all' ? geo : texturize(geo, sk);
           texGeos[i] = shown === geo ? null : shown;
           const mesh = new THREE.Mesh(shown, xray ? matCaseX : matCase);
           floorMeshes[i] = mesh;

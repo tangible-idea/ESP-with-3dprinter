@@ -124,7 +124,7 @@
   body.prod-todo [data-product="todo"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-CpLY6yKF.js"></script>
+  <script type="module" crossorigin src="/assets/index-D8GsjlFe.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -227,12 +227,21 @@
       </div>
       <div class="row"><label data-i18n="lblOledProud">OLED protrusion</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
       <div class="row"><label data-i18n="lblOledPod">OLED separate pod</label><input type="checkbox" id="oledPodOn"></div>
-      <div class="row"><label data-i18n="lblOledCover">OLED back cover</label><input type="checkbox" id="coverOn" checked></div>
       <div class="row"><label data-i18n="lblWireX">Wire hole X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
       <div class="row"><label data-i18n="lblWireY">Wire hole Y</label><input type="range" id="wireY" min="-15" max="15" step="0.5" value="-12"><span class="val" id="wireYv"></span></div>
       <div class="row"><label data-i18n="lblWireRot">Wire hole orientation</label>
         <select id="wireRot"><option value="0" selected data-i18n="optWire0">Horizontal (14×5)</option><option value="90" data-i18n="optWire90">Vertical (5×14)</option></select>
       </div>
+      <div class="row"><label data-i18n="lblBz">Buzzer (Ø12 piezo)</label><input type="checkbox" id="bzOn" checked></div>
+      <div class="row"><label data-i18n="lblBzMount">Buzzer mount</label>
+        <select id="bzMount">
+          <option value="f2" selected data-i18n="optBzF2">Layer 2 floor upright (recess + ring)</option>
+          <option value="f2s" data-i18n="optBzF2s">Layer 2 floor laid down (half-round groove)</option>
+          <option value="f3" data-i18n="optBzF3">Layer 3 ceiling (sleeve hang)</option>
+        </select>
+      </div>
+      <div class="row"><label data-i18n="lblBzX">Buzzer X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
+      <div class="row"><label data-i18n="lblBzY">Buzzer Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
       <div class="row"><label data-i18n="lblNfc">NFC sticker pocket</label><input type="checkbox" id="nfcOn" checked></div>
       <div class="row"><label data-i18n="lblNfcD">Pocket Ø</label><input type="range" id="nfcD" min="14" max="40" step="0.2" value="26.6"><span class="val" id="nfcDv"></span></div>
       <div class="row"><label data-i18n="lblNfcT">Pocket depth</label><input type="range" id="nfcT" min="0.3" max="1.6" step="0.1" value="0.5"><span class="val" id="nfcTv"></span></div>
@@ -241,7 +250,7 @@
       <div class="row"><label>NFC Y</label><input type="range" id="nfcY" min="-14" max="14" step="0.5" value="3"><span class="val" id="nfcYv"></span></div>
       <div class="btns"><button class="ghost" id="nfcCenter" data-i18n-title="tNfcCenterTitle" title="Center the NFC pocket (X=0, Y=0)" data-i18n="tNfcCenter">Center NFC pocket</button></div>
       <div class="hint" data-i18n="hintNfc">A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more.</div>
-      <div class="hint" data-i18n-html="hintLayout2">The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.</div>
+      <div class="hint" data-i18n-html="hintLayout2">The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports. The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that doesn't pierce the top plate; if it's tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.</div>
     </div>
   </details>
 
@@ -256,6 +265,7 @@
       <div class="row"><label data-i18n="lblPocketY">Pocket depth (Y)</label><input type="range" id="swBodyY" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyYv"></span></div>
       <div class="row"><label data-i18n="lblCornerOut">Pocket corner clearance</label><input type="range" id="cornerOut" min="0" max="1.5" step="0.05" value="0.4"><span class="val" id="cornerOutv"></span></div>
       <div class="row"><label data-i18n="lblSteam">Steamer floor slats</label><input type="checkbox" id="steamOn" checked></div>
+      <div class="row"><label data-i18n="lblOledCover">OLED back cover</label><input type="checkbox" id="coverOn" checked></div>
       <div class="row"><label>LED</label><input type="checkbox" id="ledOn" checked></div>
       <div class="row"><label data-i18n="lblLedType">LED type</label>
         <select id="ledType">
@@ -267,17 +277,7 @@
       </div>
       <div class="row"><label>LED X</label><input type="range" id="ledX" min="-18" max="18" step="0.5" value="0"><span class="val" id="ledXv"></span></div>
       <div class="row"><label>LED Y</label><input type="range" id="ledY" min="-18" max="18" step="0.5" value="-14.5"><span class="val" id="ledYv"></span></div>
-      <div class="row"><label data-i18n="lblBz">Buzzer (Ø12 piezo)</label><input type="checkbox" id="bzOn" checked></div>
-      <div class="row"><label data-i18n="lblBzMount">Buzzer mount</label>
-        <select id="bzMount">
-          <option value="f2" selected data-i18n="optBzF2">Layer 2 floor upright (recess + ring)</option>
-          <option value="f2s" data-i18n="optBzF2s">Layer 2 floor laid down (half-round groove)</option>
-          <option value="f3" data-i18n="optBzF3">Layer 3 ceiling (sleeve hang)</option>
-        </select>
-      </div>
-      <div class="row"><label data-i18n="lblBzX">Buzzer X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
-      <div class="row"><label data-i18n="lblBzY">Buzzer Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
-      <div class="hint" data-i18n="hintLayout3">The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that doesn't pierce the top plate; if it's tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.</div>
+      <div class="hint" data-i18n="hintLayout3">The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each).</div>
     </div>
   </details>
 
@@ -330,6 +330,7 @@
         <button class="ghost" data-tex="weave1">Weave 1</button>
         <button class="ghost" data-tex="weave2">Weave 2</button>
         <button class="ghost" data-tex="weave3">Weave 3</button>
+        <button class="ghost" data-tex="wood1">Wood 1</button>
       </div>
       <div class="row"><label data-i18n="lblTexDepth">Depth</label><input type="range" id="texDepth" min="0.1" max="1.5" step="0.05" value="0.4"><span class="val" id="texDepthv"></span></div>
       <div class="row"><label data-i18n="lblTexTile">Pattern size</label><input type="range" id="texTile" min="3" max="40" step="0.5" value="12"><span class="val" id="texTilev"></span></div>

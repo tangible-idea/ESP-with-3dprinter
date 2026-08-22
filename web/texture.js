@@ -22,6 +22,7 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import weave1Url from './textures/weave.png?url';
 import weave2Url from './textures/weave_02.jpg?url';
 import weave3Url from './textures/weave_03.jpg?url';
+import wood1Url from './textures/wood.jpg?url';
 
 // 텍스처 이미지 3장은 CNCKitchen/stlTexturizer (AGPL-3.0) 저장소의 displacement map 이다.
 // tile/res 는 텍스처를 고를 때 자동으로 들어가는 기본값 — 이미지마다 한 장 안에 무늬가
@@ -32,6 +33,9 @@ export const TEXTURES = {
   weave1: { name: 'Weave 1', url: weave1Url, tile: 12, res: 0.45 },
   weave2: { name: 'Weave 2', url: weave2Url, tile: 12, res: 0.45 },
   weave3: { name: 'Weave 3', url: weave3Url, tile: 22, res: 0.35 },
+  // Wood 1 은 흑백 2치 나뭇결 — 한 장에 결이 29줄이라 tile 을 크게 잡아야 결 간격이
+  // 노즐(0.4)로 뽑히는 굵기(≈1.2mm)가 된다. 결은 가로로 누워 케이스를 감아 돈다.
+  wood1:  { name: 'Wood 1',  url: wood1Url,  tile: 36, res: 0.40 },
 };
 
 const MAP_SIZE = 512;   // 높이맵 샘플링 해상도 (stlTexturizer 와 동일)
@@ -230,6 +234,8 @@ function refine(verts, tris, masked, target, maxTris) {
  *   tile    무늬 한 칸 크기 mm (기본 12)
  *   res     세분화 목표 변 길이 mm (기본 tile/24, 최소 0.25)
  *   angle   "옆면" 허용 기울기 deg — 수평면 기준 이 각도 이내로 서 있어야 함 (기본 20)
+ *   skip    (x,y,z) => bool — 면 중심이 여기 걸리면 무늬를 넣지 않는다.
+ *           "케이스 외곽선 위에 있는 면만" 같은 판정을 호출부가 넘기는 용도
  *   maxTris 삼각형 상한 (기본 400k)
  * @returns {THREE.BufferGeometry} 새 지오메트리 (watertight 유지)
  */
@@ -273,6 +279,15 @@ export function applySideTexture(geo, map, opt = {}) {
 
   // 2) 바깥 실루엣만 남기기 (포켓·구멍 안쪽 벽 제외)
   const outer = outerSilhouette(pos, idx, cand, faceN);
+  // 2-1) 호출부가 지정한 제외 구역 빼기
+  if (opt.skip) {
+    for (const f of [...outer]) {
+      const a = idx[f * 3], b = idx[f * 3 + 1], c = idx[f * 3 + 2];
+      if (opt.skip((pos[a * 3] + pos[b * 3] + pos[c * 3]) / 3,
+                   (pos[a * 3 + 1] + pos[b * 3 + 1] + pos[c * 3 + 1]) / 3,
+                   (pos[a * 3 + 2] + pos[b * 3 + 2] + pos[c * 3 + 2]) / 3)) outer.delete(f);
+    }
+  }
   if (!outer.size) return geo;
 
   // 3) 세분화
