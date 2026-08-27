@@ -344,4 +344,3 @@ export function applySideTexture(geo, map, opt = {}) {
   out.computeVertexNormals();
   return out;
 }
-

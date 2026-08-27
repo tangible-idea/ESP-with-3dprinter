@@ -20,6 +20,10 @@ import bunLidUrl from '../my_designs/bun_lid_clean.stl?url';
 import { initTodo } from './todo.js';
 import { TEXTURES, loadHeightMap, applySideTexture } from './texture.js';
 let rebuildTodo = () => {};   // initTodo(env) 실행 후 실제 함수로 채워짐 (rebuild()에서 호출)
+import { initWorkout } from './workout.js';
+let rebuildWorkout = () => {};
+let applyWorkoutExplode = () => {};
+let drawWorkoutWires = () => {};
 
 // ------------------------------------------------------------------
 // i18n: 기본 English, 설정 메뉴에서 한국어(ko)로 전환. 개발자 주석은 그대로 둠.
@@ -29,6 +33,8 @@ let rebuildTodo = () => {};   // initTodo(env) 실행 후 실제 함수로 채�
 const I18N = {
   en: {
     title: '🥟 Dim Sum Clicker Configurator',
+    titleTodo: 'Todo Supporter Configurator',
+    titleWorkout: 'Workout Motion Sensor Configurator',
     // 층 이름 (STL 빌드 오류 메시지용)
     layerNames: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4', 'OLED pod', 'OLED cover'],
     buildErr: (name, msg) => `⚠ ${name} build error: ${msg}`,
@@ -40,6 +46,7 @@ const I18N = {
     // GPIO 역할 이름 (우클릭 메뉴)
     roleSwitch: 'Switch', roleSwitch2: 'Switch 2', roleOledSda: 'OLED SDA',
     roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED green', roleBuzzer: 'Buzzer',
+    roleWorkoutHall: 'KY-035 analog',
     gpioSelect: (name) => `${name} GPIO select`,
     // 배선표
     wtGrpPower: 'Power',
@@ -62,6 +69,12 @@ const I18N = {
     wtGrpLedRound: (d) => `LED (round ${d}mm)`,
     wtLedPlusLeg: 'LED + (long leg)', wtLedMinusLeg: 'LED − (short leg)',
     wtGrpBuzzer: 'Piezo buzzer', wtBzPlus: 'Buzzer +', wtBzMinus: 'Buzzer −', wtPwmTone: 'PWM tone',
+    wtGrpWorkoutHall: 'KY-035 Hall sensor (analog)',
+    wtHallSignal: 'KY-035 S / AO', wtHallVcc: 'KY-035 +', wtHallGnd: 'KY-035 −',
+    wtHallNote: 'analog input · learn both magnet states',
+    wtGrpWorkoutMpu: 'MPU6050 (I2C)',
+    wtMpuVcc: 'MPU6050 VCC', wtMpuGnd: 'MPU6050 GND',
+    wtMpuSda: 'MPU6050 SDA', wtMpuScl: 'MPU6050 SCL',
     // 3D 스프라이트 라벨
     spSw1: 'SW1', spSw2: 'SW2', spSw: 'SW', spBzPlus: 'BZ+', spBzMinus: 'BZ−',
     // 토글 버튼
@@ -77,6 +90,8 @@ const I18N = {
     fitBad: (a, b, c, d) => ` · assembly interference ${a}/${b}/${c}/${d}mm³ ⚠`,
     // 경고
     wFit: '⚠ Layers overlap when assembled — adjust component layout or layer heights',
+    wSnapStrain: (a, b) => `⚠ Snap arm on Layer ${a} is bent to ${b}% strain — over ~2% PLA arms can crack. Lengthen the spring arm, raise that layer's height, or reduce the catch depth`,
+    wSnapSkin: a => `⚠ Only ${a}mm of outer wall is left over the snap pocket — reduce the catch depth or thicken the wall`,
     wBatFit: (l, w) => `⚠ Battery (${l}×${w}) doesn't fit in Layer 1 — increase W/D or reduce the corner`,
     wBatStandFit: (tk, l) => `⚠ Upright battery (${tk}×${l}) doesn't fit in Layer 2 — increase depth D or move Battery X`,
     wBatStandEsp: '⚠ Upright battery overlaps the ESP32',
@@ -138,6 +153,8 @@ const I18N = {
   },
   ko: {
     title: '🥟 딤섬 클리커 컨피규레이터',
+    titleTodo: '투두 서포터 컨피규레이터',
+    titleWorkout: '운동 모션 센서 컨피규레이터',
     layerNames: ['1층', '2층', '3층', '4층', 'OLED 포드', 'OLED 커버'],
     buildErr: (name, msg) => `⚠ ${name} 생성 오류: ${msg}`,
     texErr: name => `⚠ "${name}" 텍스처 이미지를 불러오지 못했습니다.`,
@@ -147,6 +164,7 @@ const I18N = {
     presetError: '⚠ 프리셋 파일을 읽을 수 없습니다 (JSON 형식 오류)',
     roleSwitch: '스위치', roleSwitch2: '스위치 2', roleOledSda: 'OLED SDA',
     roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED 초록', roleBuzzer: '부저',
+    roleWorkoutHall: 'KY-035 아날로그',
     gpioSelect: (name) => `${name} GPIO 선택`,
     wtGrpPower: '전원',
     wtUsbC: 'USB-C', wtEspDirect: 'ESP32 직결', wtNoBattery: '배터리 없음',
@@ -169,6 +187,12 @@ const I18N = {
     wtGrpLedRound: (d) => `LED (원형 ${d}mm)`,
     wtLedPlusLeg: 'LED + (긴 다리)', wtLedMinusLeg: 'LED − (짧은 다리)',
     wtGrpBuzzer: '피에조 부저', wtBzPlus: '부저 +', wtBzMinus: '부저 −', wtPwmTone: 'PWM 톤',
+    wtGrpWorkoutHall: 'KY-035 홀센서 (아날로그)',
+    wtHallSignal: 'KY-035 S / AO', wtHallVcc: 'KY-035 +', wtHallGnd: 'KY-035 −',
+    wtHallNote: '아날로그 입력 · 두 자석 상태 학습',
+    wtGrpWorkoutMpu: 'MPU6050 (I2C)',
+    wtMpuVcc: 'MPU6050 VCC', wtMpuGnd: 'MPU6050 GND',
+    wtMpuSda: 'MPU6050 SDA', wtMpuScl: 'MPU6050 SCL',
     spSw1: '스위치1', spSw2: '스위치2', spSw: '스위치', spBzPlus: '부저+', spBzMinus: '부저−',
     tgGhost: (on) => `부품 표시: ${on ? '켬' : '끔'}`,
     tgWires: (on) => `배선 표시: ${on ? '켬' : '끔'}`,
@@ -180,6 +204,8 @@ const I18N = {
     fitOk: ' · 조립 간섭 없음 ✓',
     fitBad: (a, b, c, d) => ` · 조립 간섭 ${a}/${b}/${c}/${d}mm³ ⚠`,
     wFit: '⚠ 조립 시 층끼리 겹칩니다 — 부품 배치나 층 높이를 조정하세요',
+    wSnapStrain: (a, b) => `⚠ ${a}층 스냅 팔의 굽힘 변형률이 ${b}% — PLA는 2% 넘으면 팔이 갈라질 수 있습니다. 탄성 팔 길이를 늘리거나 그 층 높이를 올리거나 걸림 깊이를 줄이세요`,
+    wSnapSkin: a => `⚠ 스냅 포켓 위 바깥 살이 ${a}mm뿐입니다 — 걸림 깊이를 줄이거나 벽 두께를 올리세요`,
     wBatFit: (l, w) => `⚠ 배터리(${l}×${w})가 1층에 안 들어갑니다 — W/D를 키우거나 모서리를 줄이세요`,
     wBatStandFit: (tk, l) => `⚠ 세운 배터리(${tk}×${l})가 2층에 안 들어갑니다 — 세로 D를 키우거나 배터리 X를 옮기세요`,
     wBatStandEsp: '⚠ 세운 배터리가 ESP32와 겹칩니다',
@@ -252,9 +278,8 @@ const STATIC_I18N = {
     optCircle: 'Full circle (dim sum steamer)',
     lblW: 'Width W / diameter', lblD: 'Depth D', lblCorner: 'Corner rounding',
     lblWall: 'Wall thickness', lblFit: 'Fit clearance', lblBands: 'Decorative grooves',
-    lblSnap: 'Snap-fit (Layer 2↔3)', lblSnapP: 'Snap bead height',
-    hintSnap: 'Snap-fit puts four small beads on the Layer 3 skirt and matching dimples on the Layer 2 tab (mid-wall, all four sides). Both ramps are 45°, so they print without supports, and once seated the bead sits inside the dimple with no interference. What you actually feel is the bead height minus the fit clearance — raise the bead or drop the clearance for a firmer click.',
-    hintOuter: 'Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.',
+    lblSnap: 'Snap-fit click', lblSnapD: 'Catch depth', lblSnapArm: 'Spring arm length',
+    hintOuter: 'Layer joints use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Snap-fit click adds a 1.0mm-thick cantilever arm at each of the four corners, rising from the lower layer with a 45° bead at its tip that catches a pocket inside the wall of the layer above. The arm is what flexes, so the catch depth can be a real 0.5mm. Longer arm = softer, easier push; deeper catch = firmer hold. The arm is clamped to fit inside the layer above it, so a short layer gets a shorter, stiffer arm. Corners are used because no component ever reaches there. The Layer 4 lid keeps the plain tab and groove. Settings are saved automatically.',
     secLayers: 'Layer heights',
     lblF1: 'Layer 1 (battery)', lblF2: 'Layer 2 (board)', lblF3: 'Layer 3 (switch)',
     lblLid: 'Layer 4 (dim sum lid)', lblLidH: 'Layer 4 band height',
@@ -313,7 +338,29 @@ const STATIC_I18N = {
     // 제품 선택
     secProduct: 'Product', lblProduct: 'Design',
     optProdDimsum: 'Dim Sum Clicker', optProdTodo: 'Todo Supporter (iMac)',
+    optProdWorkout: 'Workout Motion Sensor',
     hintProduct: 'Choose which 3D design to configure. Each product has its own settings below.',
+    // 운동 모션 센서
+    secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
+    lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkFit: 'Joint clearance',
+    lblWkMagSkin: 'Magnet skin', lblWkHallOn: 'Use KY-035',
+    lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
+    hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
+    secWorkoutComp: 'Electronics layout',
+    lblWkOledOn: 'Use 0.96" OLED',
+    lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
+    hintWorkoutComp: 'Three stacked parts keep the footprint compact: optional KY-035+magnet+battery base, TP4056+MPU6050 tray, and an ESP32-C3 lid with an optional top-loading 0.96" OLED cradle. The 23.2×12.4mm display remains visible from above and its four wires pass through the lid to the ESP32. Verify each module silkscreen before wiring.',
+    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl',
+    hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the display cradle faces up; use bridge-friendly settings or support under the ESP32-cage ceiling.',
+    workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×2 magnet · TW802040 650mAh · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
+    wkRowOverlap: '⚠ TP4056 and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
+    wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
+    wkMpuDepthFit: d => `⚠ MPU6050 pocket needs at least ${d}mm on the short side`,
+    wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
+    wkMpuHeightFit: '⚠ MPU6050 is too thick for the electronics tray and ESP32 clearance',
+    wkHallFit: (d, h) => `⚠ KY-035 upright pocket needs at least ${d}mm on the short side and ${h}mm base height`,
+    wkOledFit: (w, d) => `⚠ The 0.96" OLED cradle needs at least ${w}×${d}mm lid footprint`,
     // 투두 서포터
     secTodoClip: 'Corner clip & fit',
     lblTWidth: 'Device width', lblTEdge: 'iMac edge thickness', lblTClr: 'Slot clearance',
@@ -336,9 +383,8 @@ const STATIC_I18N = {
     optCircle: '완전 원형 (딤섬 찜기)',
     lblW: '가로 W / 지름', lblD: '세로 D', lblCorner: '모서리 둥글기',
     lblWall: '벽 두께', lblFit: '결합 유격', lblBands: '장식 홈',
-    lblSnap: '딸각 결합 (2↔3층)', lblSnapP: '스냅 돌기 높이',
-    hintSnap: '딸각 결합은 3층 스커트에 작은 비드 4개, 2층 턱에 같은 자리 딤플을 냅니다 (네 벽 중앙). 위아래 램프가 모두 45°라 서포트 없이 뽑히고, 다 앉으면 비드가 딤플 안에 들어가 간섭이 없습니다. 실제로 손에 걸리는 양은 돌기 높이 − 결합 유격이므로, 더 단단하게 물리려면 돌기를 키우거나 유격을 줄이세요.',
-    hintOuter: '층간·4층 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 설정은 자동 저장됩니다.',
+    lblSnap: '딸각 결합', lblSnapD: '걸림 깊이', lblSnapArm: '탄성 팔 길이',
+    hintOuter: '층간 결합부는 사각 단면 턱(1.2×1.5)·홈(깊이 1.8) — 결합 유격을 줄일수록 꽉 끼움. 딸각 결합을 켜면 네 코너에 두께 1.0mm 캔틸레버 팔이 아래층에서 올라가고, 팔 끝 바깥면의 45° 비드가 위층 벽 안쪽 포켓에 물립니다. 휘는 건 팔이라서 걸림을 0.5mm 급으로 잡을 수 있습니다(강체 턱에 돌기만 붙이면 0.2mm 가 한계). 팔이 길수록 부드럽게 눌리고, 걸림이 깊을수록 단단히 잡습니다. 팔 길이는 위층 벽 안에 들어가도록 자동 클램프되니 낮은 층은 팔이 짧고 뻣뻣해집니다. 코너를 쓰는 이유는 어떤 설정에서도 부품이 안 닿는 자리라서입니다. 4층 뚜껑은 턱·홈만 유지합니다. 설정은 자동 저장됩니다.',
     secLayers: '층 높이',
     lblF1: '1층 (배터리)', lblF2: '2층 (보드)', lblF3: '3층 (스위치)',
     lblLid: '4층 (딤섬 뚜껑)', lblLidH: '4층 밴드 높이',
@@ -397,7 +443,29 @@ const STATIC_I18N = {
     // 제품 선택
     secProduct: '제품', lblProduct: '디자인',
     optProdDimsum: '딤섬 클리커', optProdTodo: '투두 서포터 (아이맥)',
+    optProdWorkout: '운동 모션 센서',
     hintProduct: '설계할 3D 디자인을 선택하세요. 제품마다 아래에 별도 설정이 있습니다.',
+    // 운동 모션 센서
+    secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
+    lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkFit: '결합 유격',
+    lblWkMagSkin: '자석 앞 스킨', lblWkHallOn: 'KY-035 사용',
+    lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
+    hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
+    secWorkoutComp: '전자부품 배치',
+    lblWkOledOn: '0.96" OLED 사용',
+    lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
+    hintWorkoutComp: '컴팩트한 3단 구조입니다: 선택형 KY-035+자석+배터리 베이스, TP4056+MPU6050 트레이, 위에서 끼우는 선택형 0.96" OLED 받침이 있는 ESP32-C3 뚜껑. 23.2×12.4mm 화면은 위로 보이고 4가닥 배선은 뚜껑 슬롯을 통해 ESP32로 내려갑니다. 실제 배선 전 모듈 실크를 확인하세요.',
+    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl',
+    hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 화면 받침이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장에 브리지 설정 또는 서포트를 사용하세요.',
+    workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×2 자석 · TW802040 650mAh · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
+    wkRowOverlap: '⚠ TP4056과 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
+    wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
+    wkMpuDepthFit: d => `⚠ MPU6050 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
+    wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
+    wkMpuHeightFit: '⚠ MPU6050이 너무 두꺼워 전자부품 트레이와 ESP32 사이에 들어가지 않습니다',
+    wkHallFit: (d, h) => `⚠ KY-035 세움 포켓에는 짧은 변 ${d}mm, 베이스 높이 ${h}mm 이상이 필요합니다`,
+    wkOledFit: (w, d) => `⚠ 0.96" OLED 받침에는 뚜껑 외형이 최소 ${w}×${d}mm 필요합니다`,
     // 투두 서포터
     secTodoClip: '코너 클립 & 물림',
     lblTWidth: '기기 폭', lblTEdge: '아이맥 모서리 두께', lblTClr: '슬롯 유격',
@@ -451,6 +519,7 @@ function setLang(l) {
   LANG = (l === 'ko') ? 'ko' : 'en';
   try { localStorage.setItem('dimsum-lang', LANG); } catch (e) { /* 무시 */ }
   applyStaticI18n();
+  applyProductUI();
   syncToggleLabels();
   renderWireTable();
   updateWires();
@@ -570,6 +639,25 @@ const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 결합 턱 높이/폭 (사각 단면)
 const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — 턱 바깥면 inset = RABBET.out + fitClr
+// 딸각(스냅) 결합 — 코너 캔틸레버 후크.
+// 아래층 상판의 네 코너에서 탄성 팔이 올라가고, 팔 끝 바깥면의 45° 비드가 위층 벽 안쪽
+// 포켓에 물린다. 팔이 실제로 휘는 캔틸레버(길이 7~13mm · 두께 1.0)라 걸림을 0.5mm 급으로
+// 잡을 수 있다 — 강체 rabbet 링에 붙인 돌기는 휠 데가 없어 0.2mm 가 한계였다.
+// 코너는 어떤 설정에서도 부품이 없는 자리라 USB·OLED·스위치와 겹치지 않는다.
+const SNAP = {
+  t: 1.0,      // 팔 두께 (0.4 노즐 2펄리미터)
+  w: 5.0,      // 팔 폭 (외곽 호를 따라 감)
+  out: 1.5,    // 팔 바깥면 inset (외곽 기준)
+  slide: 0.1,  // 팔 바깥면 ↔ 채널 벽 미끄럼 유격 — 이만큼은 걸림에서 공짜로 빠진다
+  pClr: 0.15,  // 비드 ↔ 포켓 반경 여유 (안착 시 비드가 포켓 안에서 놀도록)
+  clr: 0.25,   // 측면·수직 유격
+  head: 0.2,   // 비드 위로 남기는 팔 끝 여유
+  root: 3.0,   // 위층 벽 상단에 남겨둘 최소 살 (팔 길이 클램프)
+};
+// 팔 길이 = 슬라이더값, 단 위층 벽 안에 root 만큼 살이 남는 범위로 클램프
+const snapArmH = upperH => Math.max(3.5, Math.min(P.snapArmH, upperH - SNAP.root));
+// 캔틸레버 굽힘 변형률 ε = 3·t·δ / 2L² — PLA 2% 넘으면 팔이 갈라질 수 있어 경고
+const snapStrain = upperH => 3 * SNAP.t * P.snapD / (2 * snapArmH(upperH) ** 2);
 const USB_PAD = { t: 2.5, w: 18 };    // 원형 모드 동쪽 평면 USB 패드 (두께 × 폭)
 const USB_REC = { w: 13 };            // USB 벽 얇게 패널 폭 (높이는 결합부 한계까지 자동 확장)
 const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두께
@@ -579,13 +667,17 @@ const POCKET_CLR = 0.4;
 // 파라미터 & UI 바인딩
 // ------------------------------------------------------------------
 const P = {
-  product: 'todo',   // 'dimsum' 딤섬 클리커 | 'todo' 모니터 투두 서포터 (아이맥 코너 클립)
+  product: 'todo',   // 'dimsum' 딤섬 | 'todo' 아이맥 클립 | 'workout' 자석 운동 모션 센서
   // --- 투두 서포터 (아이맥 우측하단 코너 ㄷ자 클립) ---
   tWidth: 62, tEdge: 11.5, tClr: 0.6, tWall: 2.5, tBridge: 3, tRound: 3,
   tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
+  // --- 운동 모션 센서 (30×10×2 자석 + MPU6050) ---
+  wkWidth: 47, wkLength: 31, wkBodyH: 16.5, wkWall: 2.2, wkFit: 0.25, wkMagSkin: 0.6,
+  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
+  wkHallGap: 1, wkHallT: 3.25,
+  wkHallGpio: 0, wkRev: 3,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
-  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
-  snapOn: true, snapP: 0.35,   // 2↔3층 딸각 결합 비드 (돌출량) — 실제 걸림량은 snapP − fitClr
+  W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, snapOn: true, snapD: 0.5, snapArmH: 9,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modY: -9, oledSide: 'W', oledType: '049', oledProud: 0,
@@ -616,6 +708,13 @@ const P = {
 try {
   const saved = JSON.parse(localStorage.getItem('dimsum-params') || '{}');
   for (const k in saved) if (k in P) P[k] = saved[k];
+  if (!('wkOledOn' in saved) && 'wkLedOn' in saved) P.wkOledOn = saved.wkLedOn;
+  // 운동 센서 구형 배치 → v3(TW802040 + KY-035 세움 포켓) 치수 마이그레이션.
+  if (saved.wkRev !== 3) Object.assign(P, {
+    wkWidth: 47, wkLength: 31, wkBodyH: 16.5, wkWall: 2.2,
+    wkFit: 0.25, wkMagSkin: 0.6, wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5,
+    wkHallGap: 1, wkHallT: 3.25, wkRev: 3,
+  });
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
   if (saved.batType === '650' && !('batPose' in saved)) P.batPose = 'stand';
   // pinRev 1 → 2: 펌웨어 핀맵으로 기본값 변경. 예전 기본값을 그대로 쓰던 항목만 옮기고,
@@ -634,9 +733,10 @@ const saveParams = () => {
 };
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledProud','batX','wireX','wireY','lidH','swGap',
-                 'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY','snapP',
+                 'snapD','snapArmH','espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
+                 'wkWidth','wkLength','wkBodyH','wkWall','wkFit','wkMagSkin','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
@@ -681,6 +781,22 @@ for (const el of document.querySelectorAll('input[type=range]')) {
   el.parentNode.insertBefore(mk('−', -1), el);
   el.parentNode.insertBefore(mk('+', +1), val && val.classList.contains('val') ? val : el.nextSibling);
 }
+const applyWorkoutOptionsUI = () => {
+  for (const id of ['wkHallGap', 'wkHallT'])
+    document.getElementById(id).disabled = !P.wkHallOn;
+};
+document.getElementById('wkHallOn').checked = P.wkHallOn;
+document.getElementById('wkOledOn').checked = P.wkOledOn;
+applyWorkoutOptionsUI();
+document.getElementById('wkHallOn').addEventListener('change', e => {
+  P.wkHallOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+document.getElementById('wkOledOn').addEventListener('change', e => {
+  P.wkOledOn = e.target.checked;
+  queueRebuild();
+});
 // 모양 선택: 원형이면 W=지름, D/R 슬라이더는 비활성. 원형 전환 시 기본 Ø54 보장
 function applyShapeUI() {
   const circ = P.shape === 'circle';
@@ -851,10 +967,10 @@ document.getElementById('solderOn').addEventListener('change', e => {
   queueRebuild();
 });
 document.getElementById('snapOn').checked = P.snapOn;
-document.getElementById('snapP').disabled = !P.snapOn;
+applySnapUI();
 document.getElementById('snapOn').addEventListener('change', e => {
   P.snapOn = e.target.checked;
-  document.getElementById('snapP').disabled = !P.snapOn;
+  applySnapUI();
   queueRebuild();
 });
 const applyNfcUI = () => {
@@ -868,6 +984,9 @@ document.getElementById('nfcOn').addEventListener('change', e => {
   applyNfcUI();
   queueRebuild();
 });
+function applySnapUI() {
+  for (const k of ['snapD', 'snapArmH']) document.getElementById(k).disabled = !P.snapOn;
+}
 document.getElementById('resetBtn').addEventListener('click', () => {
   localStorage.removeItem('dimsum-params');
   location.reload();
@@ -891,6 +1010,8 @@ function syncControls() {
   document.getElementById('batType').value = P.batType;
   document.getElementById('batPose').value = P.batPose;
   document.getElementById('bands').checked = P.bands;
+  document.getElementById('snapOn').checked = P.snapOn;
+  applySnapUI();
   document.getElementById('bossOn').checked = P.bossOn;
   document.getElementById('bossH').disabled = !P.bossOn;
   document.getElementById('steamOn').checked = P.steamOn;
@@ -904,8 +1025,6 @@ function syncControls() {
   applyBzUI();
   document.getElementById('nfcOn').checked = P.nfcOn;
   applyNfcUI();
-  document.getElementById('snapOn').checked = P.snapOn;
-  document.getElementById('snapP').disabled = !P.snapOn;
   document.getElementById('espGripOn').checked = P.espGripOn;
   document.getElementById('solderOn').checked = P.solderOn;
   document.getElementById('solderD').disabled = !P.solderOn;
@@ -915,6 +1034,9 @@ function syncControls() {
   document.getElementById('product').value = P.product;
   document.getElementById('tEspOn').checked = P.tEspOn;
   document.getElementById('tOledOn').checked = P.tOledOn;
+  document.getElementById('wkHallOn').checked = P.wkHallOn;
+  document.getElementById('wkOledOn').checked = P.wkOledOn;
+  applyWorkoutOptionsUI();
   syncTexBtns();
 }
 
@@ -1098,41 +1220,76 @@ function cylBrush(r, h, z0, seg = 96) {   // 원기둥 (뚜껑 스커트/안착 
   g.deleteAttribute('uv');
   return toMan(g);
 }
+// 네 코너의 대각선 위 외곽점 + 그 지점의 접선 방향 (원형이면 45/135/225/315°)
+function snapCorners() {
+  const R = effR(), hw = P.W / 2 - R, hd = effD() / 2 - R, k = Math.SQRT1_2;
+  const out = [];
+  for (const sx of [1, -1]) for (const sy of [1, -1])
+    out.push({ x: sx * (hw + R * k), y: sy * (hd + R * k), rot: Math.atan2(sx, -sy) });
+  return out;
+}
+// 코너 네 곳만 남기는 클립 박스 — 스냅을 국소화해서 나머지 구간의 벽 두께를 온전히 남긴다
+function snapBoxes(w, z0, h) {
+  return snapCorners()
+    .map(c => boxBrush(w, 9, h, 0, 0, z0, 0.05,
+                       new THREE.Matrix4().makeRotationZ(c.rot).setPosition(c.x, c.y, 0)))
+    .reduce((a, b) => add(a, b));
+}
+// 45° 양면 챔퍼 비드(또는 그 포켓). ExtrudeGeometry 의 bevel 이 외곽 곡선을 그대로 따라가므로
+// 둥근 모서리·원형에서도 걸림 깊이가 균일하다 — 직선 프리즘을 코너 호에 놓으면 폭 5mm 에서만
+// 0.4mm 가 어긋나 양 끝의 걸림이 사라진다. 총 높이 = flat + 2·bev, 중심 = mid.
+function beadBand(iOut, iIn, bev, mid, flat) {
+  const s = baseShape(iOut);
+  s.holes.push(basePath(iIn));
+  const g = new THREE.ExtrudeGeometry(s, {
+    depth: flat, bevelEnabled: true, bevelSegments: 1, curveSegments: 14,
+    bevelThickness: bev, bevelSize: bev, bevelOffset: 0,
+  });
+  g.deleteAttribute('uv');
+  g.translate(0, 0, mid - flat / 2);
+  return toMan(g);
+}
+// 비드 중심 높이 (안착면 기준) — 팔 끝에서 head 만큼 내려온 자리
+const snapBeadMid = h => h - SNAP.head - 0.2 - P.snapD;
+// 채널 벽 inset — 팔 바깥면이 여기에 미끄러지며 정렬된다. 비드는 이 선을 기준으로 잰다.
+const snapChanOut = () => SNAP.out - SNAP.slide;
+// 스냅 포켓 위에 남는 바깥 살
+const snapSkin = () => snapChanOut() - P.snapD - SNAP.pClr;
+
+function snapArms(z, upperH) {   // 아래층 상판의 코너 탄성 팔 + 팔 끝 비드
+  const h = snapArmH(upperH);
+  let ring = ringBrush(SNAP.out, SNAP.out + SNAP.t, h, z);
+  // 비드 끝은 채널 벽(out − slide)에서 snapD 만큼 더 튀어나온다 → 팔이 정확히 snapD 휘어야 지나간다
+  ring = add(ring, beadBand(snapChanOut() - P.snapD, SNAP.out + P.snapD + 0.4,
+                            P.snapD, z + snapBeadMid(h), 0.4));
+  return inter(ring, snapBoxes(SNAP.w, z - 1, h + 2));
+}
+
+function snapPockets(b, ownH) {   // 위층 벽 안쪽의 팔 채널 + 비드 포켓
+  const h = snapArmH(ownH), c = SNAP.clr;
+  // 채널 안쪽 경계는 팔 안쪽면보다 반드시 깊어야 한다 — 얇은 벽(1.8)에서 wall+0.6 이
+  // 팔 안쪽면(out+t)보다 얕아져 팔을 물어버렸다
+  const cIn = Math.max(P.wall + 0.6, SNAP.out + SNAP.t + c);
+  let cut = ringBrush(snapChanOut(), cIn, h + 0.4, -0.05);
+  cut = add(cut, beadBand(snapChanOut() - P.snapD - SNAP.pClr, cIn + 0.3,
+                          P.snapD + SNAP.pClr, snapBeadMid(h), 0.4 + 2 * c));
+  return sub(b, inter(cut, snapBoxes(SNAP.w + 2 * c, -1, h + 3)));
+}
+
 // 결합부 — 사각 단면 턱·홈 (턱 1.2×1.5가 홈 1.8 깊이에 꽂힘, fitClr로 유격 조절)
-function topRidge(z) {   // 아래층 상단 턱
+// upperH = 위층 높이 (팔 길이 클램프용). 생략하면 스냅 없이 턱만 (뚜껑용)
+function topRidge(z, upperH) {   // 아래층 상단 턱 (+ 딸각 탄성 팔)
   const o = RABBET.out + P.fitClr;
-  return ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+  let r = ringBrush(o, o + RIDGE_W, RIDGE_H, z);
+  if (!P.snapOn || !upperH) return r;
+  // 팔이 순수 캔틸레버가 되도록 코너 구간의 턱은 걷어낸다 (정렬은 남은 턱 구간이 담당)
+  r = sub(r, snapBoxes(SNAP.w + 2 * SNAP.clr, z - 1, RIDGE_H + 2));
+  return add(r, snapArms(z, upperH));
 }
 
-function bottomJointCut(b) {   // 위층 바닥 홈
-  return sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
-}
-
-// 딸각 결합 (2층 ↔ 3층): 3층 홈 바깥 스커트 안쪽면에 비드 4개, 2층 상단 턱 바깥면에 같은 자리 딤플.
-// 단면은 45° 다이아몬드 — 위아래 램프가 모두 45°라 서포트 없이 뽑히고, 내려오는 턱이 아랫 램프를
-// 타고 올라가다 딤플에 떨어지며 딸각 걸린다. 다 앉으면 비드가 딤플에 쏙 들어가 간섭 0.
-// 비드(추가)를 스커트 0.7 쪽에, 딤플(제거)을 턱 1.2 쪽에 둬서 얇아지는 벽이 생기지 않는다.
-const SNAP = { len: 6, clr: 0.12 };   // 비드 길이 / 딤플 사방 여유
-const snapZ = () => RIDGE_H / 2;      // 턱 높이 중앙 (3층 로컬 z = 2층 f2H 기준 오프셋과 동일)
-// z = 비드 중심 높이, inset = 비드 중심이 놓이는 외곽 inset, grow > 0 이면 딤플용으로 사방 확대
-function snapBeads(z, inset, grow = 0) {
-  const p = P.snapP + grow;               // 다이아몬드 반대각 = 돌출량
-  const half = SNAP.len / 2 + grow;
-  const s = p * Math.SQRT2;               // 45° 회전 전 정사각 한 변
-  const hx = P.W / 2 - inset, hy = effD() / 2 - inset;
-  const bar = (alongX, cx, cy) => {
-    const g = alongX ? new THREE.BoxGeometry(half * 2, s, s)
-                     : new THREE.BoxGeometry(s, half * 2, s);
-    if (alongX) g.rotateX(Math.PI / 4); else g.rotateY(Math.PI / 4);
-    g.translate(cx, cy, z);
-    g.deleteAttribute('uv');
-    return toMan(g);
-  };
-  let m = bar(true, 0, hy);
-  m = add(m, bar(true, 0, -hy));
-  m = add(m, bar(false, hx, 0));
-  m = add(m, bar(false, -hx, 0));
-  return m;
+function bottomJointCut(b, ownH) {   // 위층 바닥 홈 (+ 딸각 채널·포켓)
+  b = sub(b, ringBrush(RABBET.out, P.wall + 0.6, RABBET.d, -0.05));
+  return (P.snapOn && ownH) ? snapPockets(b, ownH) : b;
 }
 const csgOp = (a, b, f) => { const r = a[f](b); a.delete(); b.delete(); return r; };
 const add = (a, b) => csgOp(a, b, 'add');
@@ -1219,7 +1376,7 @@ function surfAt(hw, acrossHalf, depthHalf, inset) {
 function buildFloor1() {
   let b = extrude(baseShape(0), F1_PLATE);                       // 바닥판
   b = add(b, ringBrush(0, P.wall, P.f1H - F1_PLATE, F1_PLATE));  // 벽
-  b = add(b, topRidge(P.f1H));   // 상단 턱
+  b = add(b, topRidge(P.f1H, P.f2H));   // 상단 턱 + 딸각 팔(2층으로 올라감)
   // 배터리 고정 테두리 (눕힘 배치 전용 — 세움은 2층 소켓에 꽂음)
   // insideInner: 테두리 구멍 모서리가 원형/둥근 외곽 밖으로 나가면 CSG가 깨지므로 곡률 기준 검사
   const bs = batSpec();
@@ -1397,9 +1554,7 @@ function oledFrame() {
 function buildFloor2() {
   let b = extrude(baseShape(0), F2_PLATE);
   b = add(b, ringBrush(0, P.wall, P.f2H - F2_PLATE, F2_PLATE));
-  b = add(b, topRidge(P.f2H));
-  // 딸각 결합: 턱 바깥면에 딤플 (3층 스커트의 비드가 여기 떨어져 걸림)
-  if (P.snapOn) b = sub(b, snapBeads(P.f2H + snapZ(), RABBET.out + P.fitClr, SNAP.clr));
+  b = add(b, topRidge(P.f2H, P.f3H));
   b = add(b, extrude(baseShape(P.wall), F2_PLATFORM, F2_PLATE));  // 포켓 플랫폼
 
   // 원형 모드: 동쪽 벽에 플랫 USB 패드 (사진 참조 디자인) — 곡면을 깎고 평평한 벽 세그먼트로 대체
@@ -1609,7 +1764,7 @@ function buildFloor2() {
   }
 
   // 바닥 rabbet + 장식 — 돌출 포드 구간은 장식 홈이 포드 내부를 뚫지 않게 보호
-  b = bottomJointCut(b);
+  b = bottomJointCut(b, P.f2H);
   // 돌출 > 0, 원형(평면 포드가 곡면 밖으로 나옴), 분리 포드(개구 가장자리)면 보호 필요
   const podProtect = (P.oledSide !== 'none' && (P.oledProud > 0 || P.shape === 'circle' || P.oledPodOn)) ? () => {
     const spec = oledSpec();
@@ -1787,9 +1942,7 @@ function buildFloor3() {
   // 딤섬 찜통 바닥: 상판에 대나무 슬랫 립 + 통풍 슬릿
   if (P.steamOn) b = steamerFloor(b);
 
-  b = bottomJointCut(b);
-  // 딸각 결합: 홈을 판 뒤 스커트 안쪽면에 비드를 얹는다 (순서 반대면 홈이 비드를 지운다)
-  if (P.snapOn) b = add(b, snapBeads(snapZ(), RABBET.out));
+  b = bottomJointCut(b, P.f3H);
 
   // OLED 타워 노치: 2층 타워가 뚜껑을 관통해 끼워지도록 커팅 (여유 0.4/측)
   if (P.oledSide !== 'none') {
@@ -1896,6 +2049,9 @@ function lidJointGroove(b) {
 }
 
 // 뚜껑 밑면의 결합 턱: topRidge와 동일한 사각 프로파일, 아래로 내림 미러 (z0~RIDGE_H, 림 밑면 = RIDGE_H)
+// 딸각 스냅은 여기엔 없다 — 뚜껑은 턱이 베드에 닿는 방향으로 출력하므로 턱 아래로 팔을 더
+// 내릴 수가 없고(팔이 최하단이 되면 턱 링이 공중에 떠 서포트가 필요), 3층은 뒤집어 출력해서
+// 반대로 3층 상판에서 팔을 세울 수도 없다. 뚜껑은 얹는 무게 + rabbet 마찰로 잡는다.
 function lidJointRidge() {
   const o = RABBET.out + P.fitClr;
   return cylRing(LID.r - o, LID.r - o - RIDGE_W, RIDGE_H, 0);
@@ -2188,6 +2344,7 @@ function retexture() {
 
 function rebuild() {
   if (P.product === 'todo') { rebuildTodo(); return; }
+  if (P.product === 'workout') { rebuildWorkout(); return; }
   status.classList.add('on');
   setTimeout(() => {
     const buildErrs = [];
@@ -2273,6 +2430,7 @@ function checkFit() {
 
 // 분해/조립
 function applyExplode() {
+  if (P.product === 'workout') { applyWorkoutExplode(); return; }
   const e = +document.getElementById('explode').value;
   const gap = 26 * e;
   G[0].position.z = 0;
@@ -2441,6 +2599,7 @@ const GPIO_ROLES = {
   led:  { key: 'ledGpio', name: 'roleLed' },
   led2: { key: 'led2Gpio', name: 'roleLedGreen' },
   bz:   { key: 'bzGpio', name: 'roleBuzzer' },
+  hall: { key: 'wkHallGpio', name: 'roleWorkoutHall' },
 };
 
 // ------------------------------------------------------------------
@@ -2454,6 +2613,33 @@ function renderWireTable() {
   const row = (color, from, to, note = '') => rows.push(
     `<tr><td><span class="sw" style="background:${hex(color)}"></span></td>` +
     `<td>${from}</td><td>${to}</td><td>${note}</td></tr>`);
+  if (P.product === 'workout') {
+    grp(t('wtGrpPowerChain'));
+    row(WIRE_COLORS.plus, t('wtBatPlus'), t('wtChgBplus'));
+    row(WIRE_COLORS.minus, t('wtBatMinus'), t('wtChgBminus'));
+    row(WIRE_COLORS.plus, t('wtChgOutPlus'), t('wtEsp5v'));
+    row(WIRE_COLORS.minus, t('wtChgOutMinus'), t('wtEspGnd'));
+    if (P.wkHallOn) {
+      grp(t('wtGrpWorkoutHall'));
+      row(WIRE_COLORS.plus, t('wtHallVcc'), t('wtEsp3v3'));
+      row(WIRE_COLORS.minus, t('wtHallGnd'), t('wtEspGnd'));
+      row(WIRE_COLORS.gpio, t('wtHallSignal'), 'GPIO ' + P.wkHallGpio, t('wtHallNote'));
+    }
+    grp(t('wtGrpWorkoutMpu'));
+    row(WIRE_COLORS.plus, t('wtMpuVcc'), t('wtEsp3v3'));
+    row(WIRE_COLORS.minus, t('wtMpuGnd'), t('wtEspGnd'));
+    row(WIRE_COLORS.sda, t('wtMpuSda'), 'GPIO ' + P.sdaGpio);
+    row(WIRE_COLORS.scl, t('wtMpuScl'), 'GPIO ' + P.sclGpio);
+    if (P.wkOledOn) {
+      grp(t('wtGrpOled'));
+      row(WIRE_COLORS.plus, t('wtOledVcc'), t('wtEsp3v3'));
+      row(WIRE_COLORS.minus, t('wtOledGnd'), t('wtEspGnd'));
+      row(WIRE_COLORS.sda, t('wtOledSda'), 'GPIO ' + P.sdaGpio);
+      row(WIRE_COLORS.scl, t('wtOledScl'), 'GPIO ' + P.sclGpio, t('wtSckNote'));
+    }
+    wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
+    return;
+  }
   if (noBat()) {
     grp(t('wtGrpPower'));
     row(WIRE_COLORS.plus, t('wtUsbC'), t('wtEspDirect'), t('wtNoBattery'));
@@ -2547,8 +2733,12 @@ function addWire(points, color, label1, label2, tag) {
 function updateWires() {
   renderWireTable();
   wireGroup.clear();
-  if (!wiresOn) return;
+  if (!wiresOn || (P.product !== 'dimsum' && P.product !== 'workout')) return;
   try {
+    if (P.product === 'workout') {
+      drawWorkoutWires(addWire, WIRE_COLORS);
+      return;
+    }
     const z1b = G[0].position.z, z2b = G[1].position.z;
     const mc = noBat() ? null : modCenter();
 
@@ -2829,6 +3019,14 @@ function updateInfo(ms, fit) {
     t('infoDims', sizeTxt, total.toFixed(1), lidTxt, ms.toFixed(0), fitTxt);
   const warn = [];
   if (fit && !fit.ok) warn.push(t('wFit'));
+  if (P.snapOn) {
+    for (const [n, h] of [[2, P.f2H], [3, P.f3H]]) {
+      const e = snapStrain(h) * 100;
+      if (e > 2) warn.push(t('wSnapStrain', n, e.toFixed(1)));
+    }
+    const skin = snapSkin();
+    if (skin < 0.6) warn.push(t('wSnapSkin', skin.toFixed(2)));
+  }
   if (!noBat() && !batStand() && !insideInner(batSpec().L / 2 + 0.4, batSpec().W / 2 + 0.4))
     warn.push(t('wBatFit', batSpec().L, batSpec().W));
   const ef = espFoot();
@@ -3005,13 +3203,6 @@ function updateInfo(ms, fit) {
       }
     }
   }
-  // 딸각 결합: 실제 걸림량 = 돌기 − 유격. 너무 작으면 안 걸리고, 너무 크면 턱이 얇아진다
-  if (P.snapOn) {
-    const bite = P.snapP - P.fitClr;
-    if (bite < 0.12) warn.push(t('wSnapWeak', bite.toFixed(2)));
-    const tabLeft = RIDGE_W - (P.snapP + SNAP.clr);
-    if (tabLeft < 0.5) warn.push(t('wSnapTab', tabLeft.toFixed(2)));
-  }
   // NFC 스티커 포켓: 바닥판 안에 완전히 묻혀야 하고(위·아래 살), 바닥 결합 홈·배선구멍과 겹치면 안 됨
   if (P.nfcOn) {
     const nr = P.nfcD / 2;
@@ -3082,12 +3273,21 @@ document.getElementById('ex6').addEventListener('click', () => exportFloor(5, 'o
 document.getElementById('exOledTest').addEventListener('click', exportOledTest);
 
 // ------------------------------------------------------------------
-// 제품 선택(딤섬 / 투두) — 메뉴 섹션 표시 전환 + 리빌드
+// 제품 선택(딤섬 / 투두 / 운동 센서) — 메뉴 섹션 표시 전환 + 리빌드
 function applyProductUI() {
   document.body.classList.toggle('prod-dimsum', P.product === 'dimsum');
   document.body.classList.toggle('prod-todo', P.product === 'todo');
+  document.body.classList.toggle('prod-workout', P.product === 'workout');
+  const titleKey = P.product === 'workout' ? 'titleWorkout' : P.product === 'todo' ? 'titleTodo' : 'title';
+  const heading = document.querySelector('.phead h1');
+  if (heading) heading.textContent = t(titleKey);
+  document.title = t(titleKey);
+  const wiringProduct = P.product === 'dimsum' || P.product === 'workout';
   const wo = document.getElementById('wireOverlay');
-  if (wo) wo.style.display = (P.product === 'dimsum' && wiresOn) ? '' : 'none';
+  if (wo) wo.style.display = (wiringProduct && wiresOn) ? '' : 'none';
+  wireGroup.visible = wiringProduct && wiresOn;
+  const wireBtn = document.getElementById('wiresBtn');
+  if (wireBtn) wireBtn.style.display = wiringProduct ? '' : 'none';
 }
 const productSel = document.getElementById('product');
 productSel.value = P.product;
@@ -3106,6 +3306,15 @@ productSel.addEventListener('change', e => {
   clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; texGeos = [null, null, null, null]; },
   texturize,
 }));
+// 운동 모션 센서 연결: 본체/뚜껑 2피스와 제품 전용 분해 위치를 주입한다.
+({ rebuildWorkout, applyWorkoutExplode, drawWorkoutWires } = initWorkout({
+  THREE, P, t, G, MATS, matCase, matCaseX, boxBrush, add, sub,
+  manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,
+  getView: () => ({ xray, showGhosts }),
+  clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
+  setFloorMeshes: meshes => { floorMeshes = meshes; },
+  refreshWires: updateWires,
+}));
 applyProductUI();
 
 // 언어 선택 UI 연결 + 저장된 언어로 초기 텍스트 적용 (기본 English)
@@ -3123,6 +3332,7 @@ document.getElementById('settingsClose').addEventListener('click', closeSettings
 settingsModal.addEventListener('click', e => { if (e.target === settingsModal) closeSettings(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !settingsModal.hidden) closeSettings(); });
 applyStaticI18n();
+applyProductUI();
 syncToggleLabels();
 
 // ------------------------------------------------------------------

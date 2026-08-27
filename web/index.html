@@ -45,7 +45,7 @@
   /* 측면 텍스처: 선택된 버튼만 강조 */
   #texBtns button.on { background: #e9b95f; color: #4d3a14; box-shadow: inset 0 0 0 2px #b98a2e; }
   #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
-  #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; }
+  #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; white-space: pre-line; }
   /* 3D 뷰 좌상단 보기 토글 아이콘 (부품·배선·반투명·치수) */
   #viewTools {
     position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; gap: 4px;
@@ -122,6 +122,7 @@
   [data-product] { display: none; }
   body.prod-dimsum [data-product="dimsum"] { display: block; }
   body.prod-todo [data-product="todo"] { display: block; }
+  body.prod-workout [data-product="workout"] { display: block; }
   #product { font-weight: 600; }
 </style>
 </head>
@@ -150,10 +151,10 @@
       <div class="row"><label data-i18n="lblCorner">Corner rounding</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
       <div class="row"><label data-i18n="lblWall">Wall thickness</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
       <div class="row"><label data-i18n="lblFit">Fit clearance</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
-      <div class="row"><label data-i18n="lblSnap">Snap-fit (Layer 2↔3)</label><input type="checkbox" id="snapOn" checked></div>
-      <div class="row"><label data-i18n="lblSnapP">Snap bead height</label><input type="range" id="snapP" min="0.15" max="0.6" step="0.05" value="0.35"><span class="val" id="snapPv"></span></div>
+      <div class="row"><label data-i18n="lblSnap">Snap-fit click</label><input type="checkbox" id="snapOn" checked></div>
+      <div class="row"><label data-i18n="lblSnapD">Catch depth</label><input type="range" id="snapD" min="0.3" max="0.9" step="0.05" value="0.5"><span class="val" id="snapDv"></span></div>
+      <div class="row"><label data-i18n="lblSnapArm">Spring arm length</label><input type="range" id="snapArmH" min="5" max="13" step="0.5" value="9"><span class="val" id="snapArmHv"></span></div>
       <div class="row"><label data-i18n="lblBands">Decorative grooves</label><input type="checkbox" id="bands" checked></div>
-      <div class="hint" data-i18n="hintSnap">Snap-fit puts four small beads on the Layer 3 skirt and matching dimples on the Layer 2 tab (mid-wall, all four sides). Both ramps are 45°, so they print without supports, and once seated the bead sits inside the dimple with no interference. What you actually feel is the bead height minus the fit clearance — raise the bead or drop the clearance for a firmer click.</div>
       <div class="hint" data-i18n="hintOuter">Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.</div>
     </div>
   </details>
@@ -293,6 +294,45 @@
     </div>
   </details>
 
+  <details open data-product="workout">
+    <summary data-i18n="secWorkoutCase">Case &amp; magnet fit</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblWkWidth">Case width</label><input type="range" id="wkWidth" min="44.5" max="60" step="0.5" value="47"><span class="val" id="wkWidthv"></span></div>
+      <div class="row"><label data-i18n="lblWkLength">Case length</label><input type="range" id="wkLength" min="25" max="45" step="0.5" value="31"><span class="val" id="wkLengthv"></span></div>
+      <div class="row"><label data-i18n="lblWkBodyH">Body height</label><input type="range" id="wkBodyH" min="11.5" max="22" step="0.5" value="16.5"><span class="val" id="wkBodyHv"></span></div>
+      <div class="row"><label data-i18n="lblWkWall">Wall thickness</label><input type="range" id="wkWall" min="1.8" max="3" step="0.1" value="2.2"><span class="val" id="wkWallv"></span></div>
+      <div class="row"><label data-i18n="lblWkFit">Lid clearance</label><input type="range" id="wkFit" min="0.1" max="0.5" step="0.05" value="0.25"><span class="val" id="wkFitv"></span></div>
+      <div class="row"><label data-i18n="lblWkMagSkin">Magnet skin</label><input type="range" id="wkMagSkin" min="0.4" max="1.2" step="0.1" value="0.6"><span class="val" id="wkMagSkinv"></span></div>
+      <div class="row"><label data-i18n="lblWkHallOn">Use KY-035</label><input type="checkbox" id="wkHallOn" checked></div>
+      <div class="row"><label data-i18n="lblWkHallGap">Hall–magnet gap</label><input type="range" id="wkHallGap" min="0.5" max="4" step="0.25" value="1"><span class="val" id="wkHallGapv"></span></div>
+      <div class="row"><label data-i18n="lblWkHallT">KY-035 thickness</label><input type="range" id="wkHallT" min="2" max="5" step="0.25" value="3.25"><span class="val" id="wkHallTv"></span></div>
+      <div class="hint" data-i18n="hintWorkoutCase">A 30×10×2mm magnet sits under the battery. The 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output.</div>
+    </div>
+  </details>
+
+  <details open data-product="workout">
+    <summary data-i18n="secWorkoutComp">Electronics layout</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblWkOledOn">Use 0.96&quot; OLED</label><input type="checkbox" id="wkOledOn" checked></div>
+      <div class="row"><label data-i18n="lblWkMpuW">MPU6050 width</label><input type="range" id="wkMpuW" min="14" max="22" step="0.5" value="16"><span class="val" id="wkMpuWv"></span></div>
+      <div class="row"><label data-i18n="lblWkMpuL">MPU6050 length</label><input type="range" id="wkMpuL" min="18" max="27" step="0.5" value="21"><span class="val" id="wkMpuLv"></span></div>
+      <div class="row"><label data-i18n="lblWkMpuH">MPU6050 thickness</label><input type="range" id="wkMpuH" min="2.5" max="6" step="0.5" value="3.5"><span class="val" id="wkMpuHv"></span></div>
+      <div class="hint" data-i18n="hintWorkoutComp">The optional 0.96&quot; OLED drops into a protective cradle on top of the ESP32-C3 lid, leaving its display visible. Its four wires pass through the lid and share the MPU6050 I2C bus.</div>
+    </div>
+  </details>
+
+  <details open data-product="workout">
+    <summary data-i18n="secWorkoutExport">STL export</summary>
+    <div class="body">
+      <div class="btns">
+        <button id="wkExBody" data-i18n="btnWkExBody">Workout body.stl</button>
+        <button id="wkExTray" data-i18n="btnWkExTray">Electronics tray.stl</button>
+        <button id="wkExLid" data-i18n="btnWkExLid">Workout lid.stl</button>
+      </div>
+      <div class="hint" data-i18n="hintWorkoutExport">Print the base and tray as shown. The lid export is automatically flipped so its flat top rests on the bed; no supports are required.</div>
+    </div>
+  </details>
+
   <details open data-product="todo">
     <summary data-i18n="secTodoWalls">Lips (front / back)</summary>
     <div class="body">
@@ -416,6 +456,7 @@
       <select id="product">
         <option value="dimsum" data-i18n="optProdDimsum">Dim Sum Clicker</option>
         <option value="todo" data-i18n="optProdTodo">Todo Supporter (iMac)</option>
+        <option value="workout" data-i18n="optProdWorkout">Workout Motion Sensor</option>
       </select>
     </div>
     <div class="hint" data-i18n="hintProduct" style="margin:-2px 0 8px">Choose which 3D design to configure. Each product has its own settings below.</div>
