@@ -301,7 +301,7 @@
       <div class="row"><label data-i18n="lblWkLength">Case length</label><input type="range" id="wkLength" min="25" max="45" step="0.5" value="31"><span class="val" id="wkLengthv"></span></div>
       <div class="row"><label data-i18n="lblWkBodyH">Body height</label><input type="range" id="wkBodyH" min="7" max="22" step="0.5" value="11.5"><span class="val" id="wkBodyHv"></span></div>
       <div class="row"><label data-i18n="lblWkWall">Wall thickness</label><input type="range" id="wkWall" min="1.2" max="3" step="0.1" value="1.6"><span class="val" id="wkWallv"></span></div>
-      <div class="row"><label data-i18n="lblWkFit">Lid clearance</label><input type="range" id="wkFit" min="0.1" max="0.5" step="0.05" value="0.25"><span class="val" id="wkFitv"></span></div>
+      <div class="row"><label data-i18n="lblWkFit">Lid clearance</label><input type="range" id="wkFit" min="0.05" max="0.5" step="0.05" value="0.15"><span class="val" id="wkFitv"></span></div>
       <div class="row"><label data-i18n="lblWkBatH">Battery thickness</label><input type="range" id="wkBatH" min="3" max="9" step="0.1" value="4"><span class="val" id="wkBatHv"></span></div>
       <div class="row"><label data-i18n="lblWkMagSkin">Magnet skin</label><input type="range" id="wkMagSkin" min="0.4" max="1.2" step="0.1" value="0.6"><span class="val" id="wkMagSkinv"></span></div>
       <div class="row"><label data-i18n="lblWkHallOn">Use KY-035</label><input type="checkbox" id="wkHallOn" checked></div>
@@ -317,8 +317,13 @@
       <div class="row"><label data-i18n="lblWkOledOn">Use 0.96&quot; OLED</label><input type="checkbox" id="wkOledOn" checked></div>
       <div class="row"><label data-i18n="lblWkMpuW">MPU6050 width</label><input type="range" id="wkMpuW" min="14" max="22" step="0.5" value="16"><span class="val" id="wkMpuWv"></span></div>
       <div class="row"><label data-i18n="lblWkMpuL">MPU6050 length</label><input type="range" id="wkMpuL" min="18" max="27" step="0.5" value="21"><span class="val" id="wkMpuLv"></span></div>
-      <div class="row"><label data-i18n="lblWkWireX">Battery wire hole X</label><input type="range" id="wkWireX" min="-24" max="24" step="0.5" value="-18"><span class="val" id="wkWireXv"></span></div>
-      <div class="row"><label data-i18n="lblWkWireY">Battery wire hole Y</label><input type="range" id="wkWireY" min="-16" max="16" step="0.5" value="11"><span class="val" id="wkWireYv"></span></div>
+      <div class="row"><label data-i18n="lblWkUsbFit">ESP32 USB grip</label><input type="range" id="wkUsbFit" min="-0.6" max="0.4" step="0.05" value="-0.2"><span class="val" id="wkUsbFitv"></span></div>
+      <div class="row"><label data-i18n="lblWkDivGrow">Divider thicker (USB side)</label><input type="range" id="wkDivGrow" min="0" max="3" step="0.1" value="0.2"><span class="val" id="wkDivGrowv"></span></div>
+      <div class="row"><label data-i18n="lblWkChgX">TP4056 X offset</label><input type="range" id="wkChgX" min="-2" max="6" step="0.1" value="-0.5"><span class="val" id="wkChgXv"></span></div>
+      <div class="row"><label data-i18n="lblWkUsbY">USB hole Y</label><input type="range" id="wkUsbY" min="-8" max="8" step="0.5" value="0"><span class="val" id="wkUsbYv"></span></div>
+      <div class="row"><label data-i18n="lblWkDivBar">Divider bar length</label><input type="range" id="wkDivBar" min="0" max="14" step="0.5" value="7.5"><span class="val" id="wkDivBarv"></span></div>
+      <div class="row"><label data-i18n="lblWkWireX">Battery wire hole X</label><input type="range" id="wkWireX" min="-24" max="24" step="0.5" value="-14"><span class="val" id="wkWireXv"></span></div>
+      <div class="row"><label data-i18n="lblWkWireY">Battery wire hole Y</label><input type="range" id="wkWireY" min="-16" max="16" step="0.5" value="7.5"><span class="val" id="wkWireYv"></span></div>
       <div class="row"><label data-i18n="lblWkMpuH">MPU6050 thickness</label><input type="range" id="wkMpuH" min="2.5" max="6" step="0.5" value="3.5"><span class="val" id="wkMpuHv"></span></div>
       <div class="hint" data-i18n="hintWorkoutComp">The optional 0.96&quot; OLED drops into a protective cradle on top of the ESP32-C3 lid, leaving its display visible. Its four wires pass through the lid and share the MPU6050 I2C bus.</div>
     </div>

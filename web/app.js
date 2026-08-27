@@ -345,6 +345,7 @@ const STATIC_I18N = {
     lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkFit: 'Joint clearance',
     lblWkMagSkin: 'Magnet skin', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
+    lblWkDivBar: 'Divider bar length', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB grip',
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
@@ -451,6 +452,7 @@ const STATIC_I18N = {
     lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkFit: '결합 유격',
     lblWkMagSkin: '자석 앞 스킨', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
+    lblWkDivBar: '칸막이 막대 길이', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 물림',
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
@@ -674,12 +676,17 @@ const P = {
   tWidth: 62, tEdge: 11.5, tClr: 0.6, tWall: 2.5, tBridge: 3, tRound: 3,
   tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
   // --- 운동 모션 센서 (30×10×2 자석 + MPU6050) ---
-  wkWidth: 49.5, wkLength: 31, wkBodyH: 11.5, wkWall: 1.6, wkFit: 0.25, wkMagSkin: 0.6,
+  wkWidth: 49.5, wkLength: 31, wkBodyH: 11.5, wkWall: 1.6, wkFit: 0.15, wkMagSkin: 0.6,
   wkBatH: 4.0,   // 배터리 실측 두께 (802040 공칭 8.0이지만 실제 셀에 맞춰 조절)
-  wkWireX: -18.0, wkWireY: 11.0,   // 2층 바닥 배터리 배선 구멍 위치
+  wkWireX: -14.0, wkWireY: 7.5,   // 2층 바닥 배터리 배선 구멍 — TP4056 날개(패드 열) 밑
+  wkDivGrow: 0.2,  // 칸막이 벽을 USB 쪽으로 더 두껍게 (TP4056 포켓의 +X 끝만 짧아짐)
+  wkDivBar: 7.5,   // 칸막이 막대 길이 (낮출수록 바깥에서 중앙 쪽으로 더 파임, 0=칸막이 없음)
+  wkChgX: -0.5,    // TP4056 포켓 X 오프셋 (음수 = USB 쪽으로, 칸막이도 같이 이동)
+  wkUsbY: 0,       // USB 구멍 Y 오프셋
+  wkUsbFit: -0.2,  // ESP32 USB-C 소켓 물림 (셸 폭에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
-  wkHallGpio: 0, wkRev: 6,
+  wkHallGpio: 0, wkRev: 8,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08, snapOn: true, snapD: 0.5, snapArmH: 9,
   f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -713,11 +720,13 @@ try {
   const saved = JSON.parse(localStorage.getItem('dimsum-params') || '{}');
   for (const k in saved) if (k in P) P[k] = saved[k];
   if (!('wkOledOn' in saved) && 'wkLedOn' in saved) P.wkOledOn = saved.wkLedOn;
-  // 운동 센서 구형 배치 → v6(실측 배터리 두께·TP4056 27×17.3) 치수 마이그레이션.
-  if (saved.wkRev !== 6) Object.assign(P, {
+  // 운동 센서: 저장된 값이 항상 이깁니다. 리비전 마이그레이션은 TW802040 배치 이전
+  // (wkRev < 3)의 옛 저장본만 되돌리고, 그 뒤로는 사용자가 맞춘 수치를 덮지 않습니다.
+  if (!saved.wkRev || saved.wkRev < 3) Object.assign(P, {
     wkWidth: 49.5, wkLength: 31, wkBodyH: 11.5, wkWall: 1.6, wkBatH: 4.0,
-    wkFit: 0.25, wkMagSkin: 0.6, wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5,
-    wkHallGap: 1, wkHallT: 3.25, wkRev: 6,
+    wkFit: 0.15, wkMagSkin: 0.6, wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5,
+    wkHallGap: 1, wkHallT: 3.25, wkRev: 8,
+    wkWireX: -14.0, wkWireY: 7.5,
   });
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
   if (saved.batType === '650' && !('batPose' in saved)) P.batPose = 'stand';
@@ -740,7 +749,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'snapD','snapArmH','espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkWireX','wkWireY','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkWireX','wkWireY','wkDivBar','wkDivGrow','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;

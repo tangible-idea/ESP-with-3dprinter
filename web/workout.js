@@ -22,7 +22,10 @@ export function initWorkout(env) {
   const OLED_CLR = 0.4, OLED_RIM = 1.6, OLED_RIM_H = 4.2;
   const OLED_CAV_W = OLED.w + OLED_CLR, OLED_CAV_D = OLED.d + OLED_CLR;
   const OLED_OUT_W = OLED_CAV_W + 2 * OLED_RIM, OLED_OUT_D = OLED_CAV_D + 2 * OLED_RIM;
-  const JOINT_H = 1.6, JOINT_W = 0.8;
+  // 결합부: 텅이 얇으면 베드에서 떨어져 나가거나 조립 중 부러진다. 벽 두께의 85%를
+  // 그대로 쓰고(최대 1.6), 물림 깊이도 2.2로 늘려 옆으로 흔들리지 않게 한다.
+  const JOINT_H = 2.2;
+  const jointW = () => Math.min(1.6, Math.max(0.9, P.wkWall * 0.85));
   // USB-C 셸은 PCB 위에 얹히므로 셸 z중심 = PCB + (총높이 - PCB)/2.
   const USB_Z = CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2;
   // 트레이 바닥은 2.0 두께로 깔고, 모듈 외형대로 POCKET_D 만큼 파서 보드를 떨어뜨려
@@ -30,6 +33,10 @@ export function initWorkout(env) {
   const TRAY_TOP = 12.6, TRAY_FLOOR = 2.0, TRAY_FLOOR_TOP = 1.4 + TRAY_FLOOR;
   const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
   const WIRE_SLOT = { w: 9.0, d: 3.5 };   // 배터리 배선 관통 슬롯 (X × Y)
+  // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
+  const USB_C = { w: 8.94, d: 3.26, over: 1.5 };
+  const USB_SOCK_WALL = 1.2;
+  const ESP_Z0 = 0.2, ESP_PCB = 1.0;   // 뚜껑 밑 보드 안착 높이 / PCB 두께
   const LID_CAGE_H = 4.6, LID_PLATE = 1.8;
 
   let geos = [null, null, null], meshes = [null, null, null], lastLayout = null;
@@ -57,8 +64,14 @@ export function initWorkout(env) {
     const pairW = CHARGER.w + CLR + mpu.w + CLR;
     const gap = Math.max(0.2, innerW - 1.0 - pairW);
     const left = -innerW / 2 + 0.5;
-    const chargerX = left + (CHARGER.w + CLR) / 2;
-    const mpuX = chargerX + (CHARGER.w + CLR) / 2 + gap + (mpu.w + CLR) / 2;
+    // MPU 자리는 고정하고 TP4056만 wkChgX 만큼 옮긴다 — 음수면 USB(-X) 쪽으로 붙으면서
+    // 두 포켓 사이 칸막이도 같이 USB 쪽으로 밀린다. 벽을 넘지 않게 잘라 넣는다.
+    const chargerX0 = left + (CHARGER.w + CLR) / 2;
+    const mpuX = chargerX0 + (CHARGER.w + CLR) / 2 + gap + (mpu.w + CLR) / 2;
+    const chargerMin = -innerW / 2 + (CHARGER.w + CLR) / 2;
+    const chargerMax = mpuX - (mpu.w + CLR) / 2 - (CHARGER.w + CLR) / 2 - 1.2;
+    const chargerX = Math.min(Math.max(chargerMin, chargerX0 + P.wkChgX),
+                              Math.max(chargerMin, chargerMax));
     // KY-035를 -Y 벽에 세우고, 보드 안쪽면에서 wkHallGap 떨어진 곳에 자석 가장자리를 둔다.
     const hallY = -innerHalfD + P.wkHallT / 2 + 0.25;
     const hallInnerY = hallY + P.wkHallT / 2;
@@ -73,7 +86,8 @@ export function initWorkout(env) {
 
   function jointDims(q) {
     const outW = q.W - 2 * q.wall + 0.2, outD = q.D - 2 * q.wall + 0.2;
-    return { outW, outD, inW: outW - 2 * JOINT_W, inD: outD - 2 * JOINT_W };
+    const jw = jointW();
+    return { outW, outD, inW: outW - 2 * jw, inD: outD - 2 * jw };
   }
 
   function buildBase() {
@@ -102,9 +116,9 @@ export function initWorkout(env) {
     const L = Math.max(3.0, q.wall + 1.6);
     const z = SEAT_Z + USB_Z;
     if (!ASSETS || !ASSETS.usb)   // 에셋 로드 전이면 사각 개구부로 대체
-      return boxBrush(L + 1.0, 9.4, 3.6, -q.W / 2 + q.wall / 2, 0, z - 1.8, 1.0);
+      return boxBrush(L + 1.0, 9.4, 3.6, -q.W / 2 + q.wall / 2, P.wkUsbY, z - 1.8, 1.0);
     const m = new THREE.Matrix4()
-      .makeTranslation(-(q.W / 2 + 0.4) + L / 2, 0, z)
+      .makeTranslation(-(q.W / 2 + 0.4) + L / 2, P.wkUsbY, z)
       .multiply(new THREE.Matrix4().makeRotationZ(Math.PI))
       .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 3.5 / 3.8));
     return meshBrush(ASSETS.usb, m);
@@ -121,23 +135,36 @@ export function initWorkout(env) {
                           TRAY_TOP - 1.4, 1.4, r));
     // 모듈 자리: 바닥을 보드 외형대로 파서 떨어뜨려 넣는다. 깊이는 PCB 두께라
     // 보드 윗면이 바닥과 거의 나란해지고, 사방 벽이 그대로 자리잡기 역할을 한다.
-    const leftEdge = q.chargerX + (CHARGER.w + CLR) / 2;
+    // 칸막이 벽은 wkDivGrow 만큼 USB(-X) 쪽으로 더 두꺼워진다 — TP4056 포켓의 +X
+    // 끝만 그만큼 짧아지고, USB 쪽 끝은 제자리라 커넥터 위치는 그대로다.
+    const grow = P.wkDivGrow;
+    const chgLen = Math.max(1.0, CHARGER.w + CLR - grow);
+    const chgCx = q.chargerX - grow / 2;
+    const leftEdge = chgCx + chgLen / 2;
     const rightEdge = q.mpuX - (q.mpu.w + CLR) / 2;
-    for (const [cx, mw, md] of [[q.chargerX, CHARGER.w, CHARGER.d],
-                                [q.mpuX, q.mpu.w, q.mpu.d]])
-      tray = sub(tray, boxBrush(mw + CLR, md + CLR, POCKET_D + 0.2,
-                                cx, 0, SEAT_Z, 0.6));
+    tray = sub(tray, boxBrush(chgLen, CHARGER.d + CLR, POCKET_D + 0.2,
+                              chgCx, 0, SEAT_Z, 0.6));
+    tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, POCKET_D + 0.2,
+                              q.mpuX, 0, SEAT_Z, 0.6));
 
-    // 두 포켓을 잇는 배선 홈 — 모듈 사이 전선이 바닥 위로 솟지 않게 한다.
-    tray = sub(tray, boxBrush(Math.max(1.2, rightEdge - leftEdge) + 1.2, 3.0,
-                              POCKET_D + 0.2, (leftEdge + rightEdge) / 2, 0, SEAT_Z, 0.45));
+    // 칸막이 벽은 가운데 배선 홈(3.0)을 두고 막대 두 개(' - - ')만 남긴다. 막대 길이는
+    // wkDivBar로 조절 — 값을 낮출수록 파인 곳이 바깥에서 중앙 쪽으로 밀려오고,
+    // 0이면 칸막이가 통째로 사라진다. TP4056이 실측보다 클 때 여기서 여유를 준다.
+    const dividerW = Math.max(1.2, rightEdge - leftEdge) + 1.2;
+    const dividerX = (leftEdge + rightEdge) / 2;
+    tray = sub(tray, boxBrush(dividerW, 3.0, POCKET_D + 0.2, dividerX, 0, SEAT_Z, 0.45));
+    const barEnd = Math.min(q.innerHalfD, 1.5 + P.wkDivBar);
+    if (q.innerHalfD - barEnd > 0.05)
+      for (const sy of [-1, 1])
+        tray = sub(tray, boxBrush(dividerW, q.innerHalfD - barEnd, POCKET_D + 0.2,
+                                  dividerX, sy * (barEnd + q.innerHalfD) / 2, SEAT_Z, 0.45));
 
     // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
     // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
     // 안쪽 캐비티 안으로 잘라 넣는다.
     const slotW = WIRE_SLOT.w, slotD = WIRE_SLOT.d;
     const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
-    const limY = q.innerHalfD - JOINT_W - slotD / 2 - 0.4;
+    const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
     tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 1.2,
                               Math.max(-limX, Math.min(limX, P.wkWireX)),
                               Math.max(-limY, Math.min(limY, P.wkWireY)),
@@ -163,14 +190,23 @@ export function initWorkout(env) {
                         JOINT_H, LID_CAGE_H - JOINT_H,
                         Math.max(0.6, r - q.wall - fit)));
 
+    // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다. 모서리 받침 돌기는
+    // 끼울 때 걸려서 없앴고, 대신 -X 끝의 USB-C 소켓이 커넥터를 물어 고정한다.
     const cageOuterW = ESP.w + CLR + 2.0, cageOuterD = ESP.d + CLR + 2.0;
     lid = add(lid, ring(cageOuterW, cageOuterD, ESP.w + CLR, ESP.d + CLR,
                         LID_CAGE_H, 0, 1.0));
-    for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
-      lid = add(lid, boxBrush(2.8, 2.8, 0.65,
-                              sx * (ESP.w / 2 - 1.4 + 0.45),
-                              sy * (ESP.d / 2 - 1.4 + 0.45), 0.05, 0.35));
-    }
+
+    // wkUsbFit은 셸 폭에 더하는 값이라 음수면 조여서 물린다(간섭 끼움).
+    const cavW = USB_C.w + P.wkUsbFit;
+    const cavZ0 = ESP_Z0 + ESP_PCB;
+    const blkX1 = -(ESP.w + CLR) / 2;
+    const blkX0 = -cageOuterW / 2 - USB_C.over - 0.4;
+    lid = add(lid, boxBrush(blkX1 - blkX0, cavW + 2 * USB_SOCK_WALL, LID_CAGE_H,
+                            (blkX0 + blkX1) / 2, 0, 0, 0.6));
+    // 커넥터가 들어갈 길 — 소켓 바깥부터 케이지 벽을 지나 보드 자리까지 관통시킨다.
+    const cavX1 = blkX1 + 0.6, cavX0 = blkX0 - 0.6;
+    lid = sub(lid, boxBrush(cavX1 - cavX0, cavW, LID_CAGE_H - cavZ0 + 0.4,
+                            (cavX0 + cavX1) / 2, 0, cavZ0, 0.3));
     if (P.wkOledOn) {
       // OLED는 뚜껑 위에서 내려놓는 개방형 보호 림에 안착한다. 화면은 위로 보이고,
       // 헤더 쪽 4가닥은 상판 슬롯을 통과해 바로 아래 ESP32로 내려간다.
@@ -210,9 +246,9 @@ export function initWorkout(env) {
     if (ASSETS && ASSETS.esp) {
       const eg = ASSETS.esp.clone();
       eg.translate(-ESP.w / 2, -ESP.d / 2, 0);   // min corner 기준 → 중심 정렬
-      ghostGeo(G[2], eg, [0, 0, 0.2], MATS.esp);
+      ghostGeo(G[2], eg, [0, 0, ESP_Z0], MATS.esp);
     } else {
-      ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, 0.2 + ESP.h / 2], MATS.esp);
+      ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, ESP_Z0 + ESP.h / 2], MATS.esp);
     }
     if (P.wkOledOn) {
       const lidTop = LID_CAGE_H + LID_PLATE;
@@ -259,7 +295,7 @@ export function initWorkout(env) {
     const chgOutMinus = world(G[1], [q.chargerX + CHARGER.w / 2, 4.3, chgTop]);
 
     // ESP32-C3 SuperMini: USB가 -X를 향하는 뚜껑 포켓 기준 핀 좌표.
-    const espTop = 0.2 + ESP.h;
+    const espTop = ESP_Z0 + ESP.h;
     const espPin = (x, y) => world(G[2], [x, y, espTop]);
     const gpioPins = {
       4: [-1.5, 8], 3: [1, 8], 2: [3.5, 8], 1: [6, 8], 0: [8.5, 8],
