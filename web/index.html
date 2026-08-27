@@ -43,7 +43,7 @@
   button:hover { background: #f2c771; }
   button.ghost { background: #f1ead7; color: #6b5d43; }
   #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
-  #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; }
+  #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; white-space: pre-line; }
   /* 3D 뷰 좌상단 보기 토글 아이콘 (부품·배선·반투명·치수) */
   #viewTools {
     position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; gap: 4px;
@@ -120,6 +120,7 @@
   [data-product] { display: none; }
   body.prod-dimsum [data-product="dimsum"] { display: block; }
   body.prod-todo [data-product="todo"] { display: block; }
+  body.prod-workout [data-product="workout"] { display: block; }
   #product { font-weight: 600; }
 </style>
 </head>
@@ -149,7 +150,8 @@
       <div class="row"><label data-i18n="lblWall">Wall thickness</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
       <div class="row"><label data-i18n="lblFit">Fit clearance</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
       <div class="row"><label data-i18n="lblSnap">Snap-fit click</label><input type="checkbox" id="snapOn" checked></div>
-      <div class="row"><label data-i18n="lblSnapD">Detent height</label><input type="range" id="snapD" min="0.1" max="0.4" step="0.05" value="0.3"><span class="val" id="snapDv"></span></div>
+      <div class="row"><label data-i18n="lblSnapD">Catch depth</label><input type="range" id="snapD" min="0.3" max="0.9" step="0.05" value="0.5"><span class="val" id="snapDv"></span></div>
+      <div class="row"><label data-i18n="lblSnapArm">Spring arm length</label><input type="range" id="snapArmH" min="5" max="13" step="0.5" value="9"><span class="val" id="snapArmHv"></span></div>
       <div class="row"><label data-i18n="lblBands">Decorative grooves</label><input type="checkbox" id="bands" checked></div>
       <div class="hint" data-i18n="hintOuter">Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.</div>
     </div>
@@ -274,6 +276,41 @@
     </div>
   </details>
 
+  <details open data-product="workout">
+    <summary data-i18n="secWorkoutCase">Case &amp; magnet fit</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblWkWidth">Case width</label><input type="range" id="wkWidth" min="44.5" max="60" step="0.5" value="47"><span class="val" id="wkWidthv"></span></div>
+      <div class="row"><label data-i18n="lblWkLength">Case length</label><input type="range" id="wkLength" min="24.5" max="40" step="0.5" value="26.5"><span class="val" id="wkLengthv"></span></div>
+      <div class="row"><label data-i18n="lblWkBodyH">Body height</label><input type="range" id="wkBodyH" min="10.5" max="15" step="0.5" value="11.5"><span class="val" id="wkBodyHv"></span></div>
+      <div class="row"><label data-i18n="lblWkWall">Wall thickness</label><input type="range" id="wkWall" min="1.8" max="3" step="0.1" value="2.2"><span class="val" id="wkWallv"></span></div>
+      <div class="row"><label data-i18n="lblWkFit">Lid clearance</label><input type="range" id="wkFit" min="0.1" max="0.5" step="0.05" value="0.25"><span class="val" id="wkFitv"></span></div>
+      <div class="row"><label data-i18n="lblWkMagSkin">Magnet skin</label><input type="range" id="wkMagSkin" min="0.4" max="1.2" step="0.1" value="0.6"><span class="val" id="wkMagSkinv"></span></div>
+      <div class="hint" data-i18n="hintWorkoutCase">A 30×10×2mm magnet is hidden behind the bottom skin, directly under the 40×20×8mm TW802040 battery. Insert and glue the magnet first, then the battery.</div>
+    </div>
+  </details>
+
+  <details open data-product="workout">
+    <summary data-i18n="secWorkoutComp">Electronics layout</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblWkMpuW">MPU6050 width</label><input type="range" id="wkMpuW" min="14" max="22" step="0.5" value="16"><span class="val" id="wkMpuWv"></span></div>
+      <div class="row"><label data-i18n="lblWkMpuL">MPU6050 length</label><input type="range" id="wkMpuL" min="18" max="27" step="0.5" value="21"><span class="val" id="wkMpuLv"></span></div>
+      <div class="row"><label data-i18n="lblWkMpuH">MPU6050 thickness</label><input type="range" id="wkMpuH" min="2.5" max="6" step="0.5" value="3.5"><span class="val" id="wkMpuHv"></span></div>
+      <div class="hint" data-i18n="hintWorkoutComp">Three stacked parts keep the footprint close to the battery: magnet+battery base, TP4056+MPU6050 tray, and an ESP32-C3+2×5mm LED lid. The charger USB-C port opens through the left wall.</div>
+    </div>
+  </details>
+
+  <details open data-product="workout">
+    <summary data-i18n="secWorkoutExport">STL export</summary>
+    <div class="body">
+      <div class="btns">
+        <button id="wkExBody" data-i18n="btnWkExBody">Workout body.stl</button>
+        <button id="wkExTray" data-i18n="btnWkExTray">Electronics tray.stl</button>
+        <button id="wkExLid" data-i18n="btnWkExLid">Workout lid.stl</button>
+      </div>
+      <div class="hint" data-i18n="hintWorkoutExport">Print the base and tray as shown. The lid export is automatically flipped so its flat top rests on the bed; no supports are required.</div>
+    </div>
+  </details>
+
   <details open data-product="todo">
     <summary data-i18n="secTodoWalls">Lips (front / back)</summary>
     <div class="body">
@@ -380,6 +417,7 @@
       <select id="product">
         <option value="dimsum" data-i18n="optProdDimsum">Dim Sum Clicker</option>
         <option value="todo" data-i18n="optProdTodo">Todo Supporter (iMac)</option>
+        <option value="workout" data-i18n="optProdWorkout">Workout Motion Sensor</option>
       </select>
     </div>
     <div class="hint" data-i18n="hintProduct" style="margin:-2px 0 8px">Choose which 3D design to configure. Each product has its own settings below.</div>
