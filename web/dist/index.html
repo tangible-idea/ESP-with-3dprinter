@@ -42,6 +42,8 @@
   }
   button:hover { background: #f2c771; }
   button.ghost { background: #f1ead7; color: #6b5d43; }
+  /* 측면 텍스처: 선택된 버튼만 강조 */
+  #texBtns button.on { background: #e9b95f; color: #4d3a14; box-shadow: inset 0 0 0 2px #b98a2e; }
   #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
   #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; white-space: pre-line; }
   /* 3D 뷰 좌상단 보기 토글 아이콘 (부품·배선·반투명·치수) */
@@ -123,7 +125,7 @@
   body.prod-workout [data-product="workout"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-xVAZYkMz.js"></script>
+  <script type="module" crossorigin src="/assets/index-C1GofSoD.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -187,6 +189,14 @@
       </div>
       <div class="row"><label data-i18n="lblEspLift">ESP32 lift (Layer 2.5)</label><input type="range" id="espLift" min="0" max="12" step="0.5" value="0"><span class="val" id="espLiftv"></span></div>
       <div class="row"><label data-i18n="lblEspZ">ESP32 Z fine-tune</label><input type="range" id="espZ" min="-1" max="2" step="0.1" value="0"><span class="val" id="espZv"></span></div>
+      <div class="row"><label data-i18n="lblEspOut">USB push-out (no battery)</label><input type="range" id="espOut" min="0" max="2" step="0.1" value="0.8"><span class="val" id="espOutv"></span></div>
+      <div class="row"><label data-i18n="lblEspAutoDock">Auto-dock to wall</label><input type="checkbox" id="espAutoDock" checked></div>
+      <div class="row"><label data-i18n="lblUsbThin">Thin wall at USB port</label><input type="checkbox" id="usbThin" checked></div>
+      <div class="row"><label data-i18n="lblUsbWallT">Wall left at port</label><input type="range" id="usbWallT" min="1" max="3" step="0.1" value="1.5"><span class="val" id="usbWallTv"></span></div>
+      <div class="row"><label data-i18n="lblUsbThroat">USB throat setback</label><input type="range" id="usbThroat" min="0" max="2" step="0.1" value="0"><span class="val" id="usbThroatv"></span></div>
+      <div class="row"><label data-i18n="lblEspGrip">Finger notches in pocket</label><input type="checkbox" id="espGripOn" checked></div>
+      <div class="row"><label data-i18n="lblSolder">Solder relief (pin rows)</label><input type="checkbox" id="solderOn" checked></div>
+      <div class="row"><label data-i18n="lblSolderD">Relief depth</label><input type="range" id="solderD" min="0.3" max="1.5" step="0.1" value="0.5"><span class="val" id="solderDv"></span></div>
       <div class="row"><label data-i18n="lblModY">Charge module Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
       <div class="row"><label data-i18n="lblBatType">Battery capacity</label>
         <select id="batType">
@@ -224,6 +234,14 @@
       <div class="row"><label data-i18n="lblWireRot">Wire hole orientation</label>
         <select id="wireRot"><option value="0" selected data-i18n="optWire0">Horizontal (14×5)</option><option value="90" data-i18n="optWire90">Vertical (5×14)</option></select>
       </div>
+      <div class="row"><label data-i18n="lblNfc">NFC sticker pocket</label><input type="checkbox" id="nfcOn" checked></div>
+      <div class="row"><label data-i18n="lblNfcD">Pocket Ø</label><input type="range" id="nfcD" min="14" max="40" step="0.2" value="26.6"><span class="val" id="nfcDv"></span></div>
+      <div class="row"><label data-i18n="lblNfcT">Pocket depth</label><input type="range" id="nfcT" min="0.3" max="1.6" step="0.1" value="0.5"><span class="val" id="nfcTv"></span></div>
+      <div class="row"><label data-i18n="lblNfcBase">Pocket floor (pause here)</label><input type="range" id="nfcBase" min="0.2" max="1.4" step="0.2" value="0.6"><span class="val" id="nfcBasev"></span></div>
+      <div class="row"><label>NFC X</label><input type="range" id="nfcX" min="-14" max="14" step="0.5" value="5.5"><span class="val" id="nfcXv"></span></div>
+      <div class="row"><label>NFC Y</label><input type="range" id="nfcY" min="-14" max="14" step="0.5" value="3"><span class="val" id="nfcYv"></span></div>
+      <div class="btns"><button class="ghost" id="nfcCenter" data-i18n-title="tNfcCenterTitle" title="Center the NFC pocket (X=0, Y=0)" data-i18n="tNfcCenter">Center NFC pocket</button></div>
+      <div class="hint" data-i18n="hintNfc">A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more.</div>
       <div class="hint" data-i18n-html="hintLayout2">The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports.</div>
     </div>
   </details>
@@ -337,6 +355,22 @@
         <button id="tEx1" data-i18n="btnTEx1">Todo supporter.stl</button>
       </div>
       <div class="hint" data-i18n="hintTodoExport">One printed part. Print it as it appears (bridge on the plate, clip opening facing up) — walls and pockets need no supports; the OLED window bridges cleanly.</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary data-i18n="secTex">Side texture</summary>
+    <div class="body">
+      <div class="btns" id="texBtns">
+        <button class="ghost" data-tex="none" data-i18n="btnTexNone">None</button>
+        <button class="ghost" data-tex="weave1">Weave 1</button>
+        <button class="ghost" data-tex="weave2">Weave 2</button>
+        <button class="ghost" data-tex="weave3">Weave 3</button>
+      </div>
+      <div class="row"><label data-i18n="lblTexDepth">Depth</label><input type="range" id="texDepth" min="0.1" max="1.5" step="0.05" value="0.4"><span class="val" id="texDepthv"></span></div>
+      <div class="row"><label data-i18n="lblTexTile">Pattern size</label><input type="range" id="texTile" min="3" max="40" step="0.5" value="12"><span class="val" id="texTilev"></span></div>
+      <div class="row"><label data-i18n="lblTexRes">Detail (mm/triangle)</label><input type="range" id="texRes" min="0.2" max="1.2" step="0.05" value="0.45"><span class="val" id="texResv"></span></div>
+      <div class="hint" data-i18n="hintTex">Carves the texture into the outer side walls only — top and bottom faces, joint ridges and pocket walls stay untouched, so layers still stack and parts still fit. The pattern is only cut inward, so outer dimensions never grow. Picking a texture loads the pattern size and detail that suit that image (each one repeats a different number of times), so tune them after choosing. Smaller "Detail" means finer relief but many more triangles (slower rebuild, bigger STL). Textures from CNCKitchen/stlTexturizer.</div>
     </div>
   </details>
 
