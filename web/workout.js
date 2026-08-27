@@ -29,6 +29,7 @@ export function initWorkout(env) {
   // 넣는다. SEAT_Z = 파낸 자리의 바닥(= 보드 안착면), TRAY_FLOOR_TOP = 바닥 윗면.
   const TRAY_TOP = 12.6, TRAY_FLOOR = 2.0, TRAY_FLOOR_TOP = 1.4 + TRAY_FLOOR;
   const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
+  const WIRE_SLOT = { w: 9.0, d: 3.5 };   // 배터리 배선 관통 슬롯 (X × Y)
   const LID_CAGE_H = 4.6, LID_PLATE = 1.8;
 
   let geos = [null, null, null], meshes = [null, null, null], lastLayout = null;
@@ -131,16 +132,16 @@ export function initWorkout(env) {
     tray = sub(tray, boxBrush(Math.max(1.2, rightEdge - leftEdge) + 1.2, 3.0,
                               POCKET_D + 0.2, (leftEdge + rightEdge) / 2, 0, SEAT_Z, 0.45));
 
-    // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. B+/B− 패드가 있는 -X 끝,
-    // USB 구멍 바로 옆의 충전모듈 포켓 바깥 여백에 낸다. (-Y 쪽은 KY-035 슬롯 자리라
-    // +Y 쪽 여백을 쓴다.)
-    const bandLo = (CHARGER.d + CLR) / 2, bandHi = q.innerHalfD - JOINT_W - 0.4;
-    if (bandHi - bandLo > 2.0) {
-      const slotD = Math.min(3.5, bandHi - bandLo - 0.8);
-      tray = sub(tray, boxBrush(9.0, slotD, TRAY_FLOOR + 1.2,
-                                -q.W / 2 + q.wall + 5.0, (bandLo + bandHi) / 2,
-                                1.0, Math.min(1.4, slotD / 2 - 0.1)));
-    }
+    // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
+    // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
+    // 안쪽 캐비티 안으로 잘라 넣는다.
+    const slotW = WIRE_SLOT.w, slotD = WIRE_SLOT.d;
+    const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
+    const limY = q.innerHalfD - JOINT_W - slotD / 2 - 0.4;
+    tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 1.2,
+                              Math.max(-limX, Math.min(limX, P.wkWireX)),
+                              Math.max(-limY, Math.min(limY, P.wkWireY)),
+                              1.0, Math.min(1.4, slotD / 2 - 0.1)));
     tray = sub(tray, usbCut(q));
     if (P.wkHallOn) {
       // 베이스가 KY-035(높이 15)보다 낮아도 되도록 결합 텅과 트레이 바닥을 관통하는
