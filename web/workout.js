@@ -38,6 +38,7 @@ export function initWorkout(env) {
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
   const USB_C = { w: 8.94, d: 3.26, over: 1.5 };
   const USB_SOCK_WALL = 1.2;
+  const SW = { w: 8.4, d: 3.6, body: 4.0 };   // SPDT 슬라이드 스위치 (창 8.4 × 3.6)
   const ESP_Z0 = 0.2, ESP_PCB = 1.0;   // 뚜껑 밑 보드 안착 높이 / PCB 두께
   const LID_CAGE_H = 4.6, LID_PLATE = 1.8;
 
@@ -45,6 +46,7 @@ export function initWorkout(env) {
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
   const mpuMat = partMat(0x3c9b70);
   const hallMat = partMat(0x8f5aa8);
+  const switchMat = partMat(0xb0752f);
   const oledBoardMat = partMat(0x235c48);
   const oledScreenMat = new THREE.MeshStandardMaterial({
     color: 0x16262c, emissive: 0x2aa7b8, emissiveIntensity: 0.32,
@@ -150,14 +152,6 @@ export function initWorkout(env) {
     const rightEdge = q.mpuX - (q.mpu.w + CLR) / 2;
     tray = sub(tray, boxBrush(chgLen, CHARGER.d + CLR, POCKET_D + 0.2,
                               chgCx, 0, SEAT_Z, 0.6));
-    // TP4056이 빠지지 않게 포켓 긴 변에 눌림 리브를 세운다. 보드를 밀어 넣으면
-    // 리브가 살짝 뭉개지면서 물어, 유격 오차를 리브가 흡수한다.
-    if (P.wkChgRib > 0.01)
-      for (const sy of [-1, 1]) for (const sx of [-1, 1])
-        tray = add(tray, boxBrush(2.5, P.wkChgRib, POCKET_D,
-                                  chgCx + sx * chgLen * 0.26,
-                                  sy * ((CHARGER.d + CLR - P.wkChgRib) / 2),
-                                  SEAT_Z, 0.15));
     tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, POCKET_D + 0.2,
                               q.mpuX, 0, SEAT_Z, 0.6));
 
@@ -199,6 +193,18 @@ export function initWorkout(env) {
       // 슬롯을 낸다. 보드 윗부분은 MPU 옆(-Y 벽 쪽) 빈 공간으로 그대로 올라온다.
       tray = sub(tray, boxBrush(HALL.w + CLR + 0.6, q.hallT + CLR + 0.6,
                                 TRAY_FLOOR_TOP + 0.4, 0, q.hallY, -0.1, 0.45));
+    }
+    if (P.wkSwOn) {
+      // 전원 스위치(SPDT 슬라이드)는 USB 반대쪽(+X) 짧은 벽에 레버가 밖으로 나오게
+      // 끼운다. 창만 뚫고 양옆에 세로 리브를 세워 몸통을 잡는다 — 세로라 서포트 없음.
+      const wx = q.W / 2 - q.wall / 2;
+      tray = sub(tray, boxBrush(q.wall + 2.0, SW.w + 0.3, SW.d + 0.3,
+                                wx, P.wkSwY, P.wkSwZ - (SW.d + 0.3) / 2, 0.4));
+      for (const sy of [-1, 1])
+        tray = add(tray, boxBrush(1.2, 1.2, SW.d + 3.0,
+                                  q.W / 2 - q.wall - 0.6,
+                                  P.wkSwY + sy * (SW.w + 0.3 + 1.2) / 2,
+                                  P.wkSwZ - (SW.d + 3.0) / 2 + 0.4, 0.3));
     }
     tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
                           TRAY_TOP - JOINT_H, Math.max(0.8, r - q.wall)));
@@ -265,6 +271,10 @@ export function initWorkout(env) {
               SEAT_Z + CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2], MATS.mod);
     ghostBox(G[1], [q.mpu.w, q.mpu.d, q.mpu.h],
              [q.mpuX, 0, SEAT_Z + q.mpu.h / 2], mpuMat);
+    if (P.wkSwOn)
+      ghostBox(G[1], [SW.body, SW.w, SW.d],
+               [q.W / 2 - q.wall - SW.body / 2 + 0.6, P.wkSwY,
+                P.wkSwZ], switchMat);
     // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다 — 실물 STL로 표시해야
     // USB(-X)·안테나 방향이 한눈에 보인다. 에셋 로드 전이면 박스로 대체한다.
     if (ASSETS && ASSETS.esp) {
@@ -333,7 +343,16 @@ export function initWorkout(env) {
 
     wire(batPlus, chgBPlus, colors.plus, t('wtBatPlus'), 'B+');
     wire(batMinus, chgBMinus, colors.minus, t('wtBatMinus'), 'B−');
-    wire(chgOutPlus, esp5V, colors.plus, 'OUT+', '5V');
+    if (P.wkSwOn) {
+      // SPDT 가운데 다리(COM)로 들어와 바깥쪽 한 다리로 나간다. 남는 다리는 미사용.
+      const sx = lastLayout.W / 2 - lastLayout.wall - 1.2;
+      const swCom = world(G[1], [sx, P.wkSwY, P.wkSwZ]);
+      const swOut = world(G[1], [sx, P.wkSwY + 2.54, P.wkSwZ]);
+      wire(chgOutPlus, swCom, colors.plus, 'OUT+', 'SW ②');
+      wire(swOut, esp5V, colors.plus, 'SW ①', '5V');
+    } else {
+      wire(chgOutPlus, esp5V, colors.plus, 'OUT+', '5V');
+    }
     wire(chgOutMinus, espGnd, colors.minus, 'OUT−', 'GND');
 
     // KY-035: 보드 상단 3핀을 S/AO, +, − 순서로 시각화한다.
