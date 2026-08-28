@@ -30,7 +30,7 @@ export function initWorkout(env) {
   const USB_Z = CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2;
   // 트레이 바닥은 2.0 두께로 깔고, 모듈 외형대로 POCKET_D 만큼 파서 보드를 떨어뜨려
   // 넣는다. SEAT_Z = 파낸 자리의 바닥(= 보드 안착면), TRAY_FLOOR_TOP = 바닥 윗면.
-  const TRAY_TOP = 12.6, TRAY_FLOOR = 2.0, TRAY_FLOOR_TOP = 1.4 + TRAY_FLOOR;
+  const TRAY_TOP = 12.6, TRAY_FLOOR = 2.0, TRAY_FLOOR_TOP = JOINT_H + TRAY_FLOOR;
   const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
   const WIRE_SLOT = { w: 9.0, d: 3.5 };   // 배터리 배선 관통 슬롯 (X × Y)
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
@@ -90,6 +90,24 @@ export function initWorkout(env) {
     return { outW, outD, inW: outW - 2 * jw, inD: outD - 2 * jw };
   }
 
+  // 2층 바닥 바깥 턱(텅 바깥면 → 케이스 외곽)은 그냥 두면 공중에 뜬 처마라 서포트가
+  // 붙는다. 그 구간을 45° 계단으로 흘려 내려 서포트 없이 뽑히게 한다. 같은 계단을
+  // 1층 테두리에서 빼주면 두 파트가 그대로 맞물린다.
+  function skirtSteps(q) {
+    const j = jointDims(q), fit = P.wkFit;
+    const oW = j.outW - 2 * fit, oD = j.outD - 2 * fit;
+    const c = Math.min(JOINT_H - 0.4, (q.W - oW) / 2);   // 45° → 높이 = 수평 차이
+    const n = Math.max(2, Math.round(c / 0.3));
+    const steps = [];
+    for (let k = 0; k < n; k++) {
+      const t = (k + 1) / n;
+      steps.push({ w: oW + (q.W - oW) * t, d: oD + (q.D - oD) * t,
+                   z: JOINT_H - c + (k * c) / n, h: c / n + 0.02 });
+    }
+    return { c, n, steps, inW: j.inW + 2 * fit, inD: j.inD + 2 * fit,
+             gapW: j.outW, gapD: j.outD };
+  }
+
   function buildBase() {
     const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
     let body = boxBrush(q.W, q.D, q.baseH, 0, 0, 0, r);
@@ -106,6 +124,12 @@ export function initWorkout(env) {
     const j = jointDims(q);
     body = sub(body, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
                           q.baseH - JOINT_H, Math.max(0.8, r - q.wall)));
+    // 2층 스커트가 내려앉을 자리를 테두리에서 45° 계단으로 파낸다.
+    const sk = skirtSteps(q);
+    for (const s of sk.steps)
+      body = sub(body, ring(s.w + 2 * P.wkFit, s.d + 2 * P.wkFit,
+                            sk.gapW - 0.4, sk.gapD - 0.4, s.h,
+                            q.baseH - JOINT_H + s.z, Math.max(0.8, r - q.wall)));
     return body;
   }
 
@@ -130,9 +154,13 @@ export function initWorkout(env) {
     let tray = ring(j.outW - 2 * fit, j.outD - 2 * fit,
                     j.inW + 2 * fit, j.inD + 2 * fit,
                     JOINT_H, 0, Math.max(0.6, r - q.wall - fit));
-    tray = add(tray, boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, 1.4, r));
+    const sk = skirtSteps(q);
+    for (const s of sk.steps)
+      tray = add(tray, ring(s.w, s.d, sk.inW, sk.inD, s.h, s.z,
+                            Math.max(0.6, r - q.wall - fit)));
+    tray = add(tray, boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, JOINT_H, r));
     tray = add(tray, ring(q.W, q.D, q.W - 2 * q.wall, q.D - 2 * q.wall,
-                          TRAY_TOP - 1.4, 1.4, r));
+                          TRAY_TOP - JOINT_H, JOINT_H, r));
     // 모듈 자리: 바닥을 보드 외형대로 파서 떨어뜨려 넣는다. 깊이는 PCB 두께라
     // 보드 윗면이 바닥과 거의 나란해지고, 사방 벽이 그대로 자리잡기 역할을 한다.
     // 칸막이 벽은 wkDivGrow 만큼 USB(-X) 쪽으로 더 두꺼워진다 — TP4056 포켓의 +X
