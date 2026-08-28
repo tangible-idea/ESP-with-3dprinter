@@ -30,7 +30,9 @@ export function initWorkout(env) {
   const USB_Z = CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2;
   // 트레이 바닥은 2.0 두께로 깔고, 모듈 외형대로 POCKET_D 만큼 파서 보드를 떨어뜨려
   // 넣는다. SEAT_Z = 파낸 자리의 바닥(= 보드 안착면), TRAY_FLOOR_TOP = 바닥 윗면.
-  const TRAY_TOP = 12.6, TRAY_FLOOR = 2.0, TRAY_FLOOR_TOP = JOINT_H + TRAY_FLOOR;
+  // 트레이 바닥은 베드에 그대로 닿는 통짜 판이다. 결합 홈이 밑면에서 JOINT_H 만큼
+  // 파고들어오므로 그보다 POCKET_D + 여유만큼 두꺼워야 한다.
+  const TRAY_TOP = 12.2, TRAY_FLOOR = 3.8, TRAY_FLOOR_TOP = TRAY_FLOOR;
   const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
   const WIRE_SLOT = { w: 9.0, d: 3.5 };   // 배터리 배선 관통 슬롯 (X × Y)
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
@@ -90,24 +92,6 @@ export function initWorkout(env) {
     return { outW, outD, inW: outW - 2 * jw, inD: outD - 2 * jw };
   }
 
-  // 2층 바닥 바깥 턱(텅 바깥면 → 케이스 외곽)은 그냥 두면 공중에 뜬 처마라 서포트가
-  // 붙는다. 그 구간을 45° 계단으로 흘려 내려 서포트 없이 뽑히게 한다. 같은 계단을
-  // 1층 테두리에서 빼주면 두 파트가 그대로 맞물린다.
-  function skirtSteps(q) {
-    const j = jointDims(q), fit = P.wkFit;
-    const oW = j.outW - 2 * fit, oD = j.outD - 2 * fit;
-    const c = Math.min(JOINT_H - 0.4, (q.W - oW) / 2);   // 45° → 높이 = 수평 차이
-    const n = Math.max(2, Math.round(c / 0.3));
-    const steps = [];
-    for (let k = 0; k < n; k++) {
-      const t = (k + 1) / n;
-      steps.push({ w: oW + (q.W - oW) * t, d: oD + (q.D - oD) * t,
-                   z: JOINT_H - c + (k * c) / n, h: c / n + 0.02 });
-    }
-    return { c, n, steps, inW: j.inW + 2 * fit, inD: j.inD + 2 * fit,
-             gapW: j.outW, gapD: j.outD };
-  }
-
   function buildBase() {
     const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
     let body = boxBrush(q.W, q.D, q.baseH, 0, 0, 0, r);
@@ -121,15 +105,12 @@ export function initWorkout(env) {
                                 q.baseH - 0.75 + 0.2,
                                 0, q.hallY, 0.75, 0.45));
     }
-    const j = jointDims(q);
-    body = sub(body, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
-                          q.baseH - JOINT_H, Math.max(0.8, r - q.wall)));
-    // 2층 스커트가 내려앉을 자리를 테두리에서 45° 계단으로 파낸다.
-    const sk = skirtSteps(q);
-    for (const s of sk.steps)
-      body = sub(body, ring(s.w + 2 * P.wkFit, s.d + 2 * P.wkFit,
-                            sk.gapW - 0.4, sk.gapD - 0.4, s.h,
-                            q.baseH - JOINT_H + s.z, Math.max(0.8, r - q.wall)));
+    // 결합부 암수를 뒤집었다: 1층이 텅을 위로 세우고 2층이 밑면에 홈을 판다.
+    // 그래야 2층 밑면이 완전히 평평해져 바닥 밑에 서포트가 생기지 않는다.
+    const j = jointDims(q), fit = P.wkFit;
+    body = add(body, ring(j.outW - 2 * fit, j.outD - 2 * fit,
+                          j.inW + 2 * fit, j.inD + 2 * fit,
+                          JOINT_H, q.baseH, Math.max(0.6, r - q.wall - fit)));
     return body;
   }
 
@@ -151,16 +132,13 @@ export function initWorkout(env) {
   function buildTray() {
     const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
     const j = jointDims(q), fit = P.wkFit;
-    let tray = ring(j.outW - 2 * fit, j.outD - 2 * fit,
-                    j.inW + 2 * fit, j.inD + 2 * fit,
-                    JOINT_H, 0, Math.max(0.6, r - q.wall - fit));
-    const sk = skirtSteps(q);
-    for (const s of sk.steps)
-      tray = add(tray, ring(s.w, s.d, sk.inW, sk.inD, s.h, s.z,
-                            Math.max(0.6, r - q.wall - fit)));
-    tray = add(tray, boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, JOINT_H, r));
+    // 바닥판은 베드에 평평하게 놓인다. 결합 홈만 밑면에서 위로 파고들어오므로
+    // 서포트가 필요한 곳은 폭 1mm 남짓의 홈 천장(브리지)뿐이다.
+    let tray = boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, 0, r);
+    tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.2,
+                          -0.2, Math.max(0.8, r - q.wall)));
     tray = add(tray, ring(q.W, q.D, q.W - 2 * q.wall, q.D - 2 * q.wall,
-                          TRAY_TOP - JOINT_H, JOINT_H, r));
+                          TRAY_TOP - TRAY_FLOOR, TRAY_FLOOR, r));
     // 모듈 자리: 바닥을 보드 외형대로 파서 떨어뜨려 넣는다. 깊이는 PCB 두께라
     // 보드 윗면이 바닥과 거의 나란해지고, 사방 벽이 그대로 자리잡기 역할을 한다.
     // 칸막이 벽은 wkDivGrow 만큼 USB(-X) 쪽으로 더 두꺼워진다 — TP4056 포켓의 +X
@@ -172,6 +150,14 @@ export function initWorkout(env) {
     const rightEdge = q.mpuX - (q.mpu.w + CLR) / 2;
     tray = sub(tray, boxBrush(chgLen, CHARGER.d + CLR, POCKET_D + 0.2,
                               chgCx, 0, SEAT_Z, 0.6));
+    // TP4056이 빠지지 않게 포켓 긴 변에 눌림 리브를 세운다. 보드를 밀어 넣으면
+    // 리브가 살짝 뭉개지면서 물어, 유격 오차를 리브가 흡수한다.
+    if (P.wkChgRib > 0.01)
+      for (const sy of [-1, 1]) for (const sx of [-1, 1])
+        tray = add(tray, boxBrush(2.5, P.wkChgRib, POCKET_D,
+                                  chgCx + sx * chgLen * 0.26,
+                                  sy * ((CHARGER.d + CLR - P.wkChgRib) / 2),
+                                  SEAT_Z, 0.15));
     tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, POCKET_D + 0.2,
                               q.mpuX, 0, SEAT_Z, 0.6));
 
@@ -187,16 +173,26 @@ export function initWorkout(env) {
         tray = sub(tray, boxBrush(dividerW, q.innerHalfD - barEnd, POCKET_D + 0.2,
                                   dividerX, sy * (barEnd + q.innerHalfD) / 2, SEAT_Z, 0.45));
 
+    // 막대를 바닥 위로 더 세워 두 모듈이 서로 밀리지 않게 한다. ESP32 케이지에 닿지
+    // 않는 높이까지만 올라간다.
+    const divH = Math.min(P.wkDivH,
+                          TRAY_TOP - LID_CAGE_H - TRAY_FLOOR_TOP - 0.3);
+    if (divH > 0.05 && barEnd > 1.5 && rightEdge - leftEdge > 0.05)
+      for (const sy of [-1, 1])
+        tray = add(tray, boxBrush(rightEdge - leftEdge, barEnd - 1.5, divH,
+                                  (leftEdge + rightEdge) / 2, sy * (1.5 + barEnd) / 2,
+                                  TRAY_FLOOR_TOP, 0.3));
+
     // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
     // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
     // 안쪽 캐비티 안으로 잘라 넣는다.
     const slotW = WIRE_SLOT.w, slotD = WIRE_SLOT.d;
     const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
     const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
-    tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 1.2,
+    tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 0.4,
                               Math.max(-limX, Math.min(limX, P.wkWireX)),
                               Math.max(-limY, Math.min(limY, P.wkWireY)),
-                              1.0, Math.min(1.4, slotD / 2 - 0.1)));
+                              -0.2, Math.min(1.4, slotD / 2 - 0.1)));
     tray = sub(tray, usbCut(q));
     if (P.wkHallOn) {
       // 베이스가 KY-035(높이 15)보다 낮아도 되도록 결합 텅과 트레이 바닥을 관통하는
@@ -401,8 +397,8 @@ export function initWorkout(env) {
     const hallNeedD = BAT.d + CLR + q.hallT + CLR + 1.3 + 2 * q.wall;
     // KY-035는 트레이 바닥 슬롯을 지나 위로 올라오므로, 베이스 높이가 아니라
     // ESP32 케이지 밑면까지의 전체 여유가 기준이다.
-    const hallCeil = q.baseH - JOINT_H + (TRAY_TOP - LID_CAGE_H);
-    const hallNeedH = 0.75 + HALL.h + 0.4 - (TRAY_TOP - LID_CAGE_H) + JOINT_H;
+    const hallCeil = q.baseH + (TRAY_TOP - LID_CAGE_H);
+    const hallNeedH = 0.75 + HALL.h + 0.4 - (TRAY_TOP - LID_CAGE_H);
     if (P.wkHallOn && (q.D < hallNeedD || 0.75 + HALL.h + 0.4 > hallCeil))
       warnings.push(t('wkHallFit', hallNeedD.toFixed(1), hallNeedH.toFixed(1)));
     if (P.wkOledOn && (q.W < OLED_OUT_W || q.D < OLED_OUT_D))
@@ -414,8 +410,8 @@ export function initWorkout(env) {
     if (!lastLayout) return;
     const gap = 18 * +document.getElementById('explode').value;
     G[0].position.set(0, 0, 0);
-    G[1].position.set(0, 0, lastLayout.baseH - JOINT_H + gap);
-    const trayTopWorld = lastLayout.baseH - JOINT_H + TRAY_TOP;
+    G[1].position.set(0, 0, lastLayout.baseH + gap);
+    const trayTopWorld = lastLayout.baseH + TRAY_TOP;
     G[2].position.set(0, 0, trayTopWorld - LID_CAGE_H + gap * 2);
     for (let i = 3; i < G.length; i++) G[i].position.set(0, 0, 0);
     markRulers();
@@ -435,7 +431,7 @@ export function initWorkout(env) {
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
         setFloorMeshes(meshes); lastLayout = layout(); placeGhosts(lastLayout);
         applyWorkoutExplode(); setRulerExtras('workout', workoutRulerDims(lastLayout));
-        const totalH = lastLayout.baseH + (TRAY_TOP - JOINT_H) + LID_PLATE
+        const totalH = lastLayout.baseH + TRAY_TOP + LID_PLATE
           + (P.wkOledOn ? OLED_RIM_H : 0);
         const totalW = P.wkOledOn ? Math.max(lastLayout.W, OLED_OUT_W) : lastLayout.W;
         const totalD = P.wkOledOn ? Math.max(lastLayout.D, OLED_OUT_D) : lastLayout.D;
