@@ -150,6 +150,7 @@ const I18N = {
     wNfcWall: (d) => `⚠ NFC pocket (Ø${d}) runs into the wall / bottom joint groove — shrink it or move it toward the center`,
     wNfcWallF1: (d, skin) => `⚠ NFC pocket (Ø${d}) leaves less than ${skin}mm of skin to the Layer 1 outside face — shrink it or move it toward the center`,
     wNfcWire: '⚠ NFC pocket overlaps the wire hole — the pocket opens into the slot; move the NFC X/Y or the wire hole',
+    wWireWall: '⚠ Wire hole reaches the case wall — move the hole toward the center or enlarge the case',
     wNfcNoF1: '⚠ NFC pocket is set to the Layer 1 floor plate, but Layer 1 is off — turn Layer 1 on or move the pocket to Layer 2',
   },
   ko: {
@@ -265,6 +266,7 @@ const I18N = {
     wNfcWall: (d) => `⚠ NFC 포켓(Ø${d})이 벽·바닥 결합 홈에 닿습니다 — 지름을 줄이거나 중앙 쪽으로 옮기세요`,
     wNfcWallF1: (d, skin) => `⚠ NFC 포켓(Ø${d})과 1층 바깥면 사이 살이 ${skin}mm에 못 미칩니다 — 지름을 줄이거나 중앙 쪽으로 옮기세요`,
     wNfcWire: '⚠ NFC 포켓이 배선구멍과 겹칩니다 — 포켓이 슬롯으로 뚫립니다. NFC X/Y 또는 배선구멍을 옮기세요',
+    wWireWall: '⚠ 배선구멍이 케이스 벽에 닿습니다 — 구멍을 중앙으로 옮기거나 케이스를 키우세요',
     wNfcNoF1: '⚠ NFC 포켓이 1층 바닥판으로 설정돼 있는데 1층이 꺼져 있습니다 — 1층을 켜거나 포켓을 2층으로 옮기세요',
   },
 };
@@ -313,7 +315,7 @@ const STATIC_I18N = {
     lblNfcFloor: 'Which floor plate',
     optNfcF2: 'Layer 2 floor plate (2.0)', optNfcF1: 'Layer 1 floor plate — case bottom (1.6)',
     hintNfc: 'A round cavity buried inside a floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more. <b>Which floor plate:</b> Layer 2 (2.0 thick) is the default; Layer 1 is the case bottom, so the sticker sits closest to the phone tapping the underside, but the plate is thinner (1.6) — keep the pocket floor + depth at 1.2 or less, and Layer 1 must be on. On Layer 2 the pocket nearly fills the floor at Ø26.6, so it sits off-center by default to clear the battery wire slot — the warnings tell you if it runs into the slot or the bottom joint groove.',
-    optWire0: 'Horizontal (14×5)', optWire90: 'Vertical (5×14)',
+    optWire0: 'Horizontal (14×5)', optWire90: 'Vertical (5×14)', optWire90x17: 'Vertical (5×17)',
     hintLayout2: 'OLED Z is relative to its original Layer 2 position: negative values lower the OLED into Layer 1. At the minimum, the OLED module stays above the bottom plate while its housing extends to the outside bottom edge. The allowed minimum follows the current Layer 1 height. The housing, window, socket and wiring move together and are split cleanly at the layer joint for printing. Raising OLED protrusion pushes the pod outside the outline. <b>No battery</b> or turning off Layer 1 removes the battery and charge module and docks the ESP32 against the east wall for direct USB. <b>OLED separate pod</b> makes the OLED housing a separate printed part that slides into the aligned openings and rails.',
     secLayout3: 'Component layout (Layer 3)',
     lblBoss: 'Switch boss', lblBossH: 'Boss height', lblSink: 'Switch recess depth',
@@ -429,7 +431,7 @@ const STATIC_I18N = {
     lblNfcFloor: '포켓을 넣을 층',
     optNfcF2: '2층 바닥판 (두께 2.0)', optNfcF1: '1층 바닥판 — 케이스 맨 밑 (두께 1.6)',
     hintNfc: 'NFC 스티커를 넣는 원형 자리를 바닥판 속에 파묻습니다 — 밖에서는 아무것도 보이지 않습니다. 노즐이 포켓 아래 살 높이에 도달하면 출력을 일시정지하고 스티커를 눕혀 넣은 뒤 재개하세요. 포켓 깊이를 스티커 두께에 맞추면(0.4 → 0.5) 다음 레이어가 빈 공간을 건너지 않고 스티커 위에 바로 얹힙니다. 아래 살 높이가 곧 일시정지 지점입니다: 레이어 높이 0.2 기준 0.6 = 3레이어, 0.8 = 4레이어. Ø26.6은 원형 Ø26 스티커용이며, 정사각 26×26 스티커라면 Ø37 이상이 필요합니다. <b>포켓을 넣을 층:</b> 기본은 2층 바닥판(두께 2.0)이고, 1층 바닥판은 케이스 맨 밑이라 바닥에 대고 태그할 때 스티커가 가장 가깝지만 판이 얇습니다(1.6) — 아래 살 + 깊이를 1.2 이하로 유지해야 하고 1층이 켜져 있어야 합니다. 2층에서는 Ø26.6이 바닥을 거의 채우기 때문에 기본 위치가 중앙이 아니라 배터리 배선구멍을 피해 살짝 치우쳐 있습니다 — 배선구멍이나 바닥 결합 홈에 닿으면 경고로 알려줍니다.',
-    optWire0: '가로 (14×5)', optWire90: '세로 (5×14)',
+    optWire0: '가로 (14×5)', optWire90: '세로 (5×14)', optWire90x17: '세로 (5×17)',
     hintLayout2: 'OLED Z는 기존 2층 위치를 0으로 한 값입니다. 음수로 내리면 OLED가 1층까지 내려가며, 최저 위치에서는 OLED 모듈은 바닥판 위에 남고 케이스 외곽은 제품의 바닥 끝까지 이어집니다. 최솟값은 현재 1층 높이에 맞춰집니다. 하우징·창·소켓·배선이 함께 이동하고 출력할 때는 층 결합면에서 정확히 나뉩니다. OLED 돌출을 올리면 포드가 외곽선 밖으로 나옵니다. <b>배터리 없음</b> 또는 <b>1층 끄기</b>는 배터리·충전모듈을 제거하고 ESP32를 동쪽 벽 USB 직결로 바꿉니다. <b>OLED 분리 포드</b>는 정렬된 개구와 레일에 끼우는 별도 출력 파트를 만듭니다.',
     secLayout3: '부품 배치 (3층)',
     lblBoss: '스위치 Boss', lblBossH: 'Boss 높이', lblSink: '스위치 매립 깊이',
@@ -567,6 +569,13 @@ const batFlatFoot = () => {
   const bs = batSpec();
   return batFlatRot() ? { w: bs.W + bs.clr, d: bs.L + bs.clr }
                       : { w: bs.L + bs.clr, d: bs.W + bs.clr };
+};
+// 기존 저장값(숫자 0/90)과 새 5×17 선택값을 함께 지원한다.
+const wireSlotSize = () => {
+  const mode = String(P.wireRot);
+  return mode === '90x17' ? { w: 5, d: 17 }
+       : mode === '90' ? { w: 5, d: 14 }
+       : { w: 14, d: 5 };
 };
 const espStand = () => !noBat() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
 const ESP = { l: 24, w: 18, h: 4.2, usbZ: 2.6 };   // usbZ = USB 셸 z중심 (실측 1.0~4.2)
@@ -1005,7 +1014,7 @@ document.getElementById('espRot').addEventListener('change', e => {
   applyBatUI();   // 띄움은 눕힘 전용
   queueRebuild();
 });
-document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = +e.target.value; queueRebuild(); });
+document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('oledPodOn').checked = P.oledPodOn;
 document.getElementById('oledPodOn').addEventListener('change', e => { P.oledPodOn = e.target.checked; queueRebuild(); });
@@ -1785,9 +1794,8 @@ function buildFloor2() {
 
   // 배터리 배선 구멍 (긴 슬롯 — +/− 두 가닥이 함께 통과, 가로/세로 회전 가능)
   if (!noBat()) {
-    const ww = P.wireRot === 90 ? 5 : 14;
-    const wd = P.wireRot === 90 ? 14 : 5;
-    b = sub(b, boxBrush(ww, wd, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
+    const { w, d } = wireSlotSize();
+    b = sub(b, boxBrush(w, d, F2_PLATE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
   }
 
   // 피에조 부저 소켓 (2층 바닥): 플랫폼 리세스 1.8 + 가이드 링, 남쪽 링에 전선 노치
@@ -3095,6 +3103,11 @@ function updateInfo(ms, fit) {
     t('infoDims', sizeTxt, total.toFixed(1), lidTxt, ms.toFixed(0), fitTxt);
   const warn = [];
   if (fit && !fit.ok) warn.push(t('wFit'));
+  if (!noBat()) {
+    const { w, d } = wireSlotSize();
+    if (!insideInner(Math.abs(P.wireX) + w / 2, Math.abs(P.wireY) + d / 2))
+      warn.push(t('wWireWall'));
+  }
   const flatFoot = batFlatFoot();
   if (!noBat() && !batStand() && !insideInner(flatFoot.w / 2, flatFoot.d / 2))
     warn.push(t('wBatFit', flatFoot.w, flatFoot.d));
@@ -3293,9 +3306,9 @@ function updateInfo(ms, fit) {
       if (!circleInsideInset(P.nfcX, P.nfcY, nr, P.wall + 0.6))
         warn.push(t('wNfcWall', P.nfcD.toFixed(1)));
       if (!noBat()) {
-        const ww = P.wireRot === 90 ? 5 : 14, wd = P.wireRot === 90 ? 14 : 5;
+        const { w, d } = wireSlotSize();
         if (rectsOverlap({ x: P.nfcX, y: P.nfcY, w: P.nfcD, d: P.nfcD },
-                         { x: P.wireX, y: P.wireY, w: ww, d: wd }))
+                         { x: P.wireX, y: P.wireY, w, d }))
           warn.push(t('wNfcWire'));
       }
     }
