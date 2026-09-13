@@ -194,7 +194,14 @@
       <div class="row"><label data-i18n="lblEspGrip">Finger notches in pocket</label><input type="checkbox" id="espGripOn" checked></div>
       <div class="row"><label data-i18n="lblSolder">Solder relief (pin rows)</label><input type="checkbox" id="solderOn" checked></div>
       <div class="row"><label data-i18n="lblSolderD">Relief depth</label><input type="range" id="solderD" min="0.3" max="1.5" step="0.1" value="0.5"><span class="val" id="solderDv"></span></div>
+      <div class="row"><label data-i18n="lblModType">Charge module</label>
+        <select id="modType">
+          <option value="generic" selected data-i18n="optModGeneric">Existing module (19×14×4.5)</option>
+          <option value="tp4056" data-i18n="optModTp4056">TP4056 USB-C (27×17.3×4.0)</option>
+        </select>
+      </div>
       <div class="row"><label data-i18n="lblModY">Charge module Y</label><input type="range" id="modY" min="-14" max="14" step="0.5" value="-9"><span class="val" id="modYv"></span></div>
+      <div class="hint" data-i18n="hintModType">TP4056 is larger than the existing module, so the default case may need more space. Check your board dimensions, power input and charge current before printing and wiring.</div>
       <div class="row"><label data-i18n="lblBatType">Battery capacity</label>
         <select id="batType">
           <option value="520" selected>520mAh (36.5×28.5×4.3)</option>
@@ -204,7 +211,8 @@
       </div>
       <div class="row"><label data-i18n="lblBatPose">Battery placement</label>
         <select id="batPose">
-          <option value="flat" selected data-i18n="optBatFlat">Flat on Layer 1</option>
+          <option value="flat" selected data-i18n="optBatFlat">Flat on Layer 1 (horizontal, long side X)</option>
+          <option value="flatRot" data-i18n="optBatFlatRot">Flat on Layer 1 (vertical, long side Y)</option>
           <option value="stand" data-i18n="optBatStand">Upright on Layer 2 (slot-in)</option>
         </select>
       </div>
@@ -223,7 +231,7 @@
           <option value="none" data-i18n="optOledNone">None</option>
         </select>
       </div>
-      <div class="row"><label data-i18n="lblOledZ">OLED Z position</label><input type="range" id="oledZ" min="-7.5" max="8" step="0.5" value="0"><span class="val" id="oledZv"></span></div>
+      <div class="row"><label data-i18n="lblOledZ">OLED Z position</label><input type="range" id="oledZ" min="-10" max="8" step="0.5" value="0"><span class="val" id="oledZv"></span></div>
       <div class="row"><label data-i18n="lblOledProud">OLED protrusion</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
       <div class="row"><label data-i18n="lblOledPod">OLED separate pod</label><input type="checkbox" id="oledPodOn"></div>
       <div class="row"><label data-i18n="lblWireX">Wire hole X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
@@ -242,14 +250,20 @@
       <div class="row"><label data-i18n="lblBzX">Buzzer X</label><input type="range" id="bzX" min="-15" max="15" step="0.5" value="8"><span class="val" id="bzXv"></span></div>
       <div class="row"><label data-i18n="lblBzY">Buzzer Y</label><input type="range" id="bzY" min="-15" max="15" step="0.5" value="-8"><span class="val" id="bzYv"></span></div>
       <div class="row"><label data-i18n="lblNfc">NFC sticker pocket</label><input type="checkbox" id="nfcOn" checked></div>
+      <div class="row"><label data-i18n="lblNfcFloor">Which floor plate</label>
+        <select id="nfcFloor">
+          <option value="2" selected data-i18n="optNfcF2">Layer 2 floor plate (2.0)</option>
+          <option value="1" data-i18n="optNfcF1">Layer 1 floor plate — case bottom (1.6)</option>
+        </select>
+      </div>
       <div class="row"><label data-i18n="lblNfcD">Pocket Ø</label><input type="range" id="nfcD" min="14" max="40" step="0.2" value="26.6"><span class="val" id="nfcDv"></span></div>
       <div class="row"><label data-i18n="lblNfcT">Pocket depth</label><input type="range" id="nfcT" min="0.3" max="1.6" step="0.1" value="0.5"><span class="val" id="nfcTv"></span></div>
       <div class="row"><label data-i18n="lblNfcBase">Pocket floor (pause here)</label><input type="range" id="nfcBase" min="0.2" max="1.4" step="0.2" value="0.6"><span class="val" id="nfcBasev"></span></div>
       <div class="row"><label>NFC X</label><input type="range" id="nfcX" min="-14" max="14" step="0.5" value="5.5"><span class="val" id="nfcXv"></span></div>
       <div class="row"><label>NFC Y</label><input type="range" id="nfcY" min="-14" max="14" step="0.5" value="3"><span class="val" id="nfcYv"></span></div>
       <div class="btns"><button class="ghost" id="nfcCenter" data-i18n-title="tNfcCenterTitle" title="Center the NFC pocket (X=0, Y=0)" data-i18n="tNfcCenter">Center NFC pocket</button></div>
-      <div class="hint" data-i18n="hintNfc">A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more.</div>
-      <div class="hint" data-i18n-html="hintLayout2">OLED Z is relative to its original Layer 2 position. Negative values lower the OLED into Layer 1; the housing, window, socket and wiring move together and split at the layer joint for printing. <b>No battery</b> or turning off Layer 1 removes the battery and charger and switches the ESP32 to direct USB.</div>
+      <div class="hint" data-i18n-html="hintNfc">A round cavity buried inside a floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more.</div>
+      <div class="hint" data-i18n-html="hintLayout2">OLED Z is relative to its original Layer 2 position. At the minimum, the OLED module stays above the Layer 1 bottom plate while its housing reaches the outside bottom edge; the housing, window, socket and wiring move together and split at the layer joint for printing. <b>No battery</b> or turning off Layer 1 removes the battery and charger and switches the ESP32 to direct USB.</div>
     </div>
   </details>
 
