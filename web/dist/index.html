@@ -125,7 +125,7 @@
   body.prod-workout [data-product="workout"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-B8fK1e1G.js"></script>
+  <script type="module" crossorigin src="/assets/index-G6lfiD_x.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -152,9 +152,6 @@
       <div class="row"><label data-i18n="lblCorner">Corner rounding</label><input type="range" id="R" min="2" max="17" step="0.5" value="8"><span class="val" id="Rv"></span></div>
       <div class="row"><label data-i18n="lblWall">Wall thickness</label><input type="range" id="wall" min="1.8" max="3.5" step="0.1" value="2.3"><span class="val" id="wallv"></span></div>
       <div class="row"><label data-i18n="lblFit">Fit clearance</label><input type="range" id="fitClr" min="0" max="0.3" step="0.02" value="0.08"><span class="val" id="fitClrv"></span></div>
-      <div class="row"><label data-i18n="lblSnap">Snap-fit click</label><input type="checkbox" id="snapOn" checked></div>
-      <div class="row"><label data-i18n="lblSnapD">Catch depth</label><input type="range" id="snapD" min="0.3" max="0.9" step="0.05" value="0.5"><span class="val" id="snapDv"></span></div>
-      <div class="row"><label data-i18n="lblSnapArm">Spring arm length</label><input type="range" id="snapArmH" min="5" max="13" step="0.5" value="9"><span class="val" id="snapArmHv"></span></div>
       <div class="row"><label data-i18n="lblBands">Decorative grooves</label><input type="checkbox" id="bands" checked></div>
       <div class="hint" data-i18n="hintOuter">Layer joints and the Layer 4 joint use a square-section tab (1.2×1.5) and groove (depth 1.8) — the smaller the fit clearance, the tighter the grip. Settings are saved automatically.</div>
     </div>
@@ -163,12 +160,13 @@
   <details open data-product="dimsum">
     <summary data-i18n="secLayers">Layer heights</summary>
     <div class="body">
+      <div class="row"><label data-i18n="lblF1On">Use Layer 1 (battery)</label><input type="checkbox" id="f1On" checked></div>
       <div class="row"><label data-i18n="lblF1">Layer 1 (battery)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
       <div class="row"><label data-i18n="lblF2">Layer 2 (board)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="16"><span class="val" id="f2Hv"></span></div>
       <div class="row"><label data-i18n="lblF3">Layer 3 (switch)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
       <div class="row"><label data-i18n="lblLid">Layer 4 (dim sum lid)</label><input type="checkbox" id="lidOn" checked></div>
       <div class="row"><label data-i18n="lblLidH">Layer 4 band height</label><input type="range" id="lidH" min="0" max="30" step="0.5" value="6"><span class="val" id="lidHv"></span></div>
-      <div class="hint" data-i18n="hintLayers">Layer 4 = the bun_lid design (Ø41) placed as-is as the dim sum lid. Adjust the total height with the band height; the joint uses the same square tab and groove as Layers 1·2·3 (fit clearance applied), with the groove on the Layer 3 top plate and the tab on the Layer 4 underside. To fully cover the character (21.6), use at least the band height shown in the warnings.</div>
+      <div class="hint" data-i18n="hintLayers">Turn off Layer 1 to remove the battery floor and use Layer 2 as the bottom part; the battery and charge module are then omitted and the ESP32 uses direct USB. Layer 4 uses the same square tab and groove as the other layers.</div>
     </div>
   </details>
 
@@ -226,6 +224,7 @@
           <option value="none" data-i18n="optOledNone">None</option>
         </select>
       </div>
+      <div class="row"><label data-i18n="lblOledZ">OLED Z position</label><input type="range" id="oledZ" min="-7.5" max="8" step="0.5" value="0"><span class="val" id="oledZv"></span></div>
       <div class="row"><label data-i18n="lblOledProud">OLED protrusion</label><input type="range" id="oledProud" min="0" max="6" step="0.5" value="0"><span class="val" id="oledProudv"></span></div>
       <div class="row"><label data-i18n="lblOledPod">OLED separate pod</label><input type="checkbox" id="oledPodOn"></div>
       <div class="row"><label data-i18n="lblWireX">Wire hole X</label><input type="range" id="wireX" min="-16" max="16" step="0.5" value="-6"><span class="val" id="wireXv"></span></div>
@@ -251,7 +250,7 @@
       <div class="row"><label>NFC Y</label><input type="range" id="nfcY" min="-14" max="14" step="0.5" value="3"><span class="val" id="nfcYv"></span></div>
       <div class="btns"><button class="ghost" id="nfcCenter" data-i18n-title="tNfcCenterTitle" title="Center the NFC pocket (X=0, Y=0)" data-i18n="tNfcCenter">Center NFC pocket</button></div>
       <div class="hint" data-i18n="hintNfc">A round cavity buried inside the Layer 2 floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more.</div>
-      <div class="hint" data-i18n-html="hintLayout2">The wire hole is a long slot for the battery +/− pair to pass through together. The OLED slides in whole from behind the tower (inside) — the back is fully open while the front is held by the wall + window. Raising the OLED protrusion pushes the pod outside the outline, following the square/circle outer curve. The charge module USB is always on the right (east) wall. <b>No battery</b> removes the battery and charge module and docks the ESP32 against the east wall so USB plugs in directly — adjust up/down with ESP32 Y. <b>OLED separate pod</b> makes the OLED tower (window and pocket included) a separate printed part: it slides top-to-bottom into a wall-through opening — the tongue (front) fills the opening flush with the outer face, the shoulders catch on the inner wall, and the inner U-shaped socket rails hold the back and sides. Closing Layer 3 presses a notch down to lock it. Both pod and rails print upright without supports. The buzzer (Ø12×8.3 passive piezo) plugs into a socket and sounds via GPIO PWM — the Layer 3 ceiling hangs it in a sleeve that doesn't pierce the top plate; if it's tight and overlaps the switch holder, use the Layer 2 floor (recess + guide ring, south wire notch). Laid down (axis horizontal) it seats in a half-round cradle (depth 2.5) on the platform like the ESP32 pocket, and if the buzzer top (Ø12) exceeds the Layer 2 height, the overlapping part of Layer 3 (cup/top plate underside) is carved out automatically. Right-click the pink wire to change the pin.</div>
+      <div class="hint" data-i18n-html="hintLayout2">OLED Z is relative to its original Layer 2 position. Negative values lower the OLED into Layer 1; the housing, window, socket and wiring move together and split at the layer joint for printing. <b>No battery</b> or turning off Layer 1 removes the battery and charger and switches the ESP32 to direct USB.</div>
     </div>
   </details>
 
