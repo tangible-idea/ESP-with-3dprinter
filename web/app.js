@@ -137,6 +137,8 @@ const I18N = {
     wBzLayFlipThrough: '⚠ Laid-down buzzer pokes through the Layer 3 top plate — increase layer heights',
     wBzLayPocket: '⚠ Laid-down buzzer carve intrudes into the switch pocket — move X/Y',
     wBzLayCup: '⚠ Laid-down buzzer carves into the Layer 3 holder cup (watch for thin cup walls)',
+    wBzPinsNfc: '⚠ Buzzer pin holes pierce the NFC pocket — move the buzzer or the NFC sticker',
+    wBzPinsBottom: '⚠ With Layer 1 off, buzzer pins may protrude below the case — trim the pins after fitting',
     wBzCupBelow: '⚠ Buzzer touches under the Layer 3 switch holder cup — move X/Y',
     wBzTop: '⚠ Buzzer touches the Layer 3 top plate — increase layer heights',
     wSolderFloor: (left) => `⚠ Solder relief leaves only ${left}mm of Layer 2 floor under the channel — make it shallower`,
@@ -253,6 +255,8 @@ const I18N = {
     wBzLayFlipThrough: '⚠ 눕힌 부저가 3층 상판을 뚫고 나옵니다 — 층 높이를 키우세요',
     wBzLayPocket: '⚠ 눕힌 부저 파임이 스위치 포켓까지 침범합니다 — X/Y를 옮기세요',
     wBzLayCup: '⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)',
+    wBzPinsNfc: '⚠ 부저 핀 구멍이 NFC 포켓을 뚫습니다 — 부저나 NFC 스티커를 옮기세요',
+    wBzPinsBottom: '⚠ 1층을 끄면 부저 핀이 케이스 바닥 밖으로 나올 수 있습니다 — 조립 후 핀 길이를 맞춰 자르세요',
     wBzCupBelow: '⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요',
     wBzTop: '⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요',
     wSolderFloor: (left) => `⚠ 납땜 릴리프 아래 2층 바닥이 ${left}mm만 남습니다 — 릴리프를 얕게 하세요`,
@@ -327,6 +331,8 @@ const STATIC_I18N = {
     lblBz: 'Buzzer (Ø12 piezo)', lblBzMount: 'Buzzer mount',
     optBzF2: 'Layer 2 floor upright (recess + ring)', optBzF2s: 'Layer 2 floor laid down (half-round groove)',
     optBzF3: 'Layer 3 ceiling (sleeve hang)', lblBzX: 'Buzzer X', lblBzY: 'Buzzer Y',
+    lblBzPinPitch: 'Buzzer pin spacing', lblBzPinD: 'Buzzer pin hole Ø',
+    hintBzPins: 'Two thin pin holes follow the Layer 2 buzzer mount. Measure your buzzer\'s pin spacing before printing. Layer 3 leaves the pins in open space.',
     hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The OLED back cover is a separate part that plugs its tongue into a groove in the Layer 3 top plate — it only appears when the OLED tower rises above Layer 3 and leaves the pocket back exposed.',
     secTex: 'Side texture', btnTexNone: 'None',
     lblTexDepth: 'Depth', lblTexTile: 'Pattern size', lblTexRes: 'Detail (mm/triangle)',
@@ -443,6 +449,8 @@ const STATIC_I18N = {
     lblBz: '부저 (Ø12 피에조)', lblBzMount: '부저 장착',
     optBzF2: '2층 바닥 세움 (리세스 + 링)', optBzF2s: '2층 바닥 눕힘 (반원 홈)',
     optBzF3: '3층 천장 (슬리브 매달림)', lblBzX: '부저 X', lblBzY: '부저 Y',
+    lblBzPinPitch: '부저 핀 간격', lblBzPinD: '부저 핀 구멍 Ø',
+    hintBzPins: '2층 부저 장착 방향에 맞춰 얇은 핀 구멍 두 개를 뚫습니다. 출력 전 실물 부저의 핀 간격을 재 주세요. 3층 매달림은 핀이 빈 공간을 향합니다.',
     hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). OLED 뒷면 커버는 3층 상판 홈에 텅을 꽂는 별도 출력 파트입니다 — OLED 타워가 3층 위로 올라와 포켓 뒷면이 노출될 때만 나타납니다.',
     secTex: '측면 텍스처', btnTexNone: '없음',
     lblTexDepth: '깊이', lblTexTile: '무늬 크기', lblTexRes: '디테일 (mm/삼각형)',
@@ -735,7 +743,7 @@ const P = {
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 3, sw2Gpio: 4, sdaGpio: 8, sclGpio: 9, swGap: 29,
   lidOn: true, lidH: 6,
   ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 7, led2Gpio: 6,
-  bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzGpio: 2,
+  bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzPinPitch: 6.5, bzPinD: 1.5, bzGpio: 2,
   // NFC 스티커 포켓 (바닥판 속에 파묻는 원형 자리) — 출력 중 일시정지해서 스티커를 넣고 덮는다.
   // nfcBase = 포켓 아래 살 두께(= 넣을 레이어 높이), nfcT = 포켓 깊이(스티커 두께 + 여유)
   // nfcFloor = 포켓이 들어갈 층('2' = 2층 바닥판, '1' = 1층 바닥판 = 케이스 맨 밑바닥)
@@ -779,7 +787,7 @@ const saveParams = () => {
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
                  'espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
-                 'ledX','ledY','bzX','bzY','nfcD','nfcT','nfcBase','nfcX','nfcY',
+                 'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkWireX','wkWireY','wkDivBar','wkDivH','wkDivGrow','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
@@ -981,6 +989,8 @@ document.getElementById('ledOn').addEventListener('change', e => {
 document.getElementById('ledType').addEventListener('change', e => { P.ledType = e.target.value; queueRebuild(); });
 const applyBzUI = () => {
   for (const id of ['bzMount', 'bzX', 'bzY']) document.getElementById(id).disabled = !P.bzOn;
+  for (const id of ['bzPinPitch', 'bzPinD'])
+    document.getElementById(id).disabled = !P.bzOn || P.bzMount === 'f3';
 };
 document.getElementById('bzOn').checked = P.bzOn;
 document.getElementById('bzMount').value = P.bzMount;
@@ -990,7 +1000,7 @@ document.getElementById('bzOn').addEventListener('change', e => {
   applyBzUI();
   queueRebuild();
 });
-document.getElementById('bzMount').addEventListener('change', e => { P.bzMount = e.target.value; queueRebuild(); });
+document.getElementById('bzMount').addEventListener('change', e => { P.bzMount = e.target.value; applyBzUI(); queueRebuild(); });
 // ESP32 Y 중앙 정렬: Y=0으로 스냅
 document.getElementById('espYCenter').addEventListener('click', () => {
   P.espY = 0;
@@ -1202,7 +1212,7 @@ const MATS = {
     emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
   ledG: new THREE.MeshStandardMaterial({ color: 0xdff3e2, emissive: 0x3ca35a,   // 투톤 초록 반쪽
     emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
-  bz: partMat(0x23272e), nfc: partMat(0xb98f3f),
+  bz: partMat(0x23272e), bzPin: partMat(0xb6bdc5), nfc: partMat(0xb98f3f),
 };
 
 // 층 그룹 (분해/조립용) — [0..2] = 1~3층, [3] = 딤섬 뚜껑, [4] = OLED 뒷면 커버(자체 분해 이동)
@@ -1808,6 +1818,10 @@ function buildFloor2() {
     b = sub(b, bzTube(BZ.d / 2 + BZ.clr, BZ.sink + 0.05, zP - BZ.sink));
     b = sub(b, boxBrush(4, 6, BZ.sink + BZ.ring + 0.2,
                         P.bzX, P.bzY - (BZ.d / 2 + BZ.clr + BZ.wall / 2 + 0.4), zP - BZ.sink));
+    // 몸통 리세스 바닥에서 2층 밑면까지 핀 두 개가 빠져나가도록 관통한다.
+    for (const sign of [-1, 1])
+      b = sub(b, bzPinHole(P.bzX + sign * P.bzPinPitch / 2, P.bzY,
+                           -0.2, zP - BZ.sink + 0.4));
   }
 
   // 피에조 부저 눕힘 (2층 바닥): ESP32 포켓처럼 플랫폼에 반원 홈만 파냄 (sideSink 파묻힘, 축 = X)
@@ -1818,6 +1832,10 @@ function buildFloor2() {
     c.translate(P.bzX, P.bzY, zc);
     c.deleteAttribute('uv');
     b = sub(b, toMan(c));
+    // 눕힌 몸통의 +X 끝면에서 나오는 두 핀을 축방향으로 받아준다.
+    for (const sign of [-1, 1])
+      b = sub(b, bzPinHole(P.bzX + BZ.h / 2 - 0.2, P.bzY,
+                           zc + sign * P.bzPinPitch / 2, 4.2, true));
   }
 
   // NFC 스티커 포켓 (2층 바닥판) — 1층으로 옮겼으면 여기서는 파지 않는다. nfcCut() 주석 참고
@@ -2099,6 +2117,19 @@ function bzTube(r, h, z0) {
   return toMan(c);
 }
 
+function bzPinHole(x, y, z0, length, alongX = false) {
+  const c = new THREE.CylinderGeometry(P.bzPinD / 2, P.bzPinD / 2, length, 20);
+  if (alongX) {
+    c.rotateZ(Math.PI / 2);
+    c.translate(x + length / 2, y, z0);
+  } else {
+    c.rotateX(Math.PI / 2);
+    c.translate(x, y, z0 + length / 2);
+  }
+  c.deleteAttribute('uv');
+  return toMan(c);
+}
+
 // 3층 상판의 뚜껑 홈: bottomJointCut과 동일한 사각 프로파일, 원(Ø41) 기준·위로 개방 미러.
 // Ø41 케이스면 홈이 벽 상단을 지나며 바깥 살 0.7이 남음 — 층간 결합부와 동일한 형태.
 // 재료가 없는 곳은 no-op이라 케이스 크기와 무관하게 항상 컷.
@@ -2275,7 +2306,22 @@ function placeGhosts() {
     body.translate(P.bzX, P.bzY, zc);
     hole.translate(P.bzX, P.bzY, zc);
     for (const g of [body, hole]) g.deleteAttribute('uv');
-    G[f3m ? 2 : 1].add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, hole]), MATS.bz));
+    const mountGroup = G[f3m ? 2 : 1];
+    mountGroup.add(ghostMesh(BufferGeometryUtils.mergeGeometries([body, hole]), MATS.bz));
+    for (const sign of [-1, 1]) {
+      const pin = new THREE.CylinderGeometry(0.35, 0.35, 3, 12);
+      if (side) {
+        pin.rotateZ(Math.PI / 2);
+        pin.translate(P.bzX + BZ.h / 2 + 1.5, P.bzY,
+                      zc + sign * P.bzPinPitch / 2);
+      } else {
+        pin.rotateX(Math.PI / 2);
+        pin.translate(P.bzX + sign * P.bzPinPitch / 2, P.bzY,
+                      zc - BZ.h / 2 - 1.5);
+      }
+      pin.deleteAttribute('uv');
+      mountGroup.add(ghostMesh(pin, MATS.bzPin));
+    }
   }
   // NFC 스티커: 포켓 바닥에 눕혀 놓인 얇은 원판 (케이스 반투명으로 봐야 보임)
   if (nfcFits()) {
@@ -2952,12 +2998,12 @@ function updateWires() {
       if (P.bzMount === 'f2s') {   // 눕힘: 핀이 +X 끝면에 세로로
         const zc = z2b + F2_PLATE + F2_PLATFORM - BZ.sideSink + BZ.d / 2;
         const ex = P.bzX + BZ.h / 2 + 1;
-        lA = [ex, P.bzY, zc + 3.25]; lB = [ex, P.bzY, zc - 3.25];
+        lA = [ex, P.bzY, zc + P.bzPinPitch / 2]; lB = [ex, P.bzY, zc - P.bzPinPitch / 2];
       } else {
         const zLeg = P.bzMount === 'f3'
           ? G[2].position.z + P.f3H - F3_PLATE - BZ.h - 1
           : z2b + F2_PLATE + F2_PLATFORM - BZ.sink + 1;
-        lA = [P.bzX - 3.25, P.bzY, zLeg]; lB = [P.bzX + 3.25, P.bzY, zLeg];
+        lA = [P.bzX - P.bzPinPitch / 2, P.bzY, zLeg]; lB = [P.bzX + P.bzPinPitch / 2, P.bzY, zLeg];
       }
       addWire([lA, dm(lA, pinBz), pinBz], WIRE_COLORS.bz, t('spBzPlus'), 'G' + P.bzGpio, 'bz');
       addWire([lB, dm(lB, pinGND), pinGND], WIRE_COLORS.minus, t('spBzMinus'), null);
@@ -3213,6 +3259,11 @@ function updateInfo(ms, fit) {
     warn.push(t('wEspCup'));
   if (P.bzOn) {
     const side = P.bzMount === 'f2s';
+    if (P.bzMount === 'f2' && nfcFits() && !nfcOnF1() &&
+        [-1, 1].some(sign => Math.hypot(P.bzX + sign * P.bzPinPitch / 2 - P.nfcX,
+                                       P.bzY - P.nfcY) < P.nfcD / 2 + P.bzPinD / 2))
+      warn.push(t('wBzPinsNfc'));
+    if (P.bzMount === 'f2' && !P.f1On) warn.push(t('wBzPinsBottom'));
     const hx2 = side ? (BZ.h + 0.5) / 2 : BZ.d / 2 + BZ.clr;
     const hy2 = BZ.d / 2 + BZ.clr;
     const bzR = { x: P.bzX, y: P.bzY, w: hx2 * 2, d: hy2 * 2 };
