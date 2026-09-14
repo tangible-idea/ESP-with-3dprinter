@@ -19,7 +19,6 @@ import bunLidUrl from '../my_designs/bun_lid_clean.stl?url';
 // (todo.js는 app.js를 import하지 않으므로 순환/누락 import로 깨질 위험이 없음)
 import { initTodo } from './todo.js';
 import { TEXTURES, loadHeightMap, applySideTexture } from './texture.js';
-import { smoothUsbRecessGeo } from './usb-recess.js';
 let rebuildTodo = () => {};   // initTodo(env) 실행 후 실제 함수로 채워짐 (rebuild()에서 호출)
 import { initWorkout } from './workout.js';
 let rebuildWorkout = () => {};
@@ -590,7 +589,7 @@ const espStand = () => !noBat() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot)
 const ESP = { l: 24, w: 18, h: 4.2, usbZ: 2.6 };   // usbZ = USB 셸 z중심 (실측 1.0~4.2)
 // 기존 STL은 칩/제품명이 없는 19×14 범용 모듈. TP4056은 운동 센서 설계의 USB-C 실측값.
 const MOD_TYPES = {
-  generic: { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 1.0 },
+  generic: { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 0.0 },
   tp4056: { l: 27, w: 17.3, h: 4.0, usbZ: 2.6, usbOver: 1.0 },
 };
 const modSpec = () => MOD_TYPES[P.modType] || MOD_TYPES.generic;
@@ -703,6 +702,8 @@ const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — �
 const USB_PAD = { t: 2.5, w: 18 };    // 원형 모드 동쪽 평면 USB 패드 (두께 × 폭)
 const USB_REC = { w: 13 };            // USB 벽 얇게 패널 폭 (높이는 결합부 한계까지 자동 확장)
 const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두께
+const MOD_USB_SHELL_GAP = 1.2;         // 충전모듈 USB 셸 끝에서 외벽까지 목표 거리
+const MOD_POCKET_FRONT_INSET = 0.8;    // USB 셸보다 뒤에 있는 PCB 끝에 맞춰 포켓 앞면을 물림
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
@@ -880,7 +881,8 @@ function applyBatUI() {
   document.getElementById('espLift').disabled = nb || espStand();
   document.getElementById('espAutoDock').disabled = !nb;
   document.getElementById('espOut').disabled = !autoDock;    // 자동 도킹으로 벽에 붙일 때만 의미 있음
-  document.getElementById('usbWallT').disabled = !P.usbThin;
+  document.getElementById('usbThin').disabled = !nb;
+  document.getElementById('usbWallT').disabled = !nb || !P.usbThin;
   document.getElementById('espGripOn').disabled = espStand();
   document.getElementById('modY').disabled = nb || circ;   // 원형: 충전모듈은 항상 중앙 고정
   for (const id of ['wireX', 'wireY', 'wireRot']) document.getElementById(id).disabled = nb;
@@ -1046,7 +1048,7 @@ document.getElementById('espAutoDock').addEventListener('change', e => {
 document.getElementById('usbThin').checked = P.usbThin;
 document.getElementById('usbThin').addEventListener('change', e => {
   P.usbThin = e.target.checked;
-  document.getElementById('usbWallT').disabled = !P.usbThin;
+  document.getElementById('usbWallT').disabled = !noBat() || !P.usbThin;
   queueRebuild();
 });
 document.getElementById('solderOn').checked = P.solderOn;
@@ -1462,9 +1464,10 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
 }
 
 // 2.5층(띄움): 보드를 뒤집어(USB·부품면 아래) 받침선에 얹음 — USB 실루엣이 홈에 꽂혀 고정
-const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이 (셸 위 1mm를 립이 덮음)
+const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
-const LIFT_USB_EXTRA_DEPTH = 0.8; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
+const LIFT_USB_EXTRA_DEPTH = 1.5; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
+const LIFT_USB_MIN_SKIN = 1.0;    // USB 홈 아래에 남기는 최소 바닥 두께
 function espLiftGeo(inflate = false) {
   const g = ASSETS.esp.clone();
   g.rotateY(Math.PI);                              // 뒤집기 — USB·부품면이 아래
@@ -1501,14 +1504,28 @@ const flatPadX = () => Math.sqrt(Math.max((P.W / 2) ** 2 - 81, 1));
 
 function modCenter() {
   const mod = modSpec();
+  const circ = P.shape === 'circle';
+  const edgeX = circ
+    ? flatPadX() - USB_PAD.t
+    : surfAt(Math.abs(P.modY) + mod.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
+  const cy = circ ? 0 : P.modY;
+  const outerAtUsb = circ ? flatPadX()
+    : surfAt(Math.abs(cy) + 5.5, effD() / 2, P.W / 2, 0);
+  const outerAtPocketEdge = circ ? flatPadX()
+    : surfAt(Math.abs(cy) + (mod.w + POCKET_CLR) / 2, effD() / 2, P.W / 2, 0);
+  // 케이스 외면은 그대로 두고 모듈을 USB 쪽으로 전진시킨다. 곡면 모서리에서도
+  // PCB 포켓 앞쪽 벽살은 최소 1mm 남기고, 셸은 평평한 외벽에 더 가깝게 둔다.
+  const desiredPush = outerAtUsb - (edgeX - 0.2 + mod.usbOver) - MOD_USB_SHELL_GAP;
+  const maxPush = outerAtPocketEdge - USB_MIN_WALL
+    - (edgeX - 0.2 - MOD_POCKET_FRONT_INSET);
+  // 포켓 끝이 곡면 안쪽 유효 범위를 벗어나면 기존 충돌 경고에 맡기고 전진시키지 않는다.
+  const push = edgeX > 0 && outerAtUsb > 0 && outerAtPocketEdge > 0
+    ? Math.max(0, Math.min(desiredPush, maxPush)) : 0;
   if (P.shape === 'circle') {
-    // 원형: 모듈은 무조건 중앙, 플랫 패드(두께 2.5) 안쪽면에 안착
-    const edgeX = flatPadX() - USB_PAD.t;
-    return { x: edgeX - 0.2 - mod.l / 2, y: 0, edgeX };
+    // 원형: 모듈은 무조건 중앙, 플랫 패드(두께 2.5) 앞까지 전진
+    return { x: edgeX - 0.2 - mod.l / 2 + push, y: 0, edgeX };
   }
-  // 동쪽 벽 안쪽면(곡률 반영)에 PCB 끝이 0.2 남기고 닿도록
-  const edgeX = surfAt(Math.abs(P.modY) + mod.w / 2 + 0.4, effD() / 2, P.W / 2, P.wall);
-  return { x: edgeX - 0.2 - mod.l / 2, y: P.modY, edgeX };
+  return { x: edgeX - 0.2 - mod.l / 2 + push, y: P.modY, edgeX };
 }
 // 배터리 없음: ESP32가 충전모듈 자리(동쪽 벽)에 도킹 — USB가 벽 구멍으로 직결 (180° 회전)
 // espOut: 보드를 벽 쪽으로 더 밀어 넣는 양. 포켓도 같이 벽을 파고 들어가 커넥터가 벽 두께
@@ -1720,29 +1737,33 @@ function buildFloor2() {
     // 보드는 뒤집어(USB 아래) 안착 — USB/부품 밑면 실루엣을 실물 메시로 절삭 → 꽂아서 고정
     b = sub(b, meshBrush(espLiftGeo(true),
                          new THREE.Matrix4().makeTranslation(P.espX, P.espY, topZ - LIFT_SINK)));
-    // 실물 STL 절삭만으로는 USB 셸 아래 여유가 거의 없어 보드가 끝까지 안착하지 못한다.
-    // USB 셸(약 9×9) 자리만 더 깊게 파고, 바닥판 위에는 최소 0.4mm를 남긴다.
-    const usbFloorZ = Math.max(F2_PLATE + 0.4, topZ - LIFT_SINK - LIFT_USB_EXTRA_DEPTH);
-    const usbReliefTop = topZ - LIFT_SINK + 0.5;
+    // 실물 USB 셸은 약 9×9×2.5mm. 바닥 일부만이 아니라 셸 전체 높이를
+    // 여유 있게 절삭해 끝까지 앉히되, 케이스 밑면에는 최소 1mm를 남긴다.
+    const usbFloorZ = Math.max(LIFT_USB_MIN_SKIN, topZ - LIFT_SINK - LIFT_USB_EXTRA_DEPTH);
+    const usbReliefTop = topZ - LIFT_SINK + 2.7;
     if (usbReliefTop > usbFloorZ) {
       b = sub(b, boxBrush(9.6, 9.6, usbReliefTop - usbFloorZ,
                           P.espX + (rot90 ? 0 : USB_C_OFF),
                           P.espY + (rot90 ? USB_C_OFF : 0), usbFloorZ, 0.6));
     }
-    // 스냅 립: USB 홈 위 가장자리를 0.4mm씩 살짝 덮음 → 눌러 넣으면 셸이 찰칵 걸림
-    const lipIn = 4.3, lipW = 1.3, lipH = 0.9, lipL = 5;
+    // 립은 USB 셸 반폭(4.5mm) 밖에 두어 커넥터가 눌려 뜨지 않게 한다.
+    const lipIn = 4.65, lipW = 1.3, lipH = 0.9, lipL = 5;
     for (const s of [-1, 1]) {
       b = add(b, rot90
         ? boxBrush(lipW, lipL, lipH, P.espX + s * (lipIn + lipW / 2), P.espY + USB_C_OFF, topZ - lipH)
         : boxBrush(lipL, lipW, lipH, P.espX + USB_C_OFF, P.espY + s * (lipIn + lipW / 2), topZ - lipH));
     }
   }
-  // 충전모듈 포켓: 모듈이 직각 사각형이라 모서리 거의 직각(R0.4), 뒤쪽(USB 반대)으로 1mm 여유
+  // 충전모듈 포켓: USB 셸은 전용 관통 구멍에 들어가므로 PCB 홈의 앞면만 0.8mm 물린다.
+  // 뒤쪽 1.2mm 여유와 모서리 R0.4는 유지한다.
   if (!noBat()) {
     const mc = modCenter();
     const mod = modSpec();
-    b = sub(b, boxBrush(mod.l + POCKET_CLR + 1, mod.w + POCKET_CLR, F2_PLATFORM + 2,
-                        mc.x - 0.5, mc.y, F2_PLATE, 0.4));
+    const pocketBackClear = 1.2;
+    b = sub(b, boxBrush(mod.l + pocketBackClear - MOD_POCKET_FRONT_INSET,
+                        mod.w + POCKET_CLR, F2_PLATFORM + 2,
+                        mc.x - (pocketBackClear + MOD_POCKET_FRONT_INSET) / 2,
+                        mc.y, F2_PLATE, 0.4));
   }
 
   // 세움 배터리 소켓 홈: 플랫폼을 관통해 바닥판 위에 세워서 꽂음 (두께×길이 세로 슬롯)
@@ -1772,23 +1793,9 @@ function buildFloor2() {
     const dk = noBat() ? espDock() : modCenter();
     const usbZ = noBat() ? ESP.usbZ + P.espZ : modSpec().usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
     const circ = P.shape === 'circle';
-    const wallX = circ
+    const outerX = circ
       ? flatPadX()
       : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
-    const zc = F2_PLATE + usbZ;
-    const wallSurface = y => circ ? wallX : surfAt(Math.abs(y), effD() / 2, P.W / 2, 0);
-    // 얇은 케이스 벽만 깎으면 곡면이 거의 보이지 않는다. 충전모듈에는
-    // 외벽을 따라 1.2mm 돌출되는 작은 받침을 붙여 yeti_cover 같은 깊이를 확보한다.
-    const bossOut = noBat() ? 0 : 1.2;
-    if (bossOut) {
-      b = add(b, meshBrush(smoothUsbRecessGeo({
-        cy: dk.y, cz: zc, innerW: 19.2, outerW: 19.2,
-        innerH: 7.2, outerH: 6.8,
-        innerSurface: y => wallSurface(y) - 0.15,
-        outerSurface: y => wallSurface(y) + bossOut - 0.6,
-      })));
-    }
-    const outerX = wallX + bossOut;
     // 깔때기 목구멍(가장 좁은 지점) 위치 — usbThroat 이 0이면 벽 안쪽면에 딱 맞춰 최대한 전진,
     // 값을 키우면 그만큼 안쪽으로 물러난다. 목이 앞으로 나올수록 그 뒤가 뻥 뚫려서
     // 플러그 오버몰드가 들어갈 자리가 생긴다. 벽 안쪽면보다 더 나가면 구멍이 안 뚫리므로 상한.
@@ -1800,51 +1807,24 @@ function buildFloor2() {
       .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 3.5 / 3.8));
     b = sub(b, meshBrush(ASSETS.usb, usbM));
 
-    const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
-                         circ ? Math.max(8, P.f2H - 2.5) - 0.4 : Infinity);
-
-    // USB 벽 얇게: 포트 둘레 바깥면만 움푹 파서 남는 벽을 usbWallT 로 줄인다.
-    // 플러그 오버몰드가 벽을 덜 파고들어도 되고, 그만큼 포트가 리세스 면 밖으로 더 나온다.
-    // ★ 아래 결합 홈 구간(z < RABBET.d)은 바깥 스커트가 0.7밖에 안 남아서 파면 그대로 뚫린다.
-    //   위 결합 턱도 마찬가지 — 그 사이 구간으로만 판다. 원형은 평면 패드(2.5×18) 안에서만.
-    const wallAtPort = circ ? USB_PAD.t : P.wall;
-    const depth = P.usbThin
-      ? Math.max(0, Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL)) : 0;
-    // 패널은 결합부에 닿기 직전까지 위아래로 최대한 넓힌다 — 중간에 끊긴 단(경계선)이 안 생기게.
-    // 아래는 결합 홈(스커트 0.7)이, 위는 결합 턱/패드 상단이 한계선이라 그 이상은 못 넓힌다.
-    const rz0 = RABBET.d + 0.5;
-    const rz1 = zHi;
-    const rw = circ ? Math.min(USB_REC.w, USB_PAD.w - 4) : USB_REC.w;
-    if ((P.usbThin || bossOut) && rz1 - rz0 >= 3) {
-      const rh = rz1 - rz0;
-      let cut;
-      if (noBat()) {
-        if (depth > 0.05) {
-          cut = circ
-            ? boxBrush(depth + 6, rw, rh, outerX + 3 - depth / 2, dk.y, rz0, 1.5)
-            : inter(boxBrush(20, rw, rh, outerX, dk.y, rz0, 1.5),
-                    sub(extrude(baseShape(0), rh + 2, rz0 - 1),
-                        extrude(baseShape(depth), rh + 4, rz0 - 2)));
-        }
-      } else {
-        // 충전모듈: 관통 구멍은 위 STL 절삭 그대로. yeti_cover.stl처럼
-        // 작은 평평한 안쪽 자리에서 넓은 둥근 입구로 이어지는 바깥 홈만 판다.
-        // 홈의 Z 중심은 USB 구멍과 같고, 아래 결합 홈은 침범하지 않는다.
-        const recessH = Math.min(5.8, 2 * (zc - RABBET.d - 0.1), 2 * (rz1 - zc));
-        const shelfH = Math.min(4.6, 2 * (zc - rz0 - 0.1), 2 * (rz1 - zc));
-        const recessW = circ ? USB_PAD.w - 1.8 : 17.2;
-        if (recessH >= 3.2 && shelfH >= 3.2) {
-          const innerSurface = y => circ ? wallX - depth + 0.02
-            : surfAt(Math.abs(y), effD() / 2, P.W / 2, depth) + 0.02;
-          cut = meshBrush(smoothUsbRecessGeo({
-            cy: dk.y, cz: zc, innerW: recessW - 4.0, outerW: recessW,
-            innerH: shelfH, outerH: recessH,
-            innerSurface,
-            outerSurface: y => wallSurface(y) + bossOut - 0.4,
-          }));
-        }
+    // 충전모듈 쪽은 외벽을 평평하게 두고 실제 USB 구멍만 남긴다.
+    // 배터리 없는 ESP32 직결 모드에서만 선택형 외벽 리세스를 유지한다.
+    if (noBat() && P.usbThin) {
+      const wallAtPort = circ ? USB_PAD.t : P.wall;
+      const depth = Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL);
+      const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
+                           circ ? Math.max(8, P.f2H - 2.5) - 0.4 : Infinity);
+      const rz0 = RABBET.d + 0.5;
+      const rw = circ ? Math.min(USB_REC.w, USB_PAD.w - 4) : USB_REC.w;
+      if (depth > 0.05 && zHi - rz0 >= 3) {
+        const rh = zHi - rz0;
+        const cut = circ
+          ? boxBrush(depth + 6, rw, rh, outerX + 3 - depth / 2, dk.y, rz0, 1.5)
+          : inter(boxBrush(20, rw, rh, outerX, dk.y, rz0, 1.5),
+                  sub(extrude(baseShape(0), rh + 2, rz0 - 1),
+                      extrude(baseShape(depth), rh + 4, rz0 - 2)));
+        b = sub(b, cut);
       }
-      if (cut) b = sub(b, cut);
     }
   }
 
@@ -3359,7 +3339,7 @@ function updateInfo(ms, fit) {
     const gap = espDock().edgeX - (P.espX + ESP.l / 2);
     if (gap > 2) warn.push(t('wEspDockGap', gap.toFixed(1)));
   }
-  if (P.usbThin && Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL) <= 0.05)
+  if (noBat() && P.usbThin && Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL) <= 0.05)
     warn.push(t('wUsbThinNoop', wallAtPort.toFixed(1)));
   // ESP32 집게 홈: 벽에 막혀 클립되면 손가락이 안 들어간다
   if (P.espGripOn && !espStand() && !espLifted) {
