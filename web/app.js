@@ -19,6 +19,7 @@ import bunLidUrl from '../my_designs/bun_lid_clean.stl?url';
 // (todo.js는 app.js를 import하지 않으므로 순환/누락 import로 깨질 위험이 없음)
 import { initTodo } from './todo.js';
 import { TEXTURES, loadHeightMap, applySideTexture } from './texture.js';
+import { smoothUsbRecessGeo } from './usb-recess.js';
 let rebuildTodo = () => {};   // initTodo(env) 실행 후 실제 함수로 채워짐 (rebuild()에서 호출)
 import { initWorkout } from './workout.js';
 let rebuildWorkout = () => {};
@@ -1770,9 +1771,24 @@ function buildFloor2() {
   {
     const dk = noBat() ? espDock() : modCenter();
     const usbZ = noBat() ? ESP.usbZ + P.espZ : modSpec().usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
-    const outerX = P.shape === 'circle'
+    const circ = P.shape === 'circle';
+    const wallX = circ
       ? flatPadX()
       : surfAt(Math.abs(dk.y) + 5.5, effD() / 2, P.W / 2, 0);
+    const zc = F2_PLATE + usbZ;
+    const wallSurface = y => circ ? wallX : surfAt(Math.abs(y), effD() / 2, P.W / 2, 0);
+    // 얇은 케이스 벽만 깎으면 곡면이 거의 보이지 않는다. 충전모듈에는
+    // 외벽을 따라 1.2mm 돌출되는 작은 받침을 붙여 yeti_cover 같은 깊이를 확보한다.
+    const bossOut = noBat() ? 0 : 1.2;
+    if (bossOut) {
+      b = add(b, meshBrush(smoothUsbRecessGeo({
+        cy: dk.y, cz: zc, innerW: 19.2, outerW: 19.2,
+        innerH: 7.2, outerH: 6.8,
+        innerSurface: y => wallSurface(y) - 0.15,
+        outerSurface: y => wallSurface(y) + bossOut - 0.6,
+      })));
+    }
+    const outerX = wallX + bossOut;
     // 깔때기 목구멍(가장 좁은 지점) 위치 — usbThroat 이 0이면 벽 안쪽면에 딱 맞춰 최대한 전진,
     // 값을 키우면 그만큼 안쪽으로 물러난다. 목이 앞으로 나올수록 그 뒤가 뻥 뚫려서
     // 플러그 오버몰드가 들어갈 자리가 생긴다. 벽 안쪽면보다 더 나가면 구멍이 안 뚫리므로 상한.
@@ -1784,31 +1800,51 @@ function buildFloor2() {
       .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 3.5 / 3.8));
     b = sub(b, meshBrush(ASSETS.usb, usbM));
 
+    const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
+                         circ ? Math.max(8, P.f2H - 2.5) - 0.4 : Infinity);
+
     // USB 벽 얇게: 포트 둘레 바깥면만 움푹 파서 남는 벽을 usbWallT 로 줄인다.
     // 플러그 오버몰드가 벽을 덜 파고들어도 되고, 그만큼 포트가 리세스 면 밖으로 더 나온다.
     // ★ 아래 결합 홈 구간(z < RABBET.d)은 바깥 스커트가 0.7밖에 안 남아서 파면 그대로 뚫린다.
     //   위 결합 턱도 마찬가지 — 그 사이 구간으로만 판다. 원형은 평면 패드(2.5×18) 안에서만.
-    const circ = P.shape === 'circle';
     const wallAtPort = circ ? USB_PAD.t : P.wall;
-    const depth = Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL);
-    const zc = F2_PLATE + usbZ;
-    const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
-                         circ ? Math.max(8, P.f2H - 2.5) - 0.4 : Infinity);
+    const depth = P.usbThin
+      ? Math.max(0, Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL)) : 0;
     // 패널은 결합부에 닿기 직전까지 위아래로 최대한 넓힌다 — 중간에 끊긴 단(경계선)이 안 생기게.
     // 아래는 결합 홈(스커트 0.7)이, 위는 결합 턱/패드 상단이 한계선이라 그 이상은 못 넓힌다.
     const rz0 = RABBET.d + 0.5;
     const rz1 = zHi;
-    const rw = circ ? Math.min(USB_REC.w, USB_PAD.w - 4) : USB_REC.w;   // 패드 양옆 살 2씩 확보
-    if (P.usbThin && depth > 0.05 && rz1 - rz0 >= 3) {
+    const rw = circ ? Math.min(USB_REC.w, USB_PAD.w - 4) : USB_REC.w;
+    if ((P.usbThin || bossOut) && rz1 - rz0 >= 3) {
       const rh = rz1 - rz0;
-      const cut = circ
-        // 원형은 동쪽에 평평한 USB 패드가 따로 서 있으므로 단순 박스로 깎는다
-        ? boxBrush(depth + 6, rw, rh, outerX + 3 - depth / 2, dk.y, rz0, 1.5)
-        // 둥근네모는 곡면을 따라가야 하므로 "바깥면에서 depth 두께 껍질"과 교집합
-        : inter(boxBrush(20, rw, rh, outerX, dk.y, rz0, 1.5),
-                sub(extrude(baseShape(0), rh + 2, rz0 - 1),
-                    extrude(baseShape(depth), rh + 4, rz0 - 2)));
-      b = sub(b, cut);
+      let cut;
+      if (noBat()) {
+        if (depth > 0.05) {
+          cut = circ
+            ? boxBrush(depth + 6, rw, rh, outerX + 3 - depth / 2, dk.y, rz0, 1.5)
+            : inter(boxBrush(20, rw, rh, outerX, dk.y, rz0, 1.5),
+                    sub(extrude(baseShape(0), rh + 2, rz0 - 1),
+                        extrude(baseShape(depth), rh + 4, rz0 - 2)));
+        }
+      } else {
+        // 충전모듈: 관통 구멍은 위 STL 절삭 그대로. yeti_cover.stl처럼
+        // 작은 평평한 안쪽 자리에서 넓은 둥근 입구로 이어지는 바깥 홈만 판다.
+        // 홈의 Z 중심은 USB 구멍과 같고, 아래 결합 홈은 침범하지 않는다.
+        const recessH = Math.min(5.8, 2 * (zc - RABBET.d - 0.1), 2 * (rz1 - zc));
+        const shelfH = Math.min(4.6, 2 * (zc - rz0 - 0.1), 2 * (rz1 - zc));
+        const recessW = circ ? USB_PAD.w - 1.8 : 17.2;
+        if (recessH >= 3.2 && shelfH >= 3.2) {
+          const innerSurface = y => circ ? wallX - depth + 0.02
+            : surfAt(Math.abs(y), effD() / 2, P.W / 2, depth) + 0.02;
+          cut = meshBrush(smoothUsbRecessGeo({
+            cy: dk.y, cz: zc, innerW: recessW - 4.0, outerW: recessW,
+            innerH: shelfH, outerH: recessH,
+            innerSurface,
+            outerSurface: y => wallSurface(y) + bossOut - 0.4,
+          }));
+        }
+      }
+      if (cut) b = sub(b, cut);
     }
   }
 
