@@ -1463,6 +1463,7 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
 // 2.5층(띄움): 보드를 뒤집어(USB·부품면 아래) 받침선에 얹음 — USB 실루엣이 홈에 꽂혀 고정
 const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이 (셸 위 1mm를 립이 덮음)
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
+const LIFT_USB_EXTRA_DEPTH = 0.8; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
 function espLiftGeo(inflate = false) {
   const g = ASSETS.esp.clone();
   g.rotateY(Math.PI);                              // 뒤집기 — USB·부품면이 아래
@@ -1718,6 +1719,15 @@ function buildFloor2() {
     // 보드는 뒤집어(USB 아래) 안착 — USB/부품 밑면 실루엣을 실물 메시로 절삭 → 꽂아서 고정
     b = sub(b, meshBrush(espLiftGeo(true),
                          new THREE.Matrix4().makeTranslation(P.espX, P.espY, topZ - LIFT_SINK)));
+    // 실물 STL 절삭만으로는 USB 셸 아래 여유가 거의 없어 보드가 끝까지 안착하지 못한다.
+    // USB 셸(약 9×9) 자리만 더 깊게 파고, 바닥판 위에는 최소 0.4mm를 남긴다.
+    const usbFloorZ = Math.max(F2_PLATE + 0.4, topZ - LIFT_SINK - LIFT_USB_EXTRA_DEPTH);
+    const usbReliefTop = topZ - LIFT_SINK + 0.5;
+    if (usbReliefTop > usbFloorZ) {
+      b = sub(b, boxBrush(9.6, 9.6, usbReliefTop - usbFloorZ,
+                          P.espX + (rot90 ? 0 : USB_C_OFF),
+                          P.espY + (rot90 ? USB_C_OFF : 0), usbFloorZ, 0.6));
+    }
     // 스냅 립: USB 홈 위 가장자리를 0.4mm씩 살짝 덮음 → 눌러 넣으면 셸이 찰칵 걸림
     const lipIn = 4.3, lipW = 1.3, lipH = 0.9, lipL = 5;
     for (const s of [-1, 1]) {
