@@ -137,7 +137,7 @@ const I18N = {
     wBzLayFlipThrough: '⚠ Laid-down buzzer pokes through the Layer 3 top plate — increase layer heights',
     wBzLayPocket: '⚠ Laid-down buzzer carve intrudes into the switch pocket — move X/Y',
     wBzLayCup: '⚠ Laid-down buzzer carves into the Layer 3 holder cup (watch for thin cup walls)',
-    wBzPinsNfc: '⚠ Buzzer pin holes pierce the NFC pocket — move the buzzer or the NFC sticker',
+    wBzPinsNfc: '⚠ Buzzer pin/cable channel pierces the NFC pocket — move the buzzer or the NFC sticker',
     wBzPinsBottom: '⚠ With Layer 1 off, buzzer pins may protrude below the case — trim the pins after fitting',
     wBzCupBelow: '⚠ Buzzer touches under the Layer 3 switch holder cup — move X/Y',
     wBzTop: '⚠ Buzzer touches the Layer 3 top plate — increase layer heights',
@@ -255,7 +255,7 @@ const I18N = {
     wBzLayFlipThrough: '⚠ 눕힌 부저가 3층 상판을 뚫고 나옵니다 — 층 높이를 키우세요',
     wBzLayPocket: '⚠ 눕힌 부저 파임이 스위치 포켓까지 침범합니다 — X/Y를 옮기세요',
     wBzLayCup: '⚠ 눕힌 부저 자리만큼 3층 홀더 컵이 파입니다 (컵 벽 얇아짐 주의)',
-    wBzPinsNfc: '⚠ 부저 핀 구멍이 NFC 포켓을 뚫습니다 — 부저나 NFC 스티커를 옮기세요',
+    wBzPinsNfc: '⚠ 부저 핀/케이블 홈이 NFC 포켓을 뚫습니다 — 부저나 NFC 스티커를 옮기세요',
     wBzPinsBottom: '⚠ 1층을 끄면 부저 핀이 케이스 바닥 밖으로 나올 수 있습니다 — 조립 후 핀 길이를 맞춰 자르세요',
     wBzCupBelow: '⚠ 부저가 3층 스위치 홀더 컵 아래에 닿습니다 — X/Y를 옮기세요',
     wBzTop: '⚠ 부저가 3층 상판에 닿습니다 — 층 높이를 키우세요',
@@ -694,11 +694,21 @@ function triPrism(len, hgt, w, yBack, zBase, m, apexR = 0) {
 // f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
 //       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
 const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, sideSink: 2.5, ring: 4 };
+// 2층 부저: 소켓 바닥의 짧은 세로 홈에서 왼쪽으로 전선이 빠지는, 위에서 보이는 T자 홈.
+function bzCableTSpec() {
+  return {
+    barL: 5.2,                 // 화면상 세로: 두 가닥이 꺾일 자리
+    barW: 2.2,                 // 화면상 가로: T의 짧은 막대 두께
+    stemW: 2.8,                // 왼쪽으로 나가는 케이블 홈 폭
+    stemOut: BZ.d / 2 + BZ.clr + BZ.wall + F2_PAD_MARGIN + 0.4,
+  };
+}
 // 캐릭터는 바닥에 17.9각 공동(깊이 10.7)이 있어 스위치를 통째로 덮고 보스 윗면에 얹힘
 const charTopOverLid = () => effBossH() + FACE_H;
 const F1_PLATE = 1.6, F2_PLATE = 0.8, F2_PART_BASE = 2.0, F2_PLATFORM = 2.2, F3_PLATE = 3.2;
 // 2층 바닥판만 얇게 한다. 부품 안착·OLED 타워·USB·부저의 기존 Z 기준은 2.0mm로 유지.
 const F2_PAD_HEIGHT = F2_PART_BASE + F2_PLATFORM - F2_PLATE;
+const F2_PAD_MARGIN = 1.2;
 const RIDGE_H = 1.5, RIDGE_W = 1.2;   // 결합 턱 높이/폭 (사각 단면)
 const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — 턱 바깥면 inset = RABBET.out + fitClr
 const USB_PAD = { t: 2.5, w: 18 };    // 원형 모드 동쪽 평면 USB 패드 (두께 × 폭)
@@ -1468,6 +1478,9 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
 
 // 2.5층(띄움): 보드를 뒤집어(USB·부품면 아래) 받침선에 얹음 — USB 실루엣이 홈에 꽂혀 고정
 const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이
+const LIFT_SHOULDER_H = 2.5; // ESP32 받침선 홈 양끝 턱 높이
+const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3mm 더 높임
+const LIFT_LONG_CLR = 0.2; // 뒤집힌 ESP32 길이 방향 총 끼움 여유 (기존 0.4)
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
 const LIFT_USB_EXTRA_DEPTH = 2.2; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
 const LIFT_USB_MIN_SKIN = F2_PLATE; // 깊게 파되 USB 홈 밑면에는 0.8mm 바닥판을 남김
@@ -1482,7 +1495,10 @@ function espLiftGeo(inflate = false) {
   normalize(g);                                    // xy 중심, 바닥 z=0 (= USB 쉘 밑면)
   if (inflate) {
     const ySize = P.espRot === 90 ? ESP.l : ESP.w;
-    g.scale(1.04, 1.04 - LIFT_Y_TIGHTEN / ySize, 1.03);
+    const longScale = 1 + LIFT_LONG_CLR / ESP.l;
+    g.scale(P.espRot === 90 ? 1.04 : longScale,
+            P.espRot === 90 ? longScale : 1.04 - LIFT_Y_TIGHTEN / ySize,
+            1.03);
     g.translate(0, 0, -0.15);
   }
   return g;
@@ -1730,7 +1746,7 @@ function buildFloor2() {
   // 일반 바닥은 실제로 0.8mm만 남기고, 부품 포켓 둘레만 기존 플랫폼 꼭대기
   // (4.2mm)까지 올려 포켓 깊이와 안착 위치를 보존한다.
   const seatPad = (w, d, cx, cy, r = 1.2) => {
-    const margin = 1.2;
+    const margin = F2_PAD_MARGIN;
     const z0 = F2_PLATE;
     let pad = boxBrush(w + 2 * margin, d + 2 * margin, F2_PAD_HEIGHT + 0.05,
                        cx, cy, z0 - 0.05, r);
@@ -1795,7 +1811,7 @@ function buildFloor2() {
   // 2.5층 받침 선(빔): 벽에서 벽까지 한 줄로 가로지르고, 보드 자리만 24mm 홈을 파냄 —
   // 보드가 홈에 안착해 공중에 뜨고(양끝 턱이 잡음), 옆 공간 아래로 충전모듈이 지나감
   if (espLifted) {
-    const beamW = 8, shoulderH = 2.5;               // 선 폭 / 홈 양끝 턱 높이
+    const beamW = 8, shoulderH = LIFT_SHOULDER_H;    // 선 폭 / 홈 양끝 턱 높이
     const topZ = F2_PART_BASE + P.espLift + P.espZ;     // 홈 바닥 = 보드 바닥
     const rot90 = P.espRot === 90;
     const span = P.W + effD();                      // 넉넉히 → 외곽으로 잘림
@@ -1810,10 +1826,22 @@ function buildFloor2() {
     beam = inter(beam, extrude(baseShape(0), topZ + shoulderH, 0));   // 벽 곡면 따라 자르고 벽과 융합
     b = add(b, beam);
     // 홈: 보드 길이(24)만큼만 턱을 파내서 끼움
-    const slotL = ESP.l + POCKET_CLR - (rot90 ? LIFT_Y_TIGHTEN : 0);
+    const slotL = ESP.l + LIFT_LONG_CLR;
     b = sub(b, rot90
       ? boxBrush(beamW + 2, slotL, shoulderH + 1, P.espX, P.espY, topZ)
       : boxBrush(slotL, beamW + 2, shoulderH + 1, P.espX, P.espY, topZ));
+    // USB 반대쪽(-길이축) 턱만 높인다. 보드 아래 부품/USB 실루엣 절삭은 그대로 둔다.
+    const rearInner = (rot90 ? P.espY : P.espX) - slotL / 2;
+    let rearPlate = rot90
+      ? boxBrush(beamW, LIFT_REAR_W, LIFT_REAR_RISE + 0.05,
+                 P.espX, rearInner - LIFT_REAR_W / 2,
+                 topZ + shoulderH - 0.05)
+      : boxBrush(LIFT_REAR_W, beamW, LIFT_REAR_RISE + 0.05,
+                 rearInner - LIFT_REAR_W / 2, P.espY,
+                 topZ + shoulderH - 0.05);
+    rearPlate = inter(rearPlate, extrude(baseShape(0),
+                          topZ + shoulderH + LIFT_REAR_RISE + 0.2, 0));
+    b = add(b, rearPlate);
     // 보드는 뒤집어(USB 아래) 안착 — USB/부품 밑면 실루엣을 실물 메시로 절삭 → 꽂아서 고정
     b = sub(b, meshBrush(espLiftGeo(true),
                          new THREE.Matrix4().makeTranslation(P.espX, P.espY, topZ - LIFT_SINK)));
@@ -1915,7 +1943,7 @@ function buildFloor2() {
     b = sub(b, boxBrush(w, d, F2_PART_BASE + F2_PLATFORM + 1, P.wireX, P.wireY, -0.4, 2.4));
   }
 
-  // 피에조 부저 소켓 (2층 바닥): 플랫폼 리세스 1.8 + 가이드 링, 남쪽 링에 전선 노치
+  // 피에조 부저 소켓 (2층 바닥): 플랫폼 리세스 1.8 + 가이드 링, 왼쪽으로 전선 T자 홈
   if (P.bzOn && P.bzMount === 'f2') {
     const zP = F2_PART_BASE + F2_PLATFORM;
     let ring = sub(bzTube(BZ.d / 2 + BZ.clr + BZ.wall, BZ.ring, zP),
@@ -1923,8 +1951,21 @@ function buildFloor2() {
     ring = inter(ring, extrude(baseShape(0), zP + BZ.ring + 1, 0));   // 벽 곡면 따라 잘림
     b = add(b, ring);
     b = sub(b, bzTube(BZ.d / 2 + BZ.clr, BZ.sink + 0.05, zP - BZ.sink));
-    b = sub(b, boxBrush(4, 6, BZ.sink + BZ.ring + 0.2,
-                        P.bzX, P.bzY - (BZ.d / 2 + BZ.clr + BZ.wall / 2 + 0.4), zP - BZ.sink));
+    // 홈을 소켓 바닥에서 링 꼭대기까지 완전히 열어, 아래에 숨은 채널이 아니라
+    // 스크린샷처럼 받침 표면에도 왼쪽 출구가 보이도록 한다.
+    const cable = bzCableTSpec();
+    const wireZ0 = F2_PLATE + 0.05, wireZ1 = zP + BZ.ring + 0.25;
+    const wireH = wireZ1 - wireZ0;
+    let wireT = boxBrush(cable.barW, cable.barL, wireH,
+                         P.bzX, P.bzY, wireZ0, 0.5);
+    const overlap = 0.3;
+    const stemL = cable.stemOut - cable.barW / 2 + overlap;
+    wireT = add(wireT, boxBrush(stemL, cable.stemW, wireH,
+      P.bzX - (cable.stemOut + cable.barW / 2 - overlap) / 2,
+      P.bzY, wireZ0, 0.5));
+    // 케이스 외벽·결합 홈은 침범하지 않는다.
+    wireT = inter(wireT, extrude(baseShape(P.wall), wireH + 0.2, wireZ0 - 0.1));
+    b = sub(b, wireT);
     // 몸통 리세스 바닥에서 2층 밑면까지 핀 두 개가 빠져나가도록 관통한다.
     for (const sign of [-1, 1])
       b = sub(b, bzPinHole(P.bzX + sign * P.bzPinPitch / 2, P.bzY,
@@ -1943,6 +1984,32 @@ function buildFloor2() {
     for (const sign of [-1, 1])
       b = sub(b, bzPinHole(P.bzX + BZ.h / 2 - 0.2, P.bzY,
                            zc + sign * P.bzPinPitch / 2, 4.2, true));
+    // 눕힌 부저에서 나온 전선을 ESP32의 낮은 안착면 윗부분에 놓는
+    // 얕은 반원형 T자 홈. 기존 Ø1.5 선 구멍과 같은 굵기로 이어 파낸다.
+    if (espLifted && P.espRot !== 90) {
+      const pinX = P.bzX + BZ.h / 2 - 0.2;
+      const tailX = pinX + 4.2 - 0.5; // 기존 아래쪽 핀 구멍 끝과 0.5mm 겹침
+      const headX = P.espX + USB_C_OFF - LIFT_USB_SHELL_SIDE / 2
+                    - LIFT_USB_FIT_CLR - 0.1; // USB 셸 파임 바로 왼쪽
+      if (headX > tailX + 2.5) {
+        const cableY = P.bzY;
+        const headY = Math.abs(P.espY - P.bzY) <= 1.4 ? P.espY : P.bzY;
+        const headL = 8.8, radius = P.bzPinD / 2;
+        const seatTop = F2_PART_BASE + P.espLift + P.espZ;
+        const tubeZ = seatTop - 0.1; // 기존 아래쪽 핀 구멍과 연결, 윗면 홈 깊이 ≈0.85mm
+        const tube = (length, x, y, alongX) => {
+          const c = new THREE.CylinderGeometry(radius, radius, length, 32);
+          if (alongX) c.rotateZ(Math.PI / 2);
+          c.translate(x, y, tubeZ);
+          c.deleteAttribute('uv');
+          return toMan(c);
+        };
+        const stemRight = headX + 1.2; // USB 하부 파임에는 최소한만 이어짐
+        let wireT = tube(stemRight - tailX, (tailX + stemRight) / 2, cableY, true);
+        wireT = add(wireT, tube(headL, headX, headY, false));
+        b = sub(b, wireT);
+      }
+    }
   }
 
   // NFC 스티커 포켓 (2층 바닥판) — 1층으로 옮겼으면 여기서는 파지 않는다. nfcCut() 주석 참고
@@ -3366,10 +3433,18 @@ function updateInfo(ms, fit) {
     warn.push(t('wEspCup'));
   if (P.bzOn) {
     const side = P.bzMount === 'f2s';
-    if (P.bzMount === 'f2' && nfcFits() && !nfcOnF1() &&
-        [-1, 1].some(sign => Math.hypot(P.bzX + sign * P.bzPinPitch / 2 - P.nfcX,
-                                       P.bzY - P.nfcY) < P.nfcD / 2 + P.bzPinD / 2))
-      warn.push(t('wBzPinsNfc'));
+    if (P.bzMount === 'f2' && nfcFits() && !nfcOnF1()) {
+      const cable = bzCableTSpec();
+      const pinHitsNfc = [-1, 1].some(sign =>
+        Math.hypot(P.bzX + sign * P.bzPinPitch / 2 - P.nfcX, P.bzY - P.nfcY)
+          < P.nfcD / 2 + P.bzPinD / 2);
+      const barHitsNfc = circleRectOverlap(P.nfcX, P.nfcY, P.nfcD / 2,
+        { x: P.bzX, y: P.bzY, w: cable.barW, d: cable.barL });
+      const stemHitsNfc = circleRectOverlap(P.nfcX, P.nfcY, P.nfcD / 2,
+        { x: P.bzX - cable.stemOut / 2, y: P.bzY,
+          w: cable.stemOut, d: cable.stemW });
+      if (pinHitsNfc || barHitsNfc || stemHitsNfc) warn.push(t('wBzPinsNfc'));
+    }
     if (P.bzMount === 'f2' && !P.f1On) warn.push(t('wBzPinsBottom'));
     const hx2 = side ? (BZ.h + 0.5) / 2 : BZ.d / 2 + BZ.clr;
     const hy2 = BZ.d / 2 + BZ.clr;
