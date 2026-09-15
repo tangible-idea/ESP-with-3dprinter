@@ -702,7 +702,8 @@ const RABBET = { out: 0.7, d: 1.8 };  // 결합 홈 (외곽 inset 기준) — �
 const USB_PAD = { t: 2.5, w: 18 };    // 원형 모드 동쪽 평면 USB 패드 (두께 × 폭)
 const USB_REC = { w: 13 };            // USB 벽 얇게 패널 폭 (높이는 결합부 한계까지 자동 확장)
 const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두께
-const MOD_USB_SHELL_GAP = 1.2;         // 충전모듈 USB 셸 끝에서 외벽까지 목표 거리
+const MOD_USB_MIN_WALL = 0.4;          // 충전모듈 포켓 앞쪽 최소 벽살
+const MOD_USB_SHELL_GAP = 0.4;         // 충전모듈 USB 셸 끝에서 외벽까지 목표 거리
 const MOD_POCKET_FRONT_INSET = 0.8;    // USB 셸보다 뒤에 있는 PCB 끝에 맞춰 포켓 앞면을 물림
 const POCKET_CLR = 0.4;
 
@@ -1514,9 +1515,9 @@ function modCenter() {
   const outerAtPocketEdge = circ ? flatPadX()
     : surfAt(Math.abs(cy) + (mod.w + POCKET_CLR) / 2, effD() / 2, P.W / 2, 0);
   // 케이스 외면은 그대로 두고 모듈을 USB 쪽으로 전진시킨다. 곡면 모서리에서도
-  // PCB 포켓 앞쪽 벽살은 최소 1mm 남기고, 셸은 평평한 외벽에 더 가깝게 둔다.
+  // PCB 포켓 앞쪽 벽살은 최소 0.4mm 남기고, 셸은 평평한 외벽에 더 가깝게 둔다.
   const desiredPush = outerAtUsb - (edgeX - 0.2 + mod.usbOver) - MOD_USB_SHELL_GAP;
-  const maxPush = outerAtPocketEdge - USB_MIN_WALL
+  const maxPush = outerAtPocketEdge - MOD_USB_MIN_WALL
     - (edgeX - 0.2 - MOD_POCKET_FRONT_INSET);
   // 포켓 끝이 곡면 안쪽 유효 범위를 벗어나면 기존 충돌 경고에 맡기고 전진시키지 않는다.
   const push = edgeX > 0 && outerAtUsb > 0 && outerAtPocketEdge > 0
@@ -1755,7 +1756,8 @@ function buildFloor2() {
     }
   }
   // 충전모듈 포켓: USB 셸은 전용 관통 구멍에 들어가므로 PCB 홈의 앞면만 0.8mm 물린다.
-  // 뒤쪽 1.2mm 여유와 모서리 R0.4는 유지한다.
+  // 뒤쪽 1.2mm 여유는 유지한다. 앞 모서리를 둥글리면 목표 0.4mm보다
+  // 벽살이 더 두꺼워지므로 포켓은 직각으로 절삭한다.
   if (!noBat()) {
     const mc = modCenter();
     const mod = modSpec();
@@ -1763,7 +1765,7 @@ function buildFloor2() {
     b = sub(b, boxBrush(mod.l + pocketBackClear - MOD_POCKET_FRONT_INSET,
                         mod.w + POCKET_CLR, F2_PLATFORM + 2,
                         mc.x - (pocketBackClear + MOD_POCKET_FRONT_INSET) / 2,
-                        mc.y, F2_PLATE, 0.4));
+                        mc.y, F2_PLATE));
   }
 
   // 세움 배터리 소켓 홈: 플랫폼을 관통해 바닥판 위에 세워서 꽂음 (두께×길이 세로 슬롯)
