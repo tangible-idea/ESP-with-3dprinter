@@ -1540,11 +1540,13 @@ const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3m
 const ESP_HEADER4 = { blockH: 2.3, pinBelow: 3.7, pinD: 0.65, holeD: 1.0,
                       railW: 3.0, endWall: 1.4 };
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
-const LIFT_USB_EXTRA_DEPTH = 3.0; // 뒤집힌 USB 셸 아래를 0.8mm 바닥판까지 깊게 파는 끼움 여유
-const LIFT_USB_MIN_SKIN = F2_PLATE; // 깊게 파되 USB 홈 밑면에는 0.8mm 바닥판을 남김
-const LIFT_USB_SHELL_SIDE = 9.0, LIFT_USB_SHELL_H = 2.5;
-const LIFT_USB_FIT_CLR = 0.4;      // USB 셸 둘레 한쪽당 XY 끼움 여유
-const LIFT_USB_TOP_CLR = 0.4;      // USB 셸 위쪽 여유
+// USB-C 셸 실측(esp32_c3_supermini.stl): 폭 9.0 × 돌출길이 9.0 × 높이 3.2
+const LIFT_USB_SHELL_SIDE = 9.0, LIFT_USB_SHELL_LEN = 9.0, LIFT_USB_SHELL_H = 3.2;
+const LIFT_USB_FIT_CLR = 0.25;     // USB 셸 둘레 한쪽당 XY 끼움 여유
+const LIFT_USB_TOP_CLR = 0.25;     // 셸 뿌리(PCB) 쪽 여유
+const LIFT_USB_UNDER_CLR = 0.3;    // 셸 끝면 아래 여유 — 홈은 딱 이만큼만 더 깊다
+const LIFT_USB_MIN_SKIN = F2_PLATE; // 파되 USB 홈 밑면에는 0.8mm 바닥판을 남김
+const LIFT_USB_SUPPORT_DROP = 0.4; // 깊어진 USB 홈을 따라 양옆 받침은 절반만 낮춤
 const LIFT_Y_TIGHTEN = 0.15;       // 뒤집힌 ESP32의 케이스 앞뒤(Y) 홈을 0.15mm 조임
 function espHeader4Active() {
   return !!P.espHeader4On && !noBat() && !espStand();
@@ -1574,21 +1576,23 @@ function espLiftGeo(inflate = false) {
 }
 
 // 실물 USB-C 셸의 둥근 YZ 단면을 XY(폭)×Z(높이) 프로파일로 그린 뒤
-// 커넥터 길이 방향으로 압출한다. 사각 홈과 달리 둥근 셸 전체가 균일하게 들어간다.
+// 커넥터 길이 방향으로 압출한다. 폭·길이·높이 모두 실측 셸 + 끼움 여유만큼만이라
+// 커넥터를 딱 감싸는 소켓이 된다 (예전처럼 셸 길이만큼 깊은 사각 구덩이가 아니다).
 function liftedUsbShellCut(cx, cy, z0, z1, rot90) {
   const side = LIFT_USB_SHELL_SIDE + 2 * LIFT_USB_FIT_CLR;
+  const len = LIFT_USB_SHELL_LEN + 2 * LIFT_USB_FIT_CLR;
   const h = z1 - z0;
-  const geo = extrudeGeo(rrShape(side, h, 0.8), side);
+  const geo = extrudeGeo(rrShape(side, h, 0.8), len);
   const m = new THREE.Matrix4();
   if (rot90) {
     // 압출축→-Y, 단면 가로→X, 단면 높이→Z (회전행렬, 반사 없음)
     m.set(1, 0, 0, cx,
-          0, 0, -1, cy + side / 2,
+          0, 0, -1, cy + len / 2,
           0, 1, 0, z0 + h / 2,
           0, 0, 0, 1);
   } else {
     // 압출축→X, 단면 가로→Y, 단면 높이→Z
-    m.set(0, 0, 1, cx - side / 2,
+    m.set(0, 0, 1, cx - len / 2,
           1, 0, 0, cy,
           0, 1, 0, z0 + h / 2,
           0, 0, 0, 1);
@@ -1948,21 +1952,24 @@ function buildFloor2() {
     // 보드는 뒤집어(USB 아래) 안착 — USB/부품 밑면 실루엣을 실물 메시로 절삭 → 꽂아서 고정
     b = sub(b, meshBrush(espLiftGeo(true),
                          new THREE.Matrix4().makeTranslation(P.espX, P.espY, topZ - LIFT_SINK)));
-    // 실물 USB 셸 9×9×2.5mm를 따라 둥근 단면으로 통째로 절삭한다.
-    // 바닥 방향 2.2mm와 상단 0.4mm 여유를 주되 0.8mm 밑면은 남긴다.
-    const usbFloorZ = Math.max(LIFT_USB_MIN_SKIN, topZ - LIFT_SINK - LIFT_USB_EXTRA_DEPTH);
-    const usbReliefTop = topZ - LIFT_SINK + LIFT_USB_SHELL_H + LIFT_USB_TOP_CLR;
+    // 실물 USB 셸 9×9×3.2mm를 따라 둥근 단면으로 절삭한다. 셸 끝면 아래 0.3mm,
+    // 뿌리 쪽 0.25mm 여유만 두어 커넥터를 감싸는 소켓이 되게 하고 0.8mm 밑면은 남긴다.
+    const usbShellBotZ = topZ - LIFT_SINK;   // 뒤집힌 셸의 끝면(아래를 향한 면)
+    const usbFloorZ = Math.max(LIFT_USB_MIN_SKIN, usbShellBotZ - LIFT_USB_UNDER_CLR);
+    const usbReliefTop = usbShellBotZ + LIFT_USB_SHELL_H + LIFT_USB_TOP_CLR;
     if (usbReliefTop > usbFloorZ) {
       b = sub(b, liftedUsbShellCut(P.espX + (rot90 ? 0 : USB_C_OFF),
                                     P.espY + (rot90 ? USB_C_OFF : 0),
                                     usbFloorZ, usbReliefTop, rot90));
     }
-    // 립은 USB 절삭 홈 반폭(4.9mm) 밖에 두어 커넥터가 눌려 뜨지 않게 한다.
-    const lipIn = 4.9, lipW = 1.3, lipH = 0.9, lipL = 5;
+    // 립은 USB 절삭 홈 반폭 바로 밖에 두어 커넥터가 눌려 뜨지 않게 한다.
+    const lipIn = LIFT_USB_SHELL_SIDE / 2 + LIFT_USB_FIT_CLR + 0.05;
+    const lipW = 1.3, lipH = 0.9, lipL = 5;
+    const lipZ = topZ - lipH - LIFT_USB_SUPPORT_DROP;
     for (const s of [-1, 1]) {
       b = add(b, rot90
-        ? boxBrush(lipW, lipL, lipH, P.espX + s * (lipIn + lipW / 2), P.espY + USB_C_OFF, topZ - lipH)
-        : boxBrush(lipL, lipW, lipH, P.espX + USB_C_OFF, P.espY + s * (lipIn + lipW / 2), topZ - lipH));
+        ? boxBrush(lipW, lipL, lipH, P.espX + s * (lipIn + lipW / 2), P.espY + USB_C_OFF, lipZ)
+        : boxBrush(lipL, lipW, lipH, P.espX + USB_C_OFF, P.espY + s * (lipIn + lipW / 2), lipZ));
     }
   }
   // 충전모듈 포켓: USB 셸은 전용 관통 구멍에 들어가므로 PCB 홈의 앞면만 0.8mm 물린다.
@@ -2115,7 +2122,7 @@ function buildFloor2() {
     // 얕은 반원형 T자 홈. 현재 핀 구멍과 같은 굵기로 이어 파낸다.
     if (espLifted && P.espRot !== 90) {
       const tailX = pinX + BZ_SIDE_PIN_DEPTH - BZ_SIDE_HOLDER_OVERLAP;
-      const headX = P.espX + USB_C_OFF - LIFT_USB_SHELL_SIDE / 2
+      const headX = P.espX + USB_C_OFF - LIFT_USB_SHELL_LEN / 2
                     - LIFT_USB_FIT_CLR - 0.1; // USB 셸 파임 바로 왼쪽
       if (headX > tailX + 2.5) {
         const cableY = P.bzY;
