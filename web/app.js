@@ -299,6 +299,8 @@ const STATIC_I18N = {
     optEspS0: 'Upright-wide (24×5, h18)', optEspS90: 'Upright-tall (5×24, h18)',
     optEspU0: 'Upright-USB down (18×5, h24)', optEspU90: 'Upright-USB down tall (5×18, h24)',
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune',
+    lblEspHeader4: 'ESP32 4-pin header mount',
+    hintEspHeader4: 'Uses the USB-end 5V, GND, 3V3 and GPIO4 holes. A 3.7mm pin socket plus the 2.3mm header block leaves 6mm below the board.',
     lblEspBarGap: 'ESP32 insertion bar clearance (mm)',
     hintEspBarGap: 'Long-axis gap between the two insertion bars: lower is tighter, higher is looser. Bar height and board Z position stay unchanged.',
     lblModType: 'Charge module', optModGeneric: 'Existing module (19×14×4.5)',
@@ -419,6 +421,8 @@ const STATIC_I18N = {
     optEspS0: '세움-가로 (24×5, 높이 18)', optEspS90: '세움-세로 (5×24, 높이 18)',
     optEspU0: '세움-USB아래 (18×5, 높이 24)', optEspU90: '세움-USB아래-세로 (5×18, 높이 24)',
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정',
+    lblEspHeader4: 'ESP32 4핀 헤더 고정',
+    hintEspHeader4: 'USB 쪽 끝의 5V·GND·3V3·GPIO4 홀을 사용합니다. 3.7mm 핀 소켓과 2.3mm 헤더 블록을 합쳐 보드 아래 6mm를 확보합니다.',
     lblEspBarGap: 'ESP32 끼움 막대 간격 여유 (mm)',
     hintEspBarGap: '보드 길이 방향의 양끝 끼움 막대 사이 여유: 낮추면 타이트, 올리면 널널합니다. 막대 높이와 보드 Z 위치는 그대로입니다.',
     lblModType: '충전모듈', optModGeneric: '기존 모듈 (19×14×4.5)',
@@ -749,7 +753,8 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
-  espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, espBarGap: 0.2,
+  espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0,
+  espHeader4On: true, espBarGap: 0.2,
   modType: 'generic', modY: -9, oledSide: 'W', oledType: '049', oledZ: 0, oledProud: 0,
   espOut: 0.8, espGripOn: true,   // 도킹 시 보드를 벽 쪽으로 더 밀기 / 손으로 빼는 집게 홈
   espAutoDock: true,              // 끄면 배터리 없음에서도 espX/espY 자유 배치
@@ -837,7 +842,7 @@ for (const k of sliders) {
   el.addEventListener('input', () => {
     P[k] = +el.value;
     if (k === 'espLift')
-      document.getElementById('espBarGap').disabled = noBat() || espStand() || P.espLift <= 0;
+      document.getElementById('espBarGap').disabled = noBat() || espStand() || (P.espLift <= 0 && !P.espHeader4On);
     show(); queueRebuild();
   });
   show();
@@ -906,8 +911,10 @@ function applyBatUI() {
   document.getElementById('espY').disabled = autoDock && circ;   // 원형 도킹은 항상 중앙
   document.getElementById('espYCenter').disabled = autoDock && circ;
   document.getElementById('espRot').disabled = nb;
-  document.getElementById('espLift').disabled = nb || espStand();
-  document.getElementById('espBarGap').disabled = nb || espStand() || P.espLift <= 0;
+  document.getElementById('espLift').disabled = nb || espStand() || P.espHeader4On;
+  document.getElementById('espZ').disabled = espHeader4Active();
+  document.getElementById('espHeader4On').disabled = nb || espStand();
+  document.getElementById('espBarGap').disabled = nb || espStand() || (P.espLift <= 0 && !P.espHeader4On);
   document.getElementById('espAutoDock').disabled = !nb;
   document.getElementById('espOut').disabled = !autoDock;    // 자동 도킹으로 벽에 붙일 때만 의미 있음
   document.getElementById('usbThin').disabled = !nb;
@@ -1056,6 +1063,12 @@ document.getElementById('espRot').addEventListener('change', e => {
   applyBatUI();   // 띄움은 눕힘 전용
   queueRebuild();
 });
+document.getElementById('espHeader4On').checked = P.espHeader4On;
+document.getElementById('espHeader4On').addEventListener('change', e => {
+  P.espHeader4On = e.target.checked;
+  applyBatUI();
+  queueRebuild();
+});
 document.getElementById('wireRot').addEventListener('change', e => { P.wireRot = e.target.value; queueRebuild(); });
 document.getElementById('oledSide').addEventListener('change', e => { P.oledSide = e.target.value; queueRebuild(); });
 document.getElementById('oledPodOn').checked = P.oledPodOn;
@@ -1144,6 +1157,7 @@ function syncControls() {
   document.getElementById('nfcFloor').value = P.nfcFloor;
   applyNfcUI();
   document.getElementById('espGripOn').checked = P.espGripOn;
+  document.getElementById('espHeader4On').checked = P.espHeader4On;
   document.getElementById('solderOn').checked = P.solderOn;
   document.getElementById('solderD').disabled = !P.solderOn;
   document.getElementById('espAutoDock').checked = P.espAutoDock;
@@ -1497,6 +1511,8 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
 const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이
 const LIFT_SHOULDER_H = 2.5; // ESP32 받침선 홈 양끝 턱 높이
 const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3mm 더 높임
+const ESP_HEADER4 = { blockH: 2.3, pinBelow: 3.7, pinD: 0.65, holeD: 0.95,
+                      railW: 3.0, endWall: 1.4 };
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
 const LIFT_USB_EXTRA_DEPTH = 2.2; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
 const LIFT_USB_MIN_SKIN = F2_PLATE; // 깊게 파되 USB 홈 밑면에는 0.8mm 바닥판을 남김
@@ -1504,6 +1520,17 @@ const LIFT_USB_SHELL_SIDE = 9.0, LIFT_USB_SHELL_H = 2.5;
 const LIFT_USB_FIT_CLR = 0.4;      // USB 셸 둘레 한쪽당 XY 끼움 여유
 const LIFT_USB_TOP_CLR = 0.4;      // USB 셸 위쪽 여유
 const LIFT_Y_TIGHTEN = 0.15;       // 뒤집힌 ESP32의 케이스 앞뒤(Y) 홈을 0.15mm 조임
+function espHeader4Active() {
+  return !!P.espHeader4On && !noBat() && !espStand();
+}
+function espLiftActive() {
+  return !noBat() && !espStand() && (P.espLift > 0 || P.espHeader4On);
+}
+function espLiftTopZ() {
+  return espHeader4Active()
+    ? F2_PLATE + ESP_HEADER4.pinBelow + ESP_HEADER4.blockH
+    : F2_PART_BASE + P.espLift + P.espZ;
+}
 function espLiftGeo(inflate = false) {
   const g = ASSETS.esp.clone();
   g.rotateY(Math.PI);                              // 뒤집기 — USB·부품면이 아래
@@ -1758,7 +1785,7 @@ function buildFloor2() {
 
   // 포켓
   const ef = espFoot();
-  const espLifted = !noBat() && !espStand() && P.espLift > 0;   // 2.5층: 레일 홈에 끼워 공중 배치
+  const espLifted = espLiftActive();   // 2.5층: 레일 또는 4핀 헤더로 공중 배치
   // 일반 바닥은 실제로 0.8mm만 남기고, 부품 포켓 둘레만 기존 플랫폼 꼭대기
   // (4.2mm)까지 올려 포켓 깊이와 안착 위치를 보존한다.
   const seatPad = (w, d, cx, cy, r = 1.2) => {
@@ -1828,7 +1855,7 @@ function buildFloor2() {
   // 보드가 홈에 안착해 공중에 뜨고(양끝 턱이 잡음), 옆 공간 아래로 충전모듈이 지나감
   if (espLifted) {
     const beamW = 8, shoulderH = LIFT_SHOULDER_H;    // 선 폭 / 홈 양끝 턱 높이
-    const topZ = F2_PART_BASE + P.espLift + P.espZ;     // 홈 바닥 = 보드 바닥
+    const topZ = espLiftTopZ();                         // 홈 바닥 = 보드 바닥
     const rot90 = P.espRot === 90;
     const span = P.W + effD();                      // 넉넉히 → 외곽으로 잘림
     // 받침선은 얇아진 바닥판까지 내려 연결해 공중 브리지가 생기지 않게 한다.
@@ -1848,16 +1875,48 @@ function buildFloor2() {
       : boxBrush(slotL, beamW + 2, shoulderH + 1, P.espX, P.espY, topZ));
     // USB 반대쪽(-길이축) 턱만 높인다. 보드 아래 부품/USB 실루엣 절삭은 그대로 둔다.
     const rearInner = (rot90 ? P.espY : P.espX) - slotL / 2;
-    let rearPlate = rot90
-      ? boxBrush(beamW, LIFT_REAR_W, LIFT_REAR_RISE + 0.05,
-                 P.espX, rearInner - LIFT_REAR_W / 2,
-                 topZ + shoulderH - 0.05)
-      : boxBrush(LIFT_REAR_W, beamW, LIFT_REAR_RISE + 0.05,
-                 rearInner - LIFT_REAR_W / 2, P.espY,
-                 topZ + shoulderH - 0.05);
-    rearPlate = inter(rearPlate, extrude(baseShape(0),
-                          topZ + shoulderH + LIFT_REAR_RISE + 0.2, 0));
-    b = add(b, rearPlate);
+    // 4핀 헤더가 보드를 고정할 때는 높은 뒤쪽 턱이 3층 스위치 컵과 겹치므로 생략한다.
+    // 일반 레일 모드에서는 요청한 3mm 추가 높이를 그대로 유지한다.
+    if (!espHeader4Active()) {
+      let rearPlate = rot90
+        ? boxBrush(beamW, LIFT_REAR_W, LIFT_REAR_RISE + 0.05,
+                   P.espX, rearInner - LIFT_REAR_W / 2,
+                   topZ + shoulderH - 0.05)
+        : boxBrush(LIFT_REAR_W, beamW, LIFT_REAR_RISE + 0.05,
+                   rearInner - LIFT_REAR_W / 2, P.espY,
+                   topZ + shoulderH - 0.05);
+      rearPlate = inter(rearPlate, extrude(baseShape(0),
+                            topZ + shoulderH + LIFT_REAR_RISE + 0.2, 0));
+      b = add(b, rearPlate);
+    }
+    if (espHeader4Active()) {
+      // 사진 기준 USB 쪽 끝의 5V·GND·3V3·GPIO4 연속 4핀.
+      // 보드를 Y축으로 뒤집었으므로 로컬 X가 반전되고, 90° 회전도 그대로 적용한다.
+      const headerPins = [ESP_PINS['5V'], ESP_PINS.GND, ESP_PINS['3V3'], ESP_PINS[4]]
+        .map(([dx, dy]) => rot90
+          ? [P.espX - dy, P.espY - dx]
+          : [P.espX - dx, P.espY + dy]);
+      const xs = headerPins.map(p => p[0]), ys = headerPins.map(p => p[1]);
+      const railL = Math.max(Math.max(...xs) - Math.min(...xs),
+                             Math.max(...ys) - Math.min(...ys)) + 2 * ESP_HEADER4.endWall;
+      const railX = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const railY = (Math.min(...ys) + Math.max(...ys)) / 2;
+      let socket = rot90
+        ? boxBrush(ESP_HEADER4.railW, railL, ESP_HEADER4.pinBelow + 0.05,
+                   railX, railY, F2_PLATE - 0.05, 0.7)
+        : boxBrush(railL, ESP_HEADER4.railW, ESP_HEADER4.pinBelow + 0.05,
+                   railX, railY, F2_PLATE - 0.05, 0.7);
+      socket = inter(socket, extrude(baseShape(P.wall), ESP_HEADER4.pinBelow + 0.2,
+                                     F2_PLATE - 0.1));
+      b = add(b, socket);
+      // 3.7mm 핀이 끝까지 들어가되 0.75mm 바닥 스킨은 남긴다.
+      for (const [x, y] of headerPins) {
+        let hole = cylBrush(ESP_HEADER4.holeD / 2,
+                            ESP_HEADER4.pinBelow + 0.15, F2_PLATE - 0.05, 28);
+        hole = hole.translate([x, y, 0]);
+        b = sub(b, hole);
+      }
+    }
     // 보드는 뒤집어(USB 아래) 안착 — USB/부품 밑면 실루엣을 실물 메시로 절삭 → 꽂아서 고정
     b = sub(b, meshBrush(espLiftGeo(true),
                          new THREE.Matrix4().makeTranslation(P.espX, P.espY, topZ - LIFT_SINK)));
@@ -2402,9 +2461,10 @@ function placeGhosts() {
     G[1].add(ghostMesh(eg, MATS.esp, T(dk.x, dk.y, F2_PART_BASE + P.espZ)));
   } else if (espStand()) {
     G[1].add(ghostMesh(espStandGeo(), MATS.esp, T(P.espX, P.espY, espBaseZ())));
-  } else if (P.espLift > 0) {
+  } else if (espLiftActive()) {
     // 2.5층: 뒤집힌 보드가 받침선 홈에 안착 (USB 실루엣 매립)
-    G[1].add(ghostMesh(espLiftGeo(), MATS.esp, T(P.espX, P.espY, F2_PART_BASE + P.espLift + P.espZ - LIFT_SINK)));
+    G[1].add(ghostMesh(espLiftGeo(), MATS.esp,
+                       T(P.espX, P.espY, espLiftTopZ() - LIFT_SINK)));
   } else {
     const rot = P.espRot === 90 ? Math.PI / 2 : 0;
     const eg = ASSETS.esp.clone();
@@ -3099,9 +3159,14 @@ function updateWires() {
         const zP = z2b + espBaseZ() + ESP.l / 2 + dx;
         return P.espRot === 'u90' ? [P.espX, P.espY + dy, zP] : [P.espX + dy, P.espY, zP];
       }
+      if (espLiftActive()) {
+        // 뒤집힌 보드: Y축 반전 후 선택한 평면 회전을 적용한다.
+        const [rx, ry] = P.espRot === 90 ? [-dy, -dx] : [-dx, dy];
+        return [P.espX + rx, P.espY + ry,
+                z2b + espLiftTopZ() - LIFT_SINK + ESP.h];
+      }
       const [rx, ry] = P.espRot === 90 ? [-dy, dx] : [dx, dy];
-      const lift = P.espLift > 0 ? P.espLift - LIFT_SINK : 0;   // 2.5층: 뒤집혀 매립된 만큼 보정
-      return [P.espX + rx, P.espY + ry, z2b + F2_PART_BASE + P.espZ + lift + ESP.h];
+      return [P.espX + rx, P.espY + ry, z2b + F2_PART_BASE + P.espZ + ESP.h];
     };
     const pin5V = espPin(...ESP_PINS['5V']), pinGND = espPin(...ESP_PINS.GND), pin3V3 = espPin(...ESP_PINS['3V3']);
     const pinSDA = espPin(...(ESP_PINS[P.sdaGpio] || ESP_PINS[8]));
@@ -3378,13 +3443,17 @@ function updateInfo(ms, fit) {
   if (!noBat() && P.shape !== 'circle' && Math.abs(P.modY) + (mod.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push(t('wModWall'));
   if (!noBat() && P.shape !== 'circle' && mc.edgeX < mod.l - 2) warn.push(t('wModCurve'));
   if (!noBat() && P.modType === 'tp4056') warn.push(t('wTp4056Power'));
-  const espLifted = !noBat() && !espStand() && P.espLift > 0;
+  const espLifted = espLiftActive();
   if (mRect && rectsOverlap(eRect, mRect)) {
     if (!espLifted) warn.push(t('wEspModOverlap'));
-    else if (P.espLift < mod.h + 0.8)
-      warn.push(t('wEspLiftLow', P.espLift, mod.h, (mod.h + 1).toFixed(0)));
+    else {
+      const clearance = espHeader4Active()
+        ? ESP_HEADER4.pinBelow + ESP_HEADER4.blockH : P.espLift;
+      if (clearance < mod.h + 0.8)
+        warn.push(t('wEspLiftLow', clearance, mod.h, (mod.h + 1).toFixed(0)));
+    }
   }
-  if (espLifted && F2_PART_BASE + P.espLift + P.espZ - LIFT_SINK + ESP.h > P.f2H + P.f3H - F3_PLATE - 0.3)
+  if (espLifted && espLiftTopZ() - LIFT_SINK + ESP.h > P.f2H + P.f3H - F3_PLATE - 0.3)
     warn.push(t('wEspLiftTop'));
   if (espLifted) {
     const beamRect = P.espRot === 90
@@ -3443,7 +3512,7 @@ function updateInfo(ms, fit) {
     warn.push(t('wBatCup'));
   const espTopLocal = espStand()
     ? espBaseZ() + (espUsbDown() ? ESP.l : ESP.w)
-    : F2_PART_BASE + P.espZ + (P.espLift > 0 ? P.espLift - LIFT_SINK : 0) + ESP.h;
+    : (espLifted ? espLiftTopZ() - LIFT_SINK : F2_PART_BASE + P.espZ) + ESP.h;
   if ((espStand() || espLifted) && rectsOverlap(eRect, cupRect) &&
       espTopLocal > P.f2H + cupBotZ - 0.3)
     warn.push(t('wEspCup'));
