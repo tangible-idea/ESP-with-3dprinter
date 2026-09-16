@@ -299,6 +299,8 @@ const STATIC_I18N = {
     optEspS0: 'Upright-wide (24×5, h18)', optEspS90: 'Upright-tall (5×24, h18)',
     optEspU0: 'Upright-USB down (18×5, h24)', optEspU90: 'Upright-USB down tall (5×18, h24)',
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune',
+    lblEspBarGap: 'ESP32 insertion bar clearance (mm)',
+    hintEspBarGap: 'Long-axis gap between the two insertion bars: lower is tighter, higher is looser. Bar height and board Z position stay unchanged.',
     lblModType: 'Charge module', optModGeneric: 'Existing module (19×14×4.5)',
     optModTp4056: 'TP4056 USB-C (27×17.3×4.0)', lblModY: 'Charge module Y',
     hintModType: 'TP4056 uses the measured USB-C board outline. It is larger than the existing module, so the default case may need more space. Board sizes vary: check yours before printing. Its OUT pads are not regulated 5V; verify the ESP32 power input and charge current before wiring.',
@@ -417,6 +419,8 @@ const STATIC_I18N = {
     optEspS0: '세움-가로 (24×5, 높이 18)', optEspS90: '세움-세로 (5×24, 높이 18)',
     optEspU0: '세움-USB아래 (18×5, 높이 24)', optEspU90: '세움-USB아래-세로 (5×18, 높이 24)',
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정',
+    lblEspBarGap: 'ESP32 끼움 막대 간격 여유 (mm)',
+    hintEspBarGap: '보드 길이 방향의 양끝 끼움 막대 사이 여유: 낮추면 타이트, 올리면 널널합니다. 막대 높이와 보드 Z 위치는 그대로입니다.',
     lblModType: '충전모듈', optModGeneric: '기존 모듈 (19×14×4.5)',
     optModTp4056: 'TP4056 USB-C (27×17.3×4.0)', lblModY: '충전모듈 Y',
     hintModType: 'TP4056은 실측한 USB-C 보드 외형을 기준으로 합니다. 기존 모듈보다 커서 기본 케이스의 폭·깊이나 부품 배치를 조정해야 할 수 있습니다. 제품마다 치수가 달라 출력 전 실물 확인이 필요합니다. OUT 단자는 안정화된 5V가 아니므로 ESP32 전원 입력과 충전 전류를 확인하세요.',
@@ -745,7 +749,8 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
-  espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, modType: 'generic', modY: -9, oledSide: 'W', oledType: '049', oledZ: 0, oledProud: 0,
+  espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0, espBarGap: 0.2,
+  modType: 'generic', modY: -9, oledSide: 'W', oledType: '049', oledZ: 0, oledProud: 0,
   espOut: 0.8, espGripOn: true,   // 도킹 시 보드를 벽 쪽으로 더 밀기 / 손으로 빼는 집게 홈
   espAutoDock: true,              // 끄면 배터리 없음에서도 espX/espY 자유 배치
   usbThin: true, usbWallT: 1.5,   // USB 포트 둘레 벽만 얇게 (남길 두께)
@@ -799,9 +804,14 @@ try {
 const saveParams = () => {
   try { localStorage.setItem('dimsum-params', JSON.stringify(P)); } catch (e) { /* 무시 */ }
 };
+function espBarClearance() {
+  const value = Number(P.espBarGap);
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.2;
+}
+P.espBarGap = espBarClearance();
 
 const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSink','cornerOut','swBodyX','swBodyY',
-                 'espX','espY','espLift','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
+                 'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkWireX','wkWireY','wkDivBar','wkDivH','wkDivGrow','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
@@ -824,7 +834,12 @@ for (const k of sliders) {
   const dec = (+el.step < 0.1) ? 2 : 1;
   const show = () => { vl.textContent = (+el.value).toFixed(dec); };
   el.value = P[k];   // 저장값 반영
-  el.addEventListener('input', () => { P[k] = +el.value; show(); queueRebuild(); });
+  el.addEventListener('input', () => {
+    P[k] = +el.value;
+    if (k === 'espLift')
+      document.getElementById('espBarGap').disabled = noBat() || espStand() || P.espLift <= 0;
+    show(); queueRebuild();
+  });
   show();
 }
 
@@ -892,6 +907,7 @@ function applyBatUI() {
   document.getElementById('espYCenter').disabled = autoDock && circ;
   document.getElementById('espRot').disabled = nb;
   document.getElementById('espLift').disabled = nb || espStand();
+  document.getElementById('espBarGap').disabled = nb || espStand() || P.espLift <= 0;
   document.getElementById('espAutoDock').disabled = !nb;
   document.getElementById('espOut').disabled = !autoDock;    // 자동 도킹으로 벽에 붙일 때만 의미 있음
   document.getElementById('usbThin').disabled = !nb;
@@ -1094,6 +1110,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
 // 모든 UI 컨트롤을 현재 P 값으로 동기화 (프리셋 불러오기 후 호출)
 function syncControls() {
+  P.espBarGap = espBarClearance();
   for (const k of sliders) {
     const el = document.getElementById(k);
     const dec = (+el.step < 0.1) ? 2 : 1;
@@ -1480,7 +1497,6 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
 const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이
 const LIFT_SHOULDER_H = 2.5; // ESP32 받침선 홈 양끝 턱 높이
 const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3mm 더 높임
-const LIFT_LONG_CLR = 0.2; // 뒤집힌 ESP32 길이 방향 총 끼움 여유 (기존 0.4)
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
 const LIFT_USB_EXTRA_DEPTH = 2.2; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
 const LIFT_USB_MIN_SKIN = F2_PLATE; // 깊게 파되 USB 홈 밑면에는 0.8mm 바닥판을 남김
@@ -1495,7 +1511,7 @@ function espLiftGeo(inflate = false) {
   normalize(g);                                    // xy 중심, 바닥 z=0 (= USB 쉘 밑면)
   if (inflate) {
     const ySize = P.espRot === 90 ? ESP.l : ESP.w;
-    const longScale = 1 + LIFT_LONG_CLR / ESP.l;
+    const longScale = 1 + espBarClearance() / ESP.l;
     g.scale(P.espRot === 90 ? 1.04 : longScale,
             P.espRot === 90 ? longScale : 1.04 - LIFT_Y_TIGHTEN / ySize,
             1.03);
@@ -1826,7 +1842,7 @@ function buildFloor2() {
     beam = inter(beam, extrude(baseShape(0), topZ + shoulderH, 0));   // 벽 곡면 따라 자르고 벽과 융합
     b = add(b, beam);
     // 홈: 보드 길이(24)만큼만 턱을 파내서 끼움
-    const slotL = ESP.l + LIFT_LONG_CLR;
+    const slotL = ESP.l + espBarClearance();
     b = sub(b, rot90
       ? boxBrush(beamW + 2, slotL, shoulderH + 1, P.espX, P.espY, topZ)
       : boxBrush(slotL, beamW + 2, shoulderH + 1, P.espX, P.espY, topZ));
