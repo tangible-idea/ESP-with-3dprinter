@@ -728,6 +728,7 @@ const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두�
 const MOD_USB_MIN_WALL = 0.4;          // 충전모듈 포켓 앞쪽 최소 벽살
 const MOD_USB_SHELL_GAP = 0.4;         // 충전모듈 USB 셸 끝에서 외벽까지 목표 거리
 const MOD_POCKET_FRONT_INSET = 0.8;    // USB 셸보다 뒤에 있는 PCB 끝에 맞춰 포켓 앞면을 물림
+const MOD_POCKET_BACK_CLEAR = 1.3;     // PCB 길이 공차: USB 반대쪽으로 0.1mm 추가 여유
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
@@ -1520,7 +1521,7 @@ function espFoot() {  // ESP32 footprint (회전/세움 반영)
 const LIFT_SINK = 3.0;   // USB/부품 실루엣이 받침선에 파묻히는 깊이
 const LIFT_SHOULDER_H = 2.5; // ESP32 받침선 홈 양끝 턱 높이
 const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3mm 더 높임
-const ESP_HEADER4 = { blockH: 2.3, pinBelow: 3.7, pinD: 0.65, holeD: 0.95,
+const ESP_HEADER4 = { blockH: 2.3, pinBelow: 3.7, pinD: 0.65, holeD: 1.0,
                       railW: 3.0, endWall: 1.4 };
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
 const LIFT_USB_EXTRA_DEPTH = 2.2; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
@@ -1812,7 +1813,9 @@ function buildFloor2() {
   }
   if (!noBat()) {
     const mc = modCenter(), mod = modSpec();
-    seatPad(mod.l + 1.2 - MOD_POCKET_FRONT_INSET, mod.w + POCKET_CLR, mc.x - 1, mc.y);
+    seatPad(mod.l + MOD_POCKET_BACK_CLEAR - MOD_POCKET_FRONT_INSET,
+            mod.w + POCKET_CLR,
+            mc.x - (MOD_POCKET_BACK_CLEAR + MOD_POCKET_FRONT_INSET) / 2, mc.y);
   }
   if (batStand()) {
     const bs = batSpec();
@@ -1947,15 +1950,14 @@ function buildFloor2() {
     }
   }
   // 충전모듈 포켓: USB 셸은 전용 관통 구멍에 들어가므로 PCB 홈의 앞면만 0.8mm 물린다.
-  // 뒤쪽 1.2mm 여유는 유지한다. 앞 모서리를 둥글리면 목표 0.4mm보다
+  // 뒤쪽은 실물 길이 공차를 위해 1.3mm 여유를 둔다. 앞 모서리를 둥글리면 목표 0.4mm보다
   // 벽살이 더 두꺼워지므로 포켓은 직각으로 절삭한다.
   if (!noBat()) {
     const mc = modCenter();
     const mod = modSpec();
-    const pocketBackClear = 1.2;
-    b = sub(b, boxBrush(mod.l + pocketBackClear - MOD_POCKET_FRONT_INSET,
+    b = sub(b, boxBrush(mod.l + MOD_POCKET_BACK_CLEAR - MOD_POCKET_FRONT_INSET,
                         mod.w + POCKET_CLR, F2_PLATFORM + 2,
-                        mc.x - (pocketBackClear + MOD_POCKET_FRONT_INSET) / 2,
+                        mc.x - (MOD_POCKET_BACK_CLEAR + MOD_POCKET_FRONT_INSET) / 2,
                         mc.y, F2_PART_BASE));
   }
 
