@@ -611,7 +611,7 @@ const OLED_TYPES = {
   // → pz 22.1), 가로는 왼쪽 열만 우측 0.3(px 21.2 + 중심 ox 0.15) — 홀 그리드가 정사각이 아님.
   // 창 중심 13.5→14.5 ('구멍 살짝 더 위' 피드백)
   '096': { w: 25, hgt: 27.05, t: 3.5, winW: 23.2, winH: 12.4, winC: 14.5,
-           pegs: { px: 21.2, pz: 22.1, ox: 0.15, d: 1.8, len: 2.5 } },   // len 2.0→2.5 (더 길게)
+           pegs: { px: 21.2, pz: 22.1, ox: 0.15, d: 2.8, len: 2.5 } },   // Ø2.8: obj_2_Oled-Lid.stl 기둥 실측
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
 const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
@@ -1178,11 +1178,17 @@ function syncControls() {
 }
 
 // 프리셋 내보내기/불러오기 (전체 설정 JSON)
+function presetTimestamp(now = new Date()) {
+  const twoDigits = value => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${twoDigits(now.getMonth() + 1)}-${twoDigits(now.getDate())}`
+    + `_${twoDigits(now.getHours())}-${twoDigits(now.getMinutes())}-${twoDigits(now.getSeconds())}`;
+}
+
 document.getElementById('presetExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(P, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'dimsum-preset.json';
+  a.download = `dimsum-preset_${presetTimestamp()}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 });
