@@ -324,6 +324,7 @@ const STATIC_I18N = {
     optNfcF2: 'Layer 2 floor plate (2.0)', optNfcF1: 'Layer 1 floor plate — case bottom (1.6)',
     hintNfc: 'A round cavity buried inside a floor plate for an NFC sticker — nothing shows on the outside. Pause the print when the nozzle reaches the pocket floor height, drop the sticker in flat, and resume. Set the depth to the sticker thickness (0.4 → 0.5) so the next layer lands straight on the sticker instead of bridging the gap. The pocket floor height is where you pause: 0.6 = layer 3 at a 0.2 layer height, 0.8 = layer 4. Ø26.6 fits a round Ø26 sticker; a square 26×26 sticker needs Ø37 or more. <b>Which floor plate:</b> Layer 2 (2.0 thick) is the default; Layer 1 is the case bottom, so the sticker sits closest to the phone tapping the underside, but the plate is thinner (1.6) — keep the pocket floor + depth at 1.2 or less, and Layer 1 must be on. On Layer 2 the pocket nearly fills the floor at Ø26.6, so it sits off-center by default to clear the battery wire slot — the warnings tell you if it runs into the slot or the bottom joint groove.',
     optWire0: 'Horizontal (14×5)', optWire90: 'Vertical (5×14)', optWire90x17: 'Vertical (5×17)',
+    optWire8x17: 'Vertical (8×17)',
     hintLayout2: 'OLED Z is relative to its original Layer 2 position: negative values lower the OLED into Layer 1. At the minimum, the OLED module stays above the bottom plate while its housing extends to the outside bottom edge. The allowed minimum follows the current Layer 1 height. The housing, window, socket and wiring move together and are split cleanly at the layer joint for printing. Raising OLED protrusion pushes the pod outside the outline. <b>No battery</b> or turning off Layer 1 removes the battery and charge module and docks the ESP32 against the east wall for direct USB. <b>OLED separate pod</b> makes the OLED housing a separate printed part that slides into the aligned openings and rails.',
     secLayout3: 'Component layout (Layer 3)',
     lblBoss: 'Switch boss', lblBossH: 'Boss height', lblSink: 'Switch recess depth',
@@ -446,6 +447,7 @@ const STATIC_I18N = {
     optNfcF2: '2층 바닥판 (두께 2.0)', optNfcF1: '1층 바닥판 — 케이스 맨 밑 (두께 1.6)',
     hintNfc: 'NFC 스티커를 넣는 원형 자리를 바닥판 속에 파묻습니다 — 밖에서는 아무것도 보이지 않습니다. 노즐이 포켓 아래 살 높이에 도달하면 출력을 일시정지하고 스티커를 눕혀 넣은 뒤 재개하세요. 포켓 깊이를 스티커 두께에 맞추면(0.4 → 0.5) 다음 레이어가 빈 공간을 건너지 않고 스티커 위에 바로 얹힙니다. 아래 살 높이가 곧 일시정지 지점입니다: 레이어 높이 0.2 기준 0.6 = 3레이어, 0.8 = 4레이어. Ø26.6은 원형 Ø26 스티커용이며, 정사각 26×26 스티커라면 Ø37 이상이 필요합니다. <b>포켓을 넣을 층:</b> 기본은 2층 바닥판(두께 2.0)이고, 1층 바닥판은 케이스 맨 밑이라 바닥에 대고 태그할 때 스티커가 가장 가깝지만 판이 얇습니다(1.6) — 아래 살 + 깊이를 1.2 이하로 유지해야 하고 1층이 켜져 있어야 합니다. 2층에서는 Ø26.6이 바닥을 거의 채우기 때문에 기본 위치가 중앙이 아니라 배터리 배선구멍을 피해 살짝 치우쳐 있습니다 — 배선구멍이나 바닥 결합 홈에 닿으면 경고로 알려줍니다.',
     optWire0: '가로 (14×5)', optWire90: '세로 (5×14)', optWire90x17: '세로 (5×17)',
+    optWire8x17: '세로 (8×17)',
     hintLayout2: 'OLED Z는 기존 2층 위치를 0으로 한 값입니다. 음수로 내리면 OLED가 1층까지 내려가며, 최저 위치에서는 OLED 모듈은 바닥판 위에 남고 케이스 외곽은 제품의 바닥 끝까지 이어집니다. 최솟값은 현재 1층 높이에 맞춰집니다. 하우징·창·소켓·배선이 함께 이동하고 출력할 때는 층 결합면에서 정확히 나뉩니다. OLED 돌출을 올리면 포드가 외곽선 밖으로 나옵니다. <b>배터리 없음</b> 또는 <b>1층 끄기</b>는 배터리·충전모듈을 제거하고 ESP32를 동쪽 벽 USB 직결로 바꿉니다. <b>OLED 분리 포드</b>는 정렬된 개구와 레일에 끼우는 별도 출력 파트를 만듭니다.',
     secLayout3: '부품 배치 (3층)',
     lblBoss: '스위치 Boss', lblBossH: 'Boss 높이', lblSink: '스위치 매립 깊이',
@@ -586,10 +588,11 @@ const batFlatFoot = () => {
   return batFlatRot() ? { w: bs.W + bs.clr, d: bs.L + bs.clr }
                       : { w: bs.L + bs.clr, d: bs.W + bs.clr };
 };
-// 기존 저장값(숫자 0/90)과 새 5×17 선택값을 함께 지원한다.
+// 기존 저장값(숫자 0/90)과 확장 슬롯 선택값을 함께 지원한다.
 const wireSlotSize = () => {
   const mode = String(P.wireRot);
-  return mode === '90x17' ? { w: 5, d: 17 }
+  return mode === '8x17' ? { w: 8, d: 17 }
+       : mode === '90x17' ? { w: 5, d: 17 }
        : mode === '90' ? { w: 5, d: 14 }
        : { w: 14, d: 5 };
 };
@@ -701,7 +704,7 @@ function triPrism(len, hgt, w, yBack, zBase, m, apexR = 0) {
 // 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
 // f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
 //       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
-const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, sideSink: 2.5, ring: 4 };
+const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, sideSink: 3.15, ring: 4 };
 // 2층 부저: 소켓 바닥의 짧은 세로 홈에서 왼쪽으로 전선이 빠지는, 위에서 보이는 T자 홈.
 function bzCableTSpec() {
   return {
