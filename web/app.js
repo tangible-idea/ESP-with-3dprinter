@@ -348,7 +348,7 @@ const STATIC_I18N = {
     btnEx1: 'Layer 1.stl', btnEx2: 'Layer 2.stl', btnEx3: 'Layer 3.stl', btnEx4: 'Layer 4.stl',
     btnEx5: 'OLED pod.stl', btnEx6: 'OLED cover.stl', btnExOledTest: 'OLED test.stl',
     lblFlip3: 'Flip Layer 3 for printing',
-    hintExport: 'Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl is a piece cropped from Layer 2 around the OLED tower only — use it to quickly check the pocket, window, and pin fit without printing the whole part.',
+    hintExport: 'Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl crops the OLED area from the assembled Layer 1 and 2 geometry, joining a tower split across the layer boundary into one test part.',
     secPreset: 'Presets (save/load settings)',
     btnPresetExport: '⬇ Export (.json)', btnPresetImport: '⬆ Import',
     hintPreset: 'Save all current settings to a .json file, or load a saved file to restore them exactly. You can manage multiple designs as files.',
@@ -471,7 +471,7 @@ const STATIC_I18N = {
     btnEx1: '1층.stl', btnEx2: '2층.stl', btnEx3: '3층.stl', btnEx4: '4층.stl',
     btnEx5: 'OLED포드.stl', btnEx6: 'OLED커버.stl', btnExOledTest: 'OLED 테스트.stl',
     lblFlip3: '3층 출력용 뒤집기',
-    hintExport: '3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 2층에서 OLED 타워 주변만 잘라낸 조각으로, 전체를 뽑지 않고 포켓·창·핀 피팅을 빠르게 확인할 때 쓰세요.',
+    hintExport: '3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 조립된 1·2층 형상에서 OLED 주변을 잘라내며, 층 경계에서 나뉜 타워도 하나의 테스트 파트로 합쳐 저장합니다.',
     secPreset: '프리셋 (설정 저장/불러오기)',
     btnPresetExport: '⬇ 내보내기 (.json)', btnPresetImport: '⬆ 불러오기',
     hintPreset: '현재 모든 설정을 .json 파일로 저장하거나, 저장해둔 파일을 불러와 그대로 복원합니다. 여러 디자인을 파일로 관리할 수 있습니다.',
@@ -3676,17 +3676,41 @@ function exportFloor(i, name) {
   downloadSTL(geo, name);
 }
 
-// 테스트 내보내기: 2층에서 OLED 타워 주변만 크롭한 조각 — 전체 출력 없이 포켓·창·핀 피팅 확인용.
-// 분리 포드 모드면 소켓 레일·개구 구간이 잘려 나옴 (포드는 ex5로 따로)
+// 테스트 내보내기: 조립 위치의 1·2층에서 OLED 타워 주변만 크롭한 조각.
+// OLED가 층 경계에서 나뉘면 양쪽을 CSG 결합해 하나의 테스트 파트로 저장한다.
+// 분리 포드 모드면 같은 방식으로 소켓 레일·개구 구간이 잘려 나옴 (포드는 ex5로 따로)
 function exportOledTest() {
   if (!exportGeos[1] || P.oledSide === 'none') return;
   const { m, seatY, proud, outHalf } = oledFrame();
   const backY = seatY - oledSpec().t - 2.0 - 5;          // 소켓 뒤판까지 포함
   const frontY = outHalf + proud + 2;
-  const man = toMan(exportGeos[1]);
-  const crop = boxBrush(oledTowerW() + 8, frontY - backY, oledTowerTop() + 1,
-                        0, (frontY + backY) / 2, -0.3, 0, m);
-  const piece = inter(man, crop);
+  const base1 = f1BaseH();
+  const cropZ0 = -0.3;
+  const cropZ1 = base1 + oledTowerTop() + 1;
+  const crop = () => boxBrush(oledTowerW() + 8, frontY - backY, cropZ1 - cropZ0,
+                              0, (frontY + backY) / 2, cropZ0, 0, m);
+
+  // exportGeos[1]은 2층 로컬 좌표이므로 조립 높이로 이동한 다음 자른다.
+  let floor2 = toMan(exportGeos[1]);
+  if (base1 > 0) {
+    const assembled = floor2.translate([0, 0, base1]);
+    floor2.delete();
+    floor2 = assembled;
+  }
+  let piece = inter(floor2, crop());
+
+  // 내려간 OLED 타워/소켓의 하단은 1층 형상에 들어 있다. 같은 영역을 잘라
+  // 위쪽 조각과 union하여 슬라이서에서 하나의 연속 파트로 인식되게 한다.
+  if (P.f1On && exportGeos[0] && oledCaseBaseZ() < 0)
+    piece = add(piece, inter(toMan(exportGeos[0]), crop()));
+
+  // 결합 후 가장 낮은 면을 출력 베드(Z=0)에 놓는다.
+  const minZ = piece.boundingBox().min[2];
+  if (Math.abs(minZ) > 1e-6) {
+    const onBed = piece.translate([0, 0, -minZ]);
+    piece.delete();
+    piece = onBed;
+  }
   const geo = manToGeo(piece);
   piece.delete();
   downloadSTL(geo, 'oled_fit_test.stl');
