@@ -609,9 +609,11 @@ const OLED_TYPES = {
   '049': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 8.9 },
   // 096 실피팅 보정(7/19 3차): 포켓 25.5×27.25(가로세로 확정). 핀은 세로 벌림(위+0.3/아래−0.3
   // → pz 22.1), 가로는 왼쪽 열만 우측 0.3(px 21.2 + 중심 ox 0.15) — 홀 그리드가 정사각이 아님.
+  // 위쪽 두 핀만 각각 중앙으로 0.15, +Z로 0.15 추가 보정한다.
   // 창 중심 13.5→14.5 ('구멍 살짝 더 위' 피드백)
   '096': { w: 25, hgt: 27.05, t: 3.5, winW: 23.2, winH: 12.4, winC: 14.5,
-           pegs: { px: 21.2, pz: 22.1, ox: 0.15, d: 2.8, len: 2.5 } },   // Ø2.8: obj_2_Oled-Lid.stl 기둥 실측
+           pegs: { px: 21.2, pz: 22.1, ox: 0.15, topIn: 0.15, topUp: 0.15,
+                   d: 2.8, len: 2.5 } },   // Ø2.8: obj_2_Oled-Lid.stl 기둥 실측
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
 const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
@@ -1538,7 +1540,7 @@ const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3m
 const ESP_HEADER4 = { blockH: 2.3, pinBelow: 3.7, pinD: 0.65, holeD: 1.0,
                       railW: 3.0, endWall: 1.4 };
 const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
-const LIFT_USB_EXTRA_DEPTH = 2.2; // 뒤집힌 USB 셸 바닥에 추가로 주는 Z 방향 끼움 여유
+const LIFT_USB_EXTRA_DEPTH = 3.0; // 뒤집힌 USB 셸 아래를 0.8mm 바닥판까지 깊게 파는 끼움 여유
 const LIFT_USB_MIN_SKIN = F2_PLATE; // 깊게 파되 USB 홈 밑면에는 0.8mm 바닥판을 남김
 const LIFT_USB_SHELL_SIDE = 9.0, LIFT_USB_SHELL_H = 2.5;
 const LIFT_USB_FIT_CLR = 0.4;      // USB 셸 둘레 한쪽당 XY 끼움 여유
@@ -2173,9 +2175,12 @@ function oledCavityCut(b, withPegs, zShift = 0, clipZ0 = -100, clipZ1 = 100) {
     const pg = spec.pegs;
     const zc = seatZ + spec.hgt / 2;   // 포켓 중심 높이
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const upper = sz > 0;
+      const pegX = pg.ox + sx * (pg.px / 2 - (upper ? pg.topIn : 0));
+      const pegZ = zc + sz * pg.pz / 2 + (upper ? pg.topUp : 0);
       const peg = new THREE.CylinderGeometry(pg.d / 2, pg.d / 2 - 0.2, pg.len, 12);
-      peg.translate(pg.ox + sx * pg.px / 2, seatY - pg.len / 2 + 0.05,
-                    zc + sz * pg.pz / 2);   // 실린더 축 = y (벽 → 내부 방향)
+      peg.translate(pegX, seatY - pg.len / 2 + 0.05,
+                    pegZ);   // 실린더 축 = y (벽 → 내부 방향)
       peg.deleteAttribute('uv');
       let pin = toMan(peg, m);
       pin = inter(pin, boxBrush(200, 200, clipZ1 - clipZ0, 0, 0, clipZ0));
