@@ -705,6 +705,9 @@ function triPrism(len, hgt, w, yBack, zBase, m, apexR = 0) {
 // f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
 //       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
 const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, sideSink: 3.15, ring: 4 };
+const BZ_SIDE_PIN_DEPTH = 6.0;       // 눕힌 부저 핀이 +X 방향으로 들어가는 깊이
+const BZ_SIDE_VALLEY_LENGTH = BZ_SIDE_PIN_DEPTH * 2; // 위에서 선을 놓는 계곡형 홈: 핀 터널의 2배
+const BZ_SIDE_HOLDER_OVERLAP = 0.5; // 핀 터널 끝과 선 홀더가 확실히 이어지는 겹침
 // 2층 부저: 소켓 바닥의 짧은 세로 홈에서 왼쪽으로 전선이 빠지는, 위에서 보이는 T자 홈.
 function bzCableTSpec() {
   return {
@@ -772,7 +775,7 @@ const P = {
   wireX: -6, wireY: -12, wireRot: 0, swGpio: 3, sw2Gpio: 4, sdaGpio: 8, sclGpio: 9, swGap: 29,
   lidOn: true, lidH: 6,
   ledOn: true, ledType: '3', ledX: 0, ledY: -14.5, ledGpio: 7, led2Gpio: 6,
-  bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzPinPitch: 6.5, bzPinD: 1.5, bzGpio: 2,
+  bzOn: true, bzMount: 'f2', bzX: 8, bzY: -8, bzPinPitch: 6.5, bzPinD: 1.0, bzGpio: 2,
   // NFC 스티커 포켓 (바닥판 속에 파묻는 원형 자리) — 출력 중 일시정지해서 스티커를 넣고 덮는다.
   // nfcBase = 포켓 아래 살 두께(= 넣을 레이어 높이), nfcT = 포켓 깊이(스티커 두께 + 여유)
   // nfcFloor = 포켓이 들어갈 층('2' = 2층 바닥판, '1' = 1층 바닥판 = 케이스 맨 밑바닥)
@@ -781,13 +784,23 @@ const P = {
   nfcOn: true, nfcFloor: '2', nfcD: 26.6, nfcT: 0.5, nfcBase: 0.6, nfcX: 5.5, nfcY: 3,
   // 측면 텍스처 (Weave 1·2·3) — 바깥 옆면에만 무늬를 새김. texture.js 참고
   texKey: 'none', texDepth: 0.4, texTile: 12, texRes: 0.45,
-  pinRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
+  pinRev: 2, bzFitRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
 };
+
+// 예전 기본 Ø1.5/1.4 저장값과 프리셋만 새 기본 Ø1.0으로 옮기고 사용자 조절값은 유지한다.
+function migrateBuzzerFit(source) {
+  if (!source.bzFitRev || Number(source.bzFitRev) < 2) {
+    const oldDiameter = Number(source.bzPinD);
+    if (!('bzPinD' in source) || oldDiameter === 1.5 || oldDiameter === 1.4) P.bzPinD = 1.0;
+    P.bzFitRev = 2;
+  }
+}
 
 // 저장된 설정 복원 (localStorage)
 try {
   const saved = JSON.parse(localStorage.getItem('dimsum-params') || '{}');
   for (const k in saved) if (k in P) P[k] = saved[k];
+  migrateBuzzerFit(saved);
   if (!('wkOledOn' in saved) && 'wkLedOn' in saved) P.wkOledOn = saved.wkLedOn;
   // 운동 센서: 저장된 값이 항상 이깁니다. 리비전 마이그레이션은 TW802040 배치 이전
   // (wkRev < 3)의 옛 저장본만 되돌리고, 그 뒤로는 사용자가 맞춘 수치를 덮지 않습니다.
@@ -1204,6 +1217,7 @@ presetFile.addEventListener('change', e => {
       const obj = JSON.parse(r.result);
       let n = 0;
       for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
+      migrateBuzzerFit(obj);
       syncControls();
       applyProductUI();
       saveParams();
@@ -2066,15 +2080,39 @@ function buildFloor2() {
     c.translate(P.bzX, P.bzY, zc);
     c.deleteAttribute('uv');
     b = sub(b, toMan(c));
-    // 눕힌 몸통의 +X 끝면에서 나오는 두 핀을 축방향으로 받아준다.
+    // 눕힌 몸통의 +X 끝면에서 나오는 두 핀을 축방향으로 깊게 받아준다.
+    const pinX = P.bzX + BZ.h / 2 - 0.2;
     for (const sign of [-1, 1])
-      b = sub(b, bzPinHole(P.bzX + BZ.h / 2 - 0.2, P.bzY,
-                           zc + sign * P.bzPinPitch / 2, 4.2, true));
+      b = sub(b, bzPinHole(pinX, P.bzY,
+                           zc + sign * P.bzPinPitch / 2, BZ_SIDE_PIN_DEPTH, true));
+
+    // 핀 터널 위를 같은 폭으로 열어 좁은 계곡형 홈을 만든다. 원형 Ø는 유지하면서
+    // 길이 전체가 위에서 보여, 선을 터널 끝까지 밀어 넣지 않고 위에서 눌러 배치할 수 있다.
+    const valleyBottom = zc - P.bzPinPitch / 2 - P.bzPinD / 2 - 0.1;
+    const valleySurface = espLifted ? espLiftTopZ() : F2_PART_BASE + F2_PLATFORM;
+    const valleyTop = valleySurface + P.bzPinD / 2 + 0.2;
+    if (valleyTop > valleyBottom) {
+      b = sub(b, boxBrush(BZ_SIDE_VALLEY_LENGTH + 0.2, P.bzPinD,
+                          valleyTop - valleyBottom,
+                          pinX + BZ_SIDE_VALLEY_LENGTH / 2, P.bzY,
+                          valleyBottom, P.bzPinD / 2));
+    }
+
+    // 두 핀 터널의 끝을 둥근 세로 홈으로 연결한다. ESP32 방향 연장 조건과 무관하게
+    // 항상 남으므로, 핀에서 꺾은 두 가닥 선을 눌러 넣는 홀더가 사라지지 않는다.
+    const holderR = P.bzPinD / 2;
+    const holderH = P.bzPinPitch + P.bzPinD + 0.6;
+    const holder = new THREE.CylinderGeometry(holderR, holderR, holderH, 32);
+    holder.rotateX(Math.PI / 2);   // 기본 Y축 원통 → Z축
+    holder.translate(pinX + BZ_SIDE_PIN_DEPTH - BZ_SIDE_HOLDER_OVERLAP,
+                     P.bzY, zc);
+    holder.deleteAttribute('uv');
+    b = sub(b, toMan(holder));
+
     // 눕힌 부저에서 나온 전선을 ESP32의 낮은 안착면 윗부분에 놓는
-    // 얕은 반원형 T자 홈. 기존 Ø1.5 선 구멍과 같은 굵기로 이어 파낸다.
+    // 얕은 반원형 T자 홈. 현재 핀 구멍과 같은 굵기로 이어 파낸다.
     if (espLifted && P.espRot !== 90) {
-      const pinX = P.bzX + BZ.h / 2 - 0.2;
-      const tailX = pinX + 4.2 - 0.5; // 기존 아래쪽 핀 구멍 끝과 0.5mm 겹침
+      const tailX = pinX + BZ_SIDE_PIN_DEPTH - BZ_SIDE_HOLDER_OVERLAP;
       const headX = P.espX + USB_C_OFF - LIFT_USB_SHELL_SIDE / 2
                     - LIFT_USB_FIT_CLR - 0.1; // USB 셸 파임 바로 왼쪽
       if (headX > tailX + 2.5) {
