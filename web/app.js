@@ -610,11 +610,11 @@ const OLED_TYPES = {
   // 096 실피팅 보정(7/19 3차): 포켓 25.5×27.25(가로세로 확정). 핀은 세로 벌림(위+0.3/아래−0.3
   // → pz 22.1), 가로는 왼쪽 열만 우측 0.3(px 21.2 + 중심 ox 0.15) — 홀 그리드가 정사각이 아님.
   // 위쪽 두 핀은 각각 중앙으로 0.15, +Z로 0.15 추가 보정한다.
-  // 아래 두 핀도 홀에 안 맞아 각각 중앙으로 0.15 당긴다(botIn).
+  // 아래 두 핀은 가로는 맞고 세로만 안 맞아 0.15 위(중앙 쪽)로 올린다(botUp).
   // 창 중심 13.5→14.5 ('구멍 살짝 더 위' 피드백)
   '096': { w: 25, hgt: 27.05, t: 3.5, winW: 23.2, winH: 12.4, winC: 14.5,
            pegs: { px: 21.2, pz: 22.1, ox: 0.15, topIn: 0.15, topUp: 0.15,
-                   botIn: 0.15, d: 2.8, len: 2.5 } },   // Ø2.8: obj_2_Oled-Lid.stl 기둥 실측
+                   botUp: 0.15, d: 2.8, len: 2.5 } },   // Ø2.8: obj_2_Oled-Lid.stl 기둥 실측
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
 const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
@@ -2184,8 +2184,9 @@ function oledCavityCut(b, withPegs, zShift = 0, clipZ0 = -100, clipZ1 = 100) {
     const zc = seatZ + spec.hgt / 2;   // 포켓 중심 높이
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       const upper = sz > 0;
-      const pegX = pg.ox + sx * (pg.px / 2 - (upper ? pg.topIn : pg.botIn || 0));
-      const pegZ = zc + sz * pg.pz / 2 + (upper ? pg.topUp : 0);
+      const pegX = pg.ox + sx * (pg.px / 2 - (upper ? pg.topIn : 0));
+      // 위 핀은 +Z(topUp), 아래 핀도 +Z(botUp) — 둘 다 중앙 쪽으로 올리는 보정
+      const pegZ = zc + sz * pg.pz / 2 + (upper ? pg.topUp : (pg.botUp || 0));
       const peg = new THREE.CylinderGeometry(pg.d / 2, pg.d / 2 - 0.2, pg.len, 12);
       peg.translate(pegX, seatY - pg.len / 2 + 0.05,
                     pegZ);   // 실린더 축 = y (벽 → 내부 방향)
