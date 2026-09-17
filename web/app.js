@@ -313,7 +313,7 @@ const STATIC_I18N = {
     lblBatPose: 'Battery placement', optBatFlat: 'Flat on Layer 1 (horizontal, long side X)',
     optBatFlatRot: 'Flat on Layer 1 (vertical, long side Y)', optBatStand: 'Upright on Layer 2 (slot-in)',
     lblBatX: 'Battery X (upright)',
-    lblOledType: 'OLED type', optOled096: '0.96" (pocket 25.5×27.3, 4-hole pin mount)',
+    lblOledType: 'OLED type', optOled096: '0.96" (pocket 25.5×27.3, slide-in from below)',
     lblOledSide: 'OLED position', optOledW: 'West wall (opposite USB)', optOledN: 'North wall (back)',
     optOledS: 'South wall (front)', optOledNone: 'None',
     lblOledZ: 'OLED Z position', lblOledProud: 'OLED protrusion', lblOledPod: 'OLED separate pod', lblOledCover: 'OLED back cover',
@@ -436,7 +436,7 @@ const STATIC_I18N = {
     lblBatPose: '배터리 배치', optBatFlat: '눕혀서 1층 (가로·긴 변 X)',
     optBatFlatRot: '눕혀서 1층 (세로·긴 변 Y)', optBatStand: '세워서 2층 (홈에 꽂기)',
     lblBatX: '배터리 X (세움)',
-    lblOledType: 'OLED 종류', optOled096: '0.96" (포켓 25.5×27.3, 4홀 핀 고정)',
+    lblOledType: 'OLED 종류', optOled096: '0.96" (포켓 25.5×27.3, 아래에서 끼움)',
     lblOledSide: 'OLED 위치', optOledW: '서쪽 벽 (USB 반대)', optOledN: '북쪽 벽 (뒤)',
     optOledS: '남쪽 벽 (앞)', optOledNone: '없음',
     lblOledZ: 'OLED Z 위치', lblOledProud: 'OLED 돌출', lblOledPod: 'OLED 분리 포드', lblOledCover: 'OLED 뒷면 커버',
@@ -607,14 +607,13 @@ const modSpec = () => MOD_TYPES[P.modType] || MOD_TYPES.generic;
 // OLED 종류별 실측 (win: 디스플레이 창, winC: 모듈 바닥 기준 창 중심 높이)
 const OLED_TYPES = {
   '049': { w: 15, hgt: 16, t: 2.4, winW: 13.5, winH: 8, winC: 8.9 },
-  // 096 실피팅 보정(7/19 3차): 포켓 25.5×27.25(가로세로 확정). 핀은 세로 벌림(위+0.3/아래−0.3
-  // → pz 22.1), 가로는 왼쪽 열만 우측 0.3(px 21.2 + 중심 ox 0.15) — 홀 그리드가 정사각이 아님.
-  // 위쪽 두 핀은 각각 중앙으로 0.15, +Z로 0.15 추가 보정한다.
-  // 아래 두 핀은 가로는 맞고 세로만 안 맞아 0.15 위(중앙 쪽)로 올린다(botUp).
+  // 096 실피팅 보정(7/19 3차): 포켓 25.5×27.25(가로세로 확정).
+  // 4홀 위치결정 핀은 정렬이 까다로워 폐기하고, 아래에서 밀어 올려 끼우는 슬라이드 채널로
+  // 바꿨다 — 앞은 안착면, 뒤는 rib 두 줄, 좌우는 포켓 벽, 위는 포켓 천장이 막고,
+  // 아래는 1층 상면이 그대로 마개 역할을 한다.
   // 창 중심 13.5→14.5 ('구멍 살짝 더 위' 피드백)
   '096': { w: 25, hgt: 27.05, t: 3.5, winW: 23.2, winH: 12.4, winC: 14.5,
-           pegs: { px: 21.2, pz: 22.1, ox: 0.15, topIn: 0.15, topUp: 0.15,
-                   botUp: 0.15, d: 2.8, len: 2.5 } },   // Ø2.8: obj_2_Oled-Lid.stl 기둥 실측
+           slide: { clr: 0.25, ribW: 4, ribD: 1.6 } },
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
 const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
@@ -1508,7 +1507,7 @@ function buildFloor1() {
     } else {
       const z0 = Math.max(0, P.f1H + oledCaseBaseZ());
       if (z0 < P.f1H) b = add(b, oledTowerSection(z0, P.f1H));
-      b = oledCavityCut(b, true, P.f1H, 0, P.f1H);
+      b = oledCavityCut(b, true, P.f1H, 0, P.f1H, F1_PLATE);
     }
   }
   if (nfcFits() && nfcOnF1()) b = nfcCut(b);   // 1층 바닥판(케이스 맨 밑)에 묻는 NFC 포켓
@@ -2001,7 +2000,7 @@ function buildFloor2() {
     } else {
       const z0 = Math.max(0, oledCaseBaseZ());
       if (oledTowerTop() > z0) b = add(b, oledTowerSection(z0, oledTowerTop()));
-      b = oledCavityCut(b, true, 0, 0, oledTowerTop() + 1);   // 포켓 + 창 + 핀
+      b = oledCavityCut(b, true, 0, 0, oledTowerTop() + 1, F2_PLATE);   // 포켓 + 창 + 슬라이드 rib
       // ESP32 포켓 우선: 타워 add로 메워진 부분을 다시 파내 ESP32 홈을 확보
       if (!espLifted) b = sub(b, espPocket());
     }
@@ -2160,16 +2159,21 @@ function buildFloor2() {
 }
 
 // OLED 포켓 + 디스플레이 창 + (096) 위치결정 핀 — 내장 타워와 분리 포드가 공용으로 사용.
-// withPegs: 핀은 벽쪽 안착면에 붙으므로 케이스(또는 내장 타워)에만 추가 — 포드에 넣으면 공중에 뜸
-function oledCavityCut(b, withPegs, zShift = 0, clipZ0 = -100, clipZ1 = 100) {
+// withRibs: 슬라이드 채널의 뒷벽 rib. 벽쪽 안착면 기준이라 케이스(또는 내장 타워)·포드 어디든
+// 그 파트가 안착면을 가질 때만 넣는다.
+function oledCavityCut(b, withRibs, zShift = 0, clipZ0 = -100, clipZ1 = 100, floorZ = -100) {
   const spec = oledSpec();
   const { m, seatY, proud, outHalf } = oledFrame();
   const seatZ = oledSeatZ() + zShift;
-  // 뒤에서 장착: OLED 전체가 내부에서 통째로 들어가는 포켓.
-  // 뒷면은 완전 개방(뒷벽 관통), 앞은 seatY 평면 + 디스플레이 창이 잡아줌. 위는 막힘.
+  // 아래에서 장착: OLED를 포켓 아래로 밀어 올려 끼운다.
+  // 뒷면은 개방(배선 통로), 앞은 seatY 평면 + 디스플레이 창, 위는 포켓 천장이 막음.
+  // 포켓 아래는 삽입 통로로 그 파트의 바닥판 상면까지 이어 판다 (바닥판 자체는 남긴다).
+  // 모듈이 이미 그보다 아래로 내려가 있으면 그대로 둔다.
+  const pocketZ0 = spec.slide ? Math.min(seatZ, floorZ) : seatZ;
+  const pocketTop = seatZ + spec.hgt + OLED_HCLR;
   const pocketD = spec.t + 2.2 + proud;   // 뒷벽까지 완전 관통 (돌출 시 삽입 터널 연장)
-  b = sub(b, boxBrush(spec.w + 0.5, pocketD, spec.hgt + OLED_HCLR,
-                      0, seatY - pocketD / 2, seatZ, 0, m));
+  b = sub(b, boxBrush(spec.w + 0.5, pocketD, pocketTop - pocketZ0,
+                      0, seatY - pocketD / 2, pocketZ0, 0, m));
   // 디스플레이 창 (seatY 평면에서 외벽까지 관통 — 곡면이면 깊은 터널)
   const winDepth = (outHalf - seatY) + P.wall + 2;
   const wg = new THREE.ExtrudeGeometry(rrShape(spec.winW, spec.winH, 1.5), { depth: winDepth, bevelEnabled: false, curveSegments: 12 });
@@ -2177,23 +2181,18 @@ function oledCavityCut(b, withPegs, zShift = 0, clipZ0 = -100, clipZ1 = 100) {
   wg.rotateX(-Math.PI / 2);
   wg.translate(0, seatY - 0.8, seatZ + spec.winC);
   b = sub(b, toMan(wg, m));
-  // 0.96": 모서리 4홀용 위치결정 핀 — 안착면에서 포켓으로 돌출.
-  // px/pz = 가로/세로 홀 그리드, ox = 가로 중심 오프셋 (실피팅 보정)
-  if (withPegs && spec.pegs) {
-    const pg = spec.pegs;
-    const zc = seatZ + spec.hgt / 2;   // 포켓 중심 높이
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const upper = sz > 0;
-      const pegX = pg.ox + sx * (pg.px / 2 - (upper ? pg.topIn : 0));
-      // 위 핀은 +Z(topUp), 아래 핀도 +Z(botUp) — 둘 다 중앙 쪽으로 올리는 보정
-      const pegZ = zc + sz * pg.pz / 2 + (upper ? pg.topUp : (pg.botUp || 0));
-      const peg = new THREE.CylinderGeometry(pg.d / 2, pg.d / 2 - 0.2, pg.len, 12);
-      peg.translate(pegX, seatY - pg.len / 2 + 0.05,
-                    pegZ);   // 실린더 축 = y (벽 → 내부 방향)
-      peg.deleteAttribute('uv');
-      let pin = toMan(peg, m);
-      pin = inter(pin, boxBrush(200, 200, clipZ1 - clipZ0, 0, 0, clipZ0));
-      b = add(b, pin);
+  // 0.96": 슬라이드 채널의 뒷벽 — 모듈 뒷면 양 가장자리만 받치는 rib 두 줄.
+  // 가운데는 비워 배선이 지나가고, rib이 포켓 전 높이를 지나므로 아래에서 밀어 올리는
+  // 동안 계속 가이드가 된다. 앞면(안착면)과의 간격 = 모듈 두께 + clr.
+  if (withRibs && spec.slide) {
+    const sl = spec.slide;
+    const ribY = seatY - spec.t - sl.clr;              // rib 앞면 = 모듈 뒷면
+    const ribX = spec.w / 2 - sl.ribW / 2;             // 모듈 폭 양 가장자리
+    for (const sx of [-1, 1]) {
+      let rib = boxBrush(sl.ribW, sl.ribD, pocketTop - pocketZ0,
+                         sx * ribX, ribY - sl.ribD / 2, pocketZ0, 0, m);
+      rib = inter(rib, boxBrush(200, 200, clipZ1 - clipZ0, 0, 0, clipZ0));
+      b = add(b, rib);
     }
   }
   return b;
@@ -2219,7 +2218,7 @@ function buildOledPod() {
   let tongue = boxBrush(oledTongueW(), tD, tTop - sill, 0, outHalf + proud - tD / 2, sill, 0, m);
   if (P.shape !== 'circle') tongue = inter(tongue, extrude(baseShape(-proud), tTop, 0));
   b = add(b, tongue);
-  b = oledCavityCut(b, true, 0, sill - 0.1, tTop + 0.1);   // 창 + 포켓 + (096) 위치결정 핀
+  b = oledCavityCut(b, true, 0, sill - 0.1, tTop + 0.1, sill);   // 창 + 포켓 + (096) 슬라이드 rib
   return b;
 }
 
