@@ -613,7 +613,7 @@ const OLED_TYPES = {
   // 아래는 1층 상면이 그대로 마개 역할을 한다.
   // 창 중심 13.5→14.5 ('구멍 살짝 더 위' 피드백)
   '096': { w: 25, hgt: 27.05, t: 3.5, winW: 23.2, winH: 12.4, winC: 14.5,
-           slide: { clr: 0.25, ribW: 4, ribD: 1.6 } },
+           slide: { clr: 0.25, ribW: 5, ribD: 1.6, bite: 0.8 } },
 };
 const OLED_HCLR = 0.2;   // OLED 세로(높이) 삽입 여유 — 헐렁하면 빠지므로 타이트하게
 const OLED_FACE_T = 0.6; // OLED 앞(바깥) 벽 두께 — 매우 얇게 (0.4 노즐 기준 한계 근처)
@@ -2184,10 +2184,13 @@ function oledCavityCut(b, withRibs, zShift = 0, clipZ0 = -100, clipZ1 = 100, flo
   // 0.96": 슬라이드 채널의 뒷벽 — 모듈 뒷면 양 가장자리만 받치는 rib 두 줄.
   // 가운데는 비워 배선이 지나가고, rib이 포켓 전 높이를 지나므로 아래에서 밀어 올리는
   // 동안 계속 가이드가 된다. 앞면(안착면)과의 간격 = 모듈 두께 + clr.
+  // 바깥 끝은 포켓 벽을 bite 만큼 파고들어 타워 몸통과 한 몸이 된다 — 안 그러면
+  // 포켓 안에 떠 있는 판이 되어 출력 중 떨어진다.
   if (withRibs && spec.slide) {
     const sl = spec.slide;
     const ribY = seatY - spec.t - sl.clr;              // rib 앞면 = 모듈 뒷면
-    const ribX = spec.w / 2 - sl.ribW / 2;             // 모듈 폭 양 가장자리
+    const ribOuter = spec.w / 2 + 0.25 + sl.bite;      // 포켓 반폭(w/2+0.25) + 물림
+    const ribX = ribOuter - sl.ribW / 2;
     for (const sx of [-1, 1]) {
       let rib = boxBrush(sl.ribW, sl.ribD, pocketTop - pocketZ0,
                          sx * ribX, ribY - sl.ribD / 2, pocketZ0, 0, m);
