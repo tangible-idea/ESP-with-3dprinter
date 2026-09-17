@@ -334,10 +334,10 @@ const STATIC_I18N = {
     optLed3: '3mm round (hole Ø3.3, protrusion ~1.2)', optLed4: '4mm round (hole Ø4.3, protrusion ~2.6)',
     optLed5: '5mm round (hole Ø5.3, protrusion ~4.5)', optLedR25: '2×5 rect two-tone 3-pin (hole 2.3×5.3, protrusion ~3.8)',
     lblBz: 'Buzzer (Ø12 piezo)', lblBzMount: 'Buzzer mount',
-    optBzF2: 'Layer 2 floor upright (recess + ring)', optBzF2s: 'Layer 2 floor laid down (half-round groove)',
+    optBzF2: 'Layer 2 floor upright (recess + ring)', optBzF2s: 'Layer 2 floor laid down (pin holes both ways)',
     optBzF3: 'Layer 3 ceiling (sleeve hang)', lblBzX: 'Buzzer X', lblBzY: 'Buzzer Y',
     lblBzPinPitch: 'Buzzer pin spacing', lblBzPinD: 'Buzzer pin hole Ø',
-    hintBzPins: 'Two thin pin holes follow the Layer 2 buzzer mount. Measure your buzzer\'s pin spacing before printing. Layer 3 leaves the pins in open space.',
+    hintBzPins: 'Thin pin holes follow the Layer 2 buzzer mount. Laid down, all four holes (vertical and horizontal) are cut, so at assembly you can insert the buzzer as is or rotated 90° — rotated, both pins sit at the same height and every wire drops in from above. Measure your buzzer\'s pin spacing before printing. Layer 3 leaves the pins in open space.',
     hintLayout3: 'The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each). The OLED back cover is a separate part that plugs its tongue into a groove in the Layer 3 top plate — it only appears when the OLED tower rises above Layer 3 and leaves the pocket back exposed.',
     secTex: 'Side texture', btnTexNone: 'None',
     lblTexDepth: 'Depth', lblTexTile: 'Pattern size', lblTexRes: 'Detail (mm/triangle)',
@@ -457,10 +457,10 @@ const STATIC_I18N = {
     optLed3: '3mm 원형 (구멍 Ø3.3, 돌출 ~1.2)', optLed4: '4mm 원형 (구멍 Ø4.3, 돌출 ~2.6)',
     optLed5: '5mm 원형 (구멍 Ø5.3, 돌출 ~4.5)', optLedR25: '2×5 사각 투톤 3핀 (구멍 2.3×5.3, 돌출 ~3.8)',
     lblBz: '부저 (Ø12 피에조)', lblBzMount: '부저 장착',
-    optBzF2: '2층 바닥 세움 (리세스 + 링)', optBzF2s: '2층 바닥 눕힘 (반원 홈)',
+    optBzF2: '2층 바닥 세움 (리세스 + 링)', optBzF2s: '2층 바닥 눕힘 (핀 상하+좌우)',
     optBzF3: '3층 천장 (슬리브 매달림)', lblBzX: '부저 X', lblBzY: '부저 Y',
     lblBzPinPitch: '부저 핀 간격', lblBzPinD: '부저 핀 구멍 Ø',
-    hintBzPins: '2층 부저 장착 방향에 맞춰 얇은 핀 구멍 두 개를 뚫습니다. 출력 전 실물 부저의 핀 간격을 재 주세요. 3층 매달림은 핀이 빈 공간을 향합니다.',
+    hintBzPins: '2층 부저 장착 방향에 맞춰 얇은 핀 구멍을 뚫습니다. 눕힘은 위아래·좌우 네 구멍을 모두 파므로 조립할 때 부저를 그대로 끼우거나 90° 돌려 끼울 수 있습니다 — 돌려 끼우면 두 핀이 같은 높이에 와서 배선을 전부 위에서 눌러 넣습니다. 출력 전 실물 부저의 핀 간격을 재 주세요. 3층 매달림은 핀이 빈 공간을 향합니다.',
     hintLayout3: 'MX 스위치가 홀더 포켓(14.3각)에 꽂히고, 바닥에 중앙 기둥 구멍 1개 + 구리선 구멍 4개가 뚫립니다(아래로 깔때기). 매립 깊이가 클수록 스위치가 깊게 파묻힙니다. Boss = 뚜껑 위 볼록 받침. LED(3/4/5mm 원형)는 3층 상판의 몸통+0.3 구멍에 아래(2층 쪽)에서 꽂습니다 — 플랜지가 밑면에 걸려 돔 끝만 돌출(크기별 1.2/2.6/4.5), 다리는 ESP32로 연결(LED+ 파란 전선 우클릭으로 GPIO 변경, 저항 150~220Ω 권장). 2×5 사각 투톤(3핀, 피치 2.54)은 몸통이 바닥과 같은 높이까지 들어가 위로 ~3.8 돌출 — 가운데 핀이 공통 캐소드(GND), 양쪽이 빨강/초록 애노드(각각 파란/청록 전선 우클릭으로 GPIO 변경, 저항 각 150~220Ω). OLED 뒷면 커버는 3층 상판 홈에 텅을 꽂는 별도 출력 파트입니다 — OLED 타워가 3층 위로 올라와 포켓 뒷면이 노출될 때만 나타납니다.',
     secTex: '측면 텍스처', btnTexNone: '없음',
     lblTexDepth: '깊이', lblTexTile: '무늬 크기', lblTexRes: '디테일 (mm/삼각형)',
@@ -705,7 +705,9 @@ function triPrism(len, hgt, w, yBack, zBase, m, apexR = 0) {
 }
 // 수동 피에조 부저 (Ø12 × 8.3): f3 = 3층 천장 슬리브에 매달림(상판 안 뚫음) / f2 = 2층 바닥 리세스+가이드 링
 // f2s = 2층 바닥에 옆으로 눕힘(축 X) — sideSink 만큼 반원 크래들로 파묻히고,
-//       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄
+//       상단이 2층을 넘으면 3층의 겹치는 부분(컵·상판)도 같은 자리만큼 파냄.
+//       핀 구멍은 위아래·좌우 네 곳을 다 파서, 조립할 때 부저를 그대로 끼우거나
+//       90° 돌려 끼울 수 있다 (돌리면 두 핀이 같은 높이 → 배선이 전부 위에서)
 const BZ = { d: 12, h: 8.3, clr: 0.25, wall: 1.6, sink: 1.8, sideSink: 3.15, ring: 4 };
 const BZ_SIDE_PIN_DEPTH = 6.0;       // 눕힌 부저 핀이 +X 방향으로 들어가는 깊이
 const BZ_SIDE_VALLEY_LENGTH = BZ_SIDE_PIN_DEPTH * 2; // 위에서 선을 놓는 계곡형 홈: 핀 터널의 2배
@@ -733,7 +735,7 @@ const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두�
 const MOD_USB_MIN_WALL = 0.4;          // 충전모듈 포켓 앞쪽 최소 벽살
 const MOD_USB_SHELL_GAP = 0.4;         // 충전모듈 USB 셸 끝에서 외벽까지 목표 거리
 const MOD_POCKET_FRONT_INSET = 0.8;    // USB 셸보다 뒤에 있는 PCB 끝에 맞춰 포켓 앞면을 물림
-const MOD_POCKET_BACK_CLEAR = 1.3;     // PCB 길이 공차: USB 반대쪽으로 0.1mm 추가 여유
+const MOD_POCKET_BACK_CLEAR = 1.5;     // PCB 길이 공차: USB 반대쪽으로 여유 (실물이 덜 들어가 +0.2)
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
@@ -2090,33 +2092,47 @@ function buildFloor2() {
     c.deleteAttribute('uv');
     b = sub(b, toMan(c));
     // 눕힌 몸통의 +X 끝면에서 나오는 두 핀을 축방향으로 깊게 받아준다.
+    // 부저를 그대로 끼우면 핀이 위아래(z ± pitch/2), 축 중심으로 90° 돌려 끼우면
+    // 같은 높이에 좌우(y ± pitch/2)로 놓인다. 조립할 때 고르도록 네 구멍을 모두 판다 —
+    // 돌려 끼우면 한쪽 핀이 아래로 내려가지 않아 두 가닥 다 위에서 배선할 수 있다.
     const pinX = P.bzX + BZ.h / 2 - 0.2;
-    for (const sign of [-1, 1])
-      b = sub(b, bzPinHole(pinX, P.bzY,
+    for (const sign of [-1, 1]) {
+      b = sub(b, bzPinHole(pinX, P.bzY,                                  // 세움: 위아래
                            zc + sign * P.bzPinPitch / 2, BZ_SIDE_PIN_DEPTH, true));
+      b = sub(b, bzPinHole(pinX, P.bzY + sign * P.bzPinPitch / 2,        // 90° 회전: 좌우
+                           zc, BZ_SIDE_PIN_DEPTH, true));
+    }
 
     // 핀 터널 위를 같은 폭으로 열어 좁은 계곡형 홈을 만든다. 원형 Ø는 유지하면서
     // 길이 전체가 위에서 보여, 선을 터널 끝까지 밀어 넣지 않고 위에서 눌러 배치할 수 있다.
-    const valleyBottom = zc - P.bzPinPitch / 2 - P.bzPinD / 2 - 0.1;
+    // 위아래 배열은 가운데 한 줄(아래 핀까지), 좌우 배열은 핀마다 한 줄.
     const valleySurface = espLifted ? espLiftTopZ() : F2_PART_BASE + F2_PLATFORM;
     const valleyTop = valleySurface + P.bzPinD / 2 + 0.2;
-    if (valleyTop > valleyBottom) {
-      b = sub(b, boxBrush(BZ_SIDE_VALLEY_LENGTH + 0.2, P.bzPinD,
-                          valleyTop - valleyBottom,
-                          pinX + BZ_SIDE_VALLEY_LENGTH / 2, P.bzY,
-                          valleyBottom, P.bzPinD / 2));
+    const valley = (cy, z0) => boxBrush(BZ_SIDE_VALLEY_LENGTH + 0.2, P.bzPinD,
+                                        valleyTop - z0,
+                                        pinX + BZ_SIDE_VALLEY_LENGTH / 2, cy,
+                                        z0, P.bzPinD / 2);
+    const valleyBottomV = zc - P.bzPinPitch / 2 - P.bzPinD / 2 - 0.1;   // 위아래 배열
+    const valleyBottomH = zc - P.bzPinD / 2 - 0.1;                      // 좌우 배열
+    if (valleyTop > valleyBottomV) b = sub(b, valley(P.bzY, valleyBottomV));
+    if (valleyTop > valleyBottomH) {
+      for (const sign of [-1, 1])
+        b = sub(b, valley(P.bzY + sign * P.bzPinPitch / 2, valleyBottomH));
     }
 
-    // 두 핀 터널의 끝을 둥근 세로 홈으로 연결한다. ESP32 방향 연장 조건과 무관하게
-    // 항상 남으므로, 핀에서 꺾은 두 가닥 선을 눌러 넣는 홀더가 사라지지 않는다.
+    // 핀 터널의 끝을 둥근 홈으로 연결한다 — 세로(위아래 배열)·가로(좌우 배열) 십자.
+    // ESP32 방향 연장 조건과 무관하게 항상 남으므로, 핀에서 꺾은 두 가닥 선을
+    // 눌러 넣는 홀더가 사라지지 않는다.
     const holderR = P.bzPinD / 2;
     const holderH = P.bzPinPitch + P.bzPinD + 0.6;
-    const holder = new THREE.CylinderGeometry(holderR, holderR, holderH, 32);
-    holder.rotateX(Math.PI / 2);   // 기본 Y축 원통 → Z축
-    holder.translate(pinX + BZ_SIDE_PIN_DEPTH - BZ_SIDE_HOLDER_OVERLAP,
-                     P.bzY, zc);
-    holder.deleteAttribute('uv');
-    b = sub(b, toMan(holder));
+    const holderX = pinX + BZ_SIDE_PIN_DEPTH - BZ_SIDE_HOLDER_OVERLAP;
+    for (const vertical of [true, false]) {
+      const holder = new THREE.CylinderGeometry(holderR, holderR, holderH, 32);
+      if (vertical) holder.rotateX(Math.PI / 2);   // 기본 Y축 원통 → Z축
+      holder.translate(holderX, P.bzY, zc);
+      holder.deleteAttribute('uv');
+      b = sub(b, toMan(holder));
+    }
 
     // 눕힌 부저에서 나온 전선을 ESP32의 낮은 안착면 윗부분에 놓는
     // 얕은 반원형 T자 홈. 현재 핀 구멍과 같은 굵기로 이어 파낸다.
@@ -3315,10 +3331,10 @@ function updateWires() {
       const pinBz = espPin(...(ESP_PINS[P.bzGpio] || ESP_PINS[2]));
       const dm = (p, dst) => [(p[0] + dst[0]) / 2, (p[1] + dst[1]) / 2, (p[2] + dst[2]) / 2 + 3];
       let lA, lB;
-      if (P.bzMount === 'f2s') {   // 눕힘: 핀이 +X 끝면에 세로로
+      if (P.bzMount === 'f2s') {   // 눕힘: 핀이 +X 끝면에 같은 높이로 나란히
         const zc = z2b + F2_PART_BASE + F2_PLATFORM - BZ.sideSink + BZ.d / 2;
         const ex = P.bzX + BZ.h / 2 + 1;
-        lA = [ex, P.bzY, zc + P.bzPinPitch / 2]; lB = [ex, P.bzY, zc - P.bzPinPitch / 2];
+        lA = [ex, P.bzY + P.bzPinPitch / 2, zc]; lB = [ex, P.bzY - P.bzPinPitch / 2, zc];
       } else {
         const zLeg = P.bzMount === 'f3'
           ? G[2].position.z + P.f3H - F3_PLATE - BZ.h - 1
