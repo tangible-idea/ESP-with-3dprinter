@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import ManifoldModule from './vendor/manifold.js';
 import manifoldWasmUrl from './vendor/manifold.wasm?url';
@@ -344,10 +345,17 @@ const STATIC_I18N = {
     hintTex: 'Carves the texture into the outer side walls only — top and bottom faces, joint ridges and pocket walls stay untouched, so layers still stack and parts still fit. The pattern is only cut inward, so outer dimensions never grow. Picking a texture loads the pattern size and detail that suit that image (each one repeats a different number of times), so tune them after choosing. Smaller "Detail" means finer relief but many more triangles (slower rebuild, bigger STL). Textures from CNCKitchen/stlTexturizer.',
     secView: 'View', lblExplode: 'Explode ⟷ Assemble', btnAnim: '▶ Assembly animation', btnReset: 'Reset settings',
     hintViewTools: 'Components, wiring, X-ray and dimension toggles sit as icons in the top-left corner of the 3D view.',
-    secExport: 'STL export',
+    secExport: 'Export (STL / GLB)',
     btnEx1: 'Layer 1.stl', btnEx2: 'Layer 2.stl', btnEx3: 'Layer 3.stl', btnEx4: 'Layer 4.stl',
     btnEx5: 'OLED pod.stl', btnEx6: 'OLED cover.stl', btnExOledTest: 'OLED test.stl',
     lblFlip3: 'Flip Layer 3 for printing',
+    btnExGlb: '⬇ Assembled.glb', lblGlbInc: 'Include in the .glb',
+    glbF1: 'Layer 1', glbF2: 'Layer 2', glbF3: 'Layer 3', glbLid: 'Layer 4 (lid)',
+    glbGhosts: 'Components', glbChar: 'Dim sum character',
+    glbEmpty: '\u26a0 Nothing is selected for the .glb',
+    glbError: (msg) => `\u26a0 GLB export error: ${msg}`,
+    glbDone: (name) => `\u2713 ${name} saved`,
+    hintGlbExport: 'Saves every layer in its assembled position as one .glb. The checkboxes only filter the file, never the model \u2014 so you can leave the lid on (Layer 3 keeps its seating groove) and still export without it.',
     hintExport: 'Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl crops the OLED area from the assembled Layer 1 and 2 geometry, joining a tower split across the layer boundary into one test part.',
     secPreset: 'Presets (save/load settings)',
     btnPresetExport: '⬇ Export (.json)', btnPresetImport: '⬆ Import',
@@ -467,10 +475,17 @@ const STATIC_I18N = {
     hintTex: '바깥쪽 옆면에만 무늬를 새깁니다 — 위·아래 면, 결합 턱/홈, 포켓 안쪽 벽은 건드리지 않아서 층 결합과 부품 끼움이 그대로 유지됩니다. 무늬는 안쪽으로만 파내므로 바깥 치수가 커지지 않습니다. 무늬를 고르면 그 이미지에 맞는 무늬 크기·디테일이 자동으로 들어가니(이미지마다 반복 횟수가 다릅니다) 조절은 고른 뒤에 하세요. \'디테일\' 값이 작을수록 무늬가 선명해지지만 삼각형이 크게 늘어나 리빌드가 느려지고 STL이 커집니다. 텍스처 이미지 출처: CNCKitchen/stlTexturizer.',
     secView: '보기', lblExplode: '분해 ⟷ 조립', btnAnim: '▶ 조립 애니메이션', btnReset: '설정 초기화',
     hintViewTools: '부품·배선·반투명·치수 표시 토글은 3D 뷰 왼쪽 위 아이콘에 있습니다.',
-    secExport: 'STL 내보내기',
+    secExport: '내보내기 (STL / GLB)',
     btnEx1: '1층.stl', btnEx2: '2층.stl', btnEx3: '3층.stl', btnEx4: '4층.stl',
     btnEx5: 'OLED포드.stl', btnEx6: 'OLED커버.stl', btnExOledTest: 'OLED 테스트.stl',
     lblFlip3: '3층 출력용 뒤집기',
+    btnExGlb: '⬇ 조립본.glb', lblGlbInc: '.glb에 포함',
+    glbF1: '1층', glbF2: '2층', glbF3: '3층', glbLid: '4층(뚜껍)',
+    glbGhosts: '부품', glbChar: '딕섬 캐릭터',
+    glbEmpty: '⚠ .glb에 넣을 항목이 하나도 선택되지 않았습니다',
+    glbError: (msg) => `⚠ GLB 내보내기 오류: ${msg}`,
+    glbDone: (name) => `✓ ${name} 저장됨`,
+    hintGlbExport: '모든 층을 조립된 위치 그대로 한 개의 .glb로 저장합니다. 체크박스는 파일에서만 걸러내고 모델은 그대로입니다 — 뚜껍을 켜둔 채(3층 안착 홈은 그대로 파인 상태) 뚜껍만 빼고 내보낼 수 있습니다.',
     hintExport: '3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 조립된 1·2층 형상에서 OLED 주변을 잘라내며, 층 경계에서 나뉜 타워도 하나의 테스트 파트로 합쳐 저장합니다.',
     secPreset: '프리셋 (설정 저장/불러오기)',
     btnPresetExport: '⬇ 내보내기 (.json)', btnPresetImport: '⬆ 불러오기',
@@ -1278,15 +1293,20 @@ resize();
 const matCase = new THREE.MeshStandardMaterial({ color: 0xdec08c, roughness: 0.75, metalness: 0.02 });
 const matCaseX = new THREE.MeshStandardMaterial({ color: 0xdec08c, roughness: 0.75, transparent: true, opacity: 0.42 });
 const partMat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, transparent: true, opacity: 0.9 });
+// LED 렌즈: 투명 유리느낌(투과) + 색은 은은한 발광으로만 구분한다.
+const lensMat = (tint, emissive) => new THREE.MeshPhysicalMaterial({
+  color: tint, emissive, emissiveIntensity: 0.35,
+  roughness: 0.05, metalness: 0, transmission: 0.92, thickness: 1.4, ior: 1.52,
+  transparent: true, opacity: 0.55,
+});
 const MATS = {
   bat: partMat(0x8494a8), esp: partMat(0x33475c), mod: partMat(0xc0503c),
-  oled: partMat(0x1f9e86), stand: partMat(0x9061c2), face: partMat(0xf4d271),
-  led: new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xffc36b,
-    emissiveIntensity: 0.6, roughness: 0.25, transparent: true, opacity: 0.95 }),
-  ledR: new THREE.MeshStandardMaterial({ color: 0xffe3dc, emissive: 0xe0523c,   // 투톤 빨강 반쪽
-    emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
-  ledG: new THREE.MeshStandardMaterial({ color: 0xdff3e2, emissive: 0x3ca35a,   // 투톤 초록 반쪽
-    emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.95 }),
+  oled: partMat(0x14161a),                    // OLED 패널 — 실물처럼 검정
+  stand: partMat(0x2e6fd0),                   // MX 청축(파랑)
+  face: partMat(0xf4d271),
+  led: lensMat(0xffffff, 0xffc36b),
+  ledR: lensMat(0xffd9d0, 0xe0523c),   // 투톤 빨강 반쪽
+  ledG: lensMat(0xd6f0db, 0x3ca35a),   // 투톤 초록 반쪽
   bz: partMat(0x23272e), bzPin: partMat(0xb6bdc5), nfc: partMat(0xb98f3f),
 };
 
@@ -2591,7 +2611,9 @@ function placeGhosts() {
     sg.rotateZ(Math.PI);   // 핀 배치를 홀더 구멍(180° 장착 기준)에 정렬
     G[2].add(ghostMesh(sg, MATS.stand, T(0, oy, seatZ3 - SW.pinLen)));
     // 캐릭터: 바닥 공동(17.9각×10.7)이 스위치를 통째로 덮고 보스/컵 윗면에 얹힘
-    G[2].add(ghostMesh(ASSETS.face, MATS.face, T(0, oy, P.f3H + effBossH())));
+    const cg = ghostMesh(ASSETS.face, MATS.face, T(0, oy, P.f3H + effBossH()));
+    cg.userData.char = true;   // GLB 내보내기에서 캠릭터만 따로 뺀다
+    G[2].add(cg);
   }
   // LED: 원형(3/4/5mm)은 플랜지가 상판 밑면에 정지 → 원통부 + 돔 끝만 상판 위로 돌출.
   // 사각 투톤(2×5×7)은 몸통 바닥이 상판 밑면과 나란 → 위로 3.8 돌출. 빨강/초록 반쪽으로 표시
@@ -3719,10 +3741,7 @@ function updateInfo(ms, fit) {
 // STL 내보내기
 // ------------------------------------------------------------------
 const exporter = new STLExporter();
-function downloadSTL(geo, name) {
-  const mesh = new THREE.Mesh(geo);
-  const data = exporter.parse(mesh, { binary: true });
-  const blob = new Blob([data], { type: 'application/octet-stream' });
+function downloadBlob(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;
@@ -3730,6 +3749,11 @@ function downloadSTL(geo, name) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function downloadSTL(geo, name) {
+  const mesh = new THREE.Mesh(geo);
+  const data = exporter.parse(mesh, { binary: true });
+  downloadBlob(new Blob([data], { type: 'application/octet-stream' }), name);
 }
 
 function exportFloor(i, name) {
@@ -3794,6 +3818,85 @@ document.getElementById('ex4').addEventListener('click', () => exportFloor(3, 'f
 document.getElementById('ex5').addEventListener('click', () => exportFloor(4, 'oled_pod.stl'));
 document.getElementById('ex6').addEventListener('click', () => exportFloor(5, 'oled_back_cover.stl'));
 document.getElementById('exOledTest').addEventListener('click', exportOledTest);
+
+// ------------------------------------------------------------------
+// GLB 내보내기 — 모든 층을 조립 위치(분해 0) 그대로 한 파일로 묶는다.
+// 제외는 빌드가 아니라 내보내기 단계에서만 한다: 뚜껍을 끄면 3층 상판의 안착 홈까지
+// 사라지므로, '뚜껍 설정은 켜둔 채 파일에서만 빼는' 쓰임을 체크박스로 받는다.
+// glTF 규약은 Y-up 이라 씩 모델(Z-up)을 루트에서 한 번 누여 어느 뷰어에서든 서 있게 한다.
+// ------------------------------------------------------------------
+const glbExporter = new GLTFExporter();
+const glbInc = id => { const el = document.getElementById(id); return el ? el.checked : true; };
+//   0=1층 1=2층 2=3층 3=뚜껍 4=OLED 포드(2층에 딸림) 5=OLED 커버(3층에 딸림)
+const GLB_PART_GATE = ['glbF1', 'glbF2', 'glbF3', 'glbLid', 'glbF2', 'glbF3'];
+const GLB_GROUP_NAMES = ['floor1', 'floor2', 'floor3', 'lid', 'oled_cover'];
+const GLB_PART_NAMES = ['floor1', 'floor2', 'floor3', 'lid', 'oled_pod', 'oled_cover'];
+
+function glbKeeps(obj) {
+  const part = floorMeshes.indexOf(obj);
+  if (part >= 0) return glbInc(GLB_PART_GATE[part]);
+  if (!obj.userData.ghost) return false;
+  return glbInc('glbGhosts') && (!obj.userData.char || glbInc('glbChar'));
+}
+
+function buildGlbRoot() {
+  const base1 = f1BaseH();
+  const zOf = [0, base1, base1 + P.f2H, base1 + P.f2H + P.f3H - RIDGE_H, base1 + P.f2H];
+  const root = new THREE.Group();
+  root.name = 'dimsum_clicker';
+  root.rotation.x = -Math.PI / 2;   // Z-up → Y-up
+  for (let gi = 0; gi < G.length; gi++) {
+    const grp = new THREE.Group();
+    grp.name = GLB_GROUP_NAMES[gi];
+    grp.position.z = zOf[gi];       // 분해 슬라이더와 무관하게 항상 조립 위치
+    for (const child of G[gi].children) {
+      if (!glbKeeps(child)) continue;
+      const c = child.clone();
+      c.visible = true;             // 부품 표시를 꺼두고 내보낼 수 있게
+      const part = floorMeshes.indexOf(child);
+      c.name = part >= 0 ? GLB_PART_NAMES[part]
+                         : (child.userData.char ? 'character' : 'component');
+      if (part >= 0) c.material = matCase;   // 반투명(X-ray)은 보기 보조일 뿐 — 파일에는 담지 않는다
+      grp.add(c);
+    }
+    if (grp.children.length) root.add(grp);
+  }
+  return root;
+}
+
+function glbBuffer() {
+  return new Promise((resolve, reject) => {
+    const root = buildGlbRoot();
+    if (!root.children.length) { reject(new Error(t('glbEmpty'))); return; }
+    glbExporter.parse(root, resolve, reject, { binary: true, onlyVisible: false });
+  });
+}
+
+function exportGLB(name = 'dimsum_clicker.glb') {
+  const warn = document.getElementById('warnings');
+  glbBuffer().then(buf => {
+    downloadBlob(new Blob([buf], { type: 'model/gltf-binary' }), name);
+    warn.textContent = t('glbDone', name);
+  }).catch(err => {
+    warn.textContent = t('glbError', (err && err.message) || err);
+    console.error(err);
+  });
+}
+document.getElementById('exGlb').addEventListener('click', () => exportGLB());
+
+// 스크립트용 훅 — 콘솔이나 자동화에서 버튼과 같은 파일을 얻고,
+// dev 서버의 /__save 로 프로젝트 안에 바로 저장할 수 있게 한다.
+window.dimsumGLB = {
+  buffer: glbBuffer,
+  download: exportGLB,
+  async save(relPath) {
+    const buf = await glbBuffer();
+    const r = await fetch(`/__save?name=${encodeURIComponent(relPath)}`,
+                          { method: 'POST', body: buf });
+    if (!r.ok) throw new Error(await r.text());
+    return r.text();
+  },
+};
 
 // ------------------------------------------------------------------
 // 제품 선택(딤섬 / 투두 / 운동 센서) — 메뉴 섹션 표시 전환 + 리빌드

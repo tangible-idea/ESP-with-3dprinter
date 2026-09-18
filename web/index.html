@@ -436,6 +436,15 @@
       </div>
       <div class="row" style="margin-top:8px"><label data-i18n="lblFlip3">Flip Layer 3 for printing</label><input type="checkbox" id="flip3" checked></div>
       <div class="hint" data-i18n="hintExport">Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl crops the OLED area from the assembled Layer 1 and 2 geometry, joining a tower split across the layer boundary into one test part.</div>
+      <div class="btns" style="margin-top:10px"><button class="ghost" id="exGlb" data-i18n="btnExGlb">⬇ Assembled.glb</button></div>
+      <div class="row"><label data-i18n="lblGlbInc">Include in the .glb</label></div>
+      <div class="row"><label data-i18n="glbF1">Layer 1</label><input type="checkbox" id="glbF1" checked></div>
+      <div class="row"><label data-i18n="glbF2">Layer 2</label><input type="checkbox" id="glbF2" checked></div>
+      <div class="row"><label data-i18n="glbF3">Layer 3</label><input type="checkbox" id="glbF3" checked></div>
+      <div class="row"><label data-i18n="glbLid">Layer 4 (lid)</label><input type="checkbox" id="glbLid" checked></div>
+      <div class="row"><label data-i18n="glbGhosts">Components</label><input type="checkbox" id="glbGhosts" checked></div>
+      <div class="row"><label data-i18n="glbChar">Dim sum character</label><input type="checkbox" id="glbChar" checked></div>
+      <div class="hint" data-i18n="hintGlbExport">Saves every layer in its assembled position as one .glb.</div>
     </div>
   </details>
 
