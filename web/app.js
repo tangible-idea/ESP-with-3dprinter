@@ -750,7 +750,7 @@ const USB_MIN_WALL = 1.0;             // 리세스 후 반드시 남길 벽 두�
 const MOD_USB_MIN_WALL = 0.4;          // 충전모듈 포켓 앞쪽 최소 벽살
 const MOD_USB_SHELL_GAP = 0.4;         // 충전모듈 USB 셸 끝에서 외벽까지 목표 거리
 const MOD_POCKET_FRONT_INSET = 0.8;    // USB 셸보다 뒤에 있는 PCB 끝에 맞춰 포켓 앞면을 물림
-const MOD_POCKET_BACK_CLEAR = 1.5;     // PCB 길이 공차: USB 반대쪽으로 여유 (실물이 덜 들어가 +0.2)
+const MOD_POCKET_BACK_CLEAR = 2.0;     // PCB 길이 공차: TP4056 포켓 전체 길이 28.2mm
 const POCKET_CLR = 0.4;
 
 // ------------------------------------------------------------------
@@ -1995,7 +1995,7 @@ function buildFloor2() {
     }
   }
   // 충전모듈 포켓: USB 셸은 전용 관통 구멍에 들어가므로 PCB 홈의 앞면만 0.8mm 물린다.
-  // 뒤쪽은 실물 길이 공차를 위해 1.3mm 여유를 둔다. 앞 모서리를 둥글리면 목표 0.4mm보다
+  // 뒤쪽은 실물 길이 공차를 위해 2.0mm 여유를 둔다. 앞 모서리를 둥글리면 목표 0.4mm보다
   // 벽살이 더 두꺼워지므로 포켓은 직각으로 절삭한다.
   if (!noBat()) {
     const mc = modCenter();
