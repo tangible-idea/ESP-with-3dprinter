@@ -16,7 +16,7 @@ export function initWorkout(env) {
   // 긴 변 양쪽의 폭 2.6mm 날개(패드 열)는 부품이 없어 걸림턱으로 눌러 잡을 수 있다.
   const CHARGER = { w: 27, d: 17.3, h: 4.0, pcb: 1.2, wing: 2.6 };
   const HALL = { w: 19, h: 15 };       // KY-035 PCB: X=19, 세움 높이 Z=15
-  const MAG = { w: 30, d: 10, h: 2 };
+  const MAG = { w: 30, d: 10 };   // 두께는 실측값(P.wkMagH)
   const OLED = { w: 25, d: 27.05, h: 3.5, winW: 23.2, winD: 12.4, winY: 0.975 };
   const CLR = 0.4;
   const OLED_CLR = 0.4, OLED_RIM = 1.6, OLED_RIM_H = 4.2;
@@ -84,7 +84,7 @@ export function initWorkout(env) {
     return {
       W, D, baseH, wall, innerW, innerHalfD, mpu, gap, chargerX, mpuX,
       hallY, hallInnerY, batteryY, magnetY, hallT: P.wkHallT,
-      magnetZ: P.wkMagSkin, batteryZ: P.wkMagSkin + MAG.h + 0.2,
+      magnetZ: P.wkMagSkin, batteryZ: P.wkMagSkin + P.wkMagH + 0.2,
     };
   }
 
@@ -97,7 +97,7 @@ export function initWorkout(env) {
   function buildBase() {
     const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
     let body = boxBrush(q.W, q.D, q.baseH, 0, 0, 0, r);
-    body = sub(body, boxBrush(MAG.w + CLR, MAG.d + CLR, MAG.h + 0.25,
+    body = sub(body, boxBrush(MAG.w + CLR, MAG.d + CLR, P.wkMagH + 0.25,
                               0, q.magnetY, q.magnetZ, 0.8));
     body = sub(body, boxBrush(BAT.w + CLR, BAT.d + CLR, q.baseH - q.batteryZ + 0.2,
                               0, q.batteryY, q.batteryZ, 1.4));
@@ -260,7 +260,7 @@ export function initWorkout(env) {
   }
 
   function placeGhosts(q) {
-    ghostBox(G[0], [MAG.w, MAG.d, MAG.h], [0, q.magnetY, q.magnetZ + MAG.h / 2], magnetMat);
+    ghostBox(G[0], [MAG.w, MAG.d, P.wkMagH], [0, q.magnetY, q.magnetZ + P.wkMagH / 2], magnetMat);
     ghostBox(G[0], [BAT.w, BAT.d, P.wkBatH], [0, q.batteryY, q.batteryZ + P.wkBatH / 2], MATS.bat);
     if (P.wkHallOn)
       ghostBox(G[0], [HALL.w, q.hallT, HALL.h], [0, q.hallY, 0.75 + HALL.h / 2], hallMat);
