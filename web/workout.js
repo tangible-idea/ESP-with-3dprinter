@@ -34,7 +34,7 @@ export function initWorkout(env) {
   // 파고들어오므로 그보다 POCKET_D + 여유만큼 두꺼워야 한다.
   const TRAY_TOP = 12.2, TRAY_FLOOR = 3.8, TRAY_FLOOR_TOP = TRAY_FLOOR;
   const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
-  const WIRE_SLOT = { w: 9.0, d: 3.5 };   // 배터리 배선 관통 슬롯 (X × Y)
+  // 배터리 배선 관통 슬롯 — 크기는 wkWireLen(X) × wkWireW(Y)로 조절한다.
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
   const USB_C = { w: 8.94, d: 3.26, over: 1.5 };
   const USB_SOCK_WALL = 1.2;
@@ -143,6 +143,21 @@ export function initWorkout(env) {
                           TRAY_TOP - TRAY_FLOOR, TRAY_FLOOR, r));
     // 모듈 자리: 바닥을 보드 외형대로 파서 떨어뜨려 넣는다. 깊이는 PCB 두께라
     // 보드 윗면이 바닥과 거의 나란해지고, 사방 벽이 그대로 자리잡기 역할을 한다.
+    // 납땜 릴리프: 보드 밑면 패드 열에 납이 볼록하게 남으면 보드가 뜬다. 그 줄을
+    // 바닥까지 아예 관통시켜 납이 얼마나 두껍든 걸리지 않게 한다. 단, 결합 홈
+    // (밑면에서 JOINT_H) 자리는 건드리지 않도록 바깥쪽 한계선 안으로 잘라 넣는다.
+    function solderRelief(t, edgeX, depthY, dir = -1) {
+      const sw = P.wkSolderW;
+      if (sw <= 0.1) return t;
+      const lim = jointDims(q).inW / 2 - 0.5;           // 결합 홈 안쪽 한계
+      const clamp = v => Math.max(-lim, Math.min(lim, v));
+      const a = clamp(edgeX), b = clamp(edgeX + dir * sw);
+      const x0 = Math.min(a, b), x1 = Math.max(a, b);
+      if (x1 - x0 < 0.4) return t;
+      return sub(t, boxBrush(x1 - x0, depthY, TRAY_FLOOR + 0.4,
+                             (x0 + x1) / 2, 0, -0.2, 0.3));
+    }
+
     // 칸막이 벽은 wkDivGrow 만큼 USB(-X) 쪽으로 더 두꺼워진다 — TP4056 포켓의 +X
     // 끝만 그만큼 짧아지고, USB 쪽 끝은 제자리라 커넥터 위치는 그대로다.
     const grow = P.wkDivGrow;
@@ -154,6 +169,10 @@ export function initWorkout(env) {
                               chgCx, 0, SEAT_Z, 0.6));
     tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, POCKET_D + 0.2,
                               q.mpuX, 0, SEAT_Z, 0.6));
+    // 칸막이 벽 양쪽(TP4056 오른쪽 끝 · MPU 왼쪽 끝)과 MPU 오른쪽 끝에 관통 슬롯.
+    tray = solderRelief(tray, chgCx + chgLen / 2, CHARGER.d + CLR, -1);
+    tray = solderRelief(tray, q.mpuX - (q.mpu.w + CLR) / 2, q.mpu.d + CLR, +1);
+    tray = solderRelief(tray, q.mpuX + (q.mpu.w + CLR) / 2, q.mpu.d + CLR, -1);
 
     // 칸막이 벽은 가운데 배선 홈(3.0)을 두고 막대 두 개(' - - ')만 남긴다. 막대 길이는
     // wkDivBar로 조절 — 값을 낮출수록 파인 곳이 바깥에서 중앙 쪽으로 밀려오고,
@@ -180,12 +199,13 @@ export function initWorkout(env) {
     // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
     // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
     // 안쪽 캐비티 안으로 잘라 넣는다.
-    const slotW = WIRE_SLOT.w, slotD = WIRE_SLOT.d;
+    const slotW = P.wkWireLen, slotD = P.wkWireW;
+    // 구멍이 커져 더 못 움직일 만큼 자리가 좁아지면 그냥 가운데로 붙인다.
     const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
     const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
+    const clampPos = (v, lim) => (lim <= 0 ? 0 : Math.max(-lim, Math.min(lim, v)));
     tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 0.4,
-                              Math.max(-limX, Math.min(limX, P.wkWireX)),
-                              Math.max(-limY, Math.min(limY, P.wkWireY)),
+                              clampPos(P.wkWireX, limX), clampPos(P.wkWireY, limY),
                               -0.2, Math.min(1.4, slotD / 2 - 0.1)));
     tray = sub(tray, usbCut(q));
     if (P.wkHallOn) {
