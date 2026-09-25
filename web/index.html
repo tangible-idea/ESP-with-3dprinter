@@ -160,7 +160,7 @@
     <summary data-i18n="secLayers">Layer heights</summary>
     <div class="body">
       <div class="row"><label data-i18n="lblF1On">Use Layer 1 (battery)</label><input type="checkbox" id="f1On" checked></div>
-      <div class="row"><label data-i18n="lblF1">Layer 1 (battery)</label><input type="range" id="f1H" min="6.5" max="14" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
+      <div class="row"><label data-i18n="lblF1">Layer 1 (battery)</label><input type="range" id="f1H" min="6.5" max="20" step="0.5" value="7.5"><span class="val" id="f1Hv"></span></div>
       <div class="row"><label data-i18n="lblF2">Layer 2 (board)</label><input type="range" id="f2H" min="9" max="26" step="0.5" value="16"><span class="val" id="f2Hv"></span></div>
       <div class="row"><label data-i18n="lblF3">Layer 3 (switch)</label><input type="range" id="f3H" min="7" max="16" step="0.5" value="10"><span class="val" id="f3Hv"></span></div>
       <div class="row"><label data-i18n="lblLid">Layer 4 (dim sum lid)</label><input type="checkbox" id="lidOn" checked></div>
@@ -209,6 +209,10 @@
       <div class="row"><label data-i18n="lblBatType">Battery capacity</label>
         <select id="batType">
           <option value="520" selected>520mAh (36.5×28.5×4.3)</option>
+          <option value="302030">302030 135mAh (32×20×4)</option>
+          <option value="14280" data-i18n="optBat14280">14280 350mAh (Ø14.2×28.2, cylindrical)</option>
+          <option value="16340" data-i18n="optBat16340">16340 (Ø16.7×37.4, cylindrical)</option>
+          <option value="10180" data-i18n="optBat10180">3.7V 10180 100mAh (Ø10×18, cylindrical)</option>
           <option value="650">650mAh (40×20×8)</option>
           <option value="none" data-i18n="optBatNone">No battery (ESP32 direct USB)</option>
         </select>
@@ -280,6 +284,8 @@
       <div class="row"><label data-i18n="lblBoss">Switch boss</label><input type="checkbox" id="bossOn" checked></div>
       <div class="row"><label data-i18n="lblBossH">Boss height</label><input type="range" id="bossH" min="0.5" max="5" step="0.5" value="2.5"><span class="val" id="bossHv"></span></div>
       <div class="row"><label data-i18n="lblSink">Switch recess depth</label><input type="range" id="standSink" min="0" max="5" step="0.2" value="2.5"><span class="val" id="standSinkv"></span></div>
+      <div class="row"><label data-i18n="lblSwX">Switch X</label><input type="range" id="swX" min="-18" max="18" step="0.5" value="0"><span class="val" id="swXv"></span></div>
+      <div class="row"><label data-i18n="lblSwY">Switch Y</label><input type="range" id="swY" min="-18" max="18" step="0.5" value="0"><span class="val" id="swYv"></span></div>
       <div class="row"><label data-i18n="lblSwGap">Switch spacing (double)</label><input type="range" id="swGap" min="22" max="36" step="0.5" value="29"><span class="val" id="swGapv"></span></div>
       <div class="row"><label data-i18n="lblPocketX">Pocket width (X)</label><input type="range" id="swBodyX" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyXv"></span></div>
       <div class="row"><label data-i18n="lblPocketY">Pocket depth (Y)</label><input type="range" id="swBodyY" min="13.5" max="15.5" step="0.05" value="14.3"><span class="val" id="swBodyYv"></span></div>
