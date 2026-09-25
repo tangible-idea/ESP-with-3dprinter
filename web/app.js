@@ -377,10 +377,11 @@ const STATIC_I18N = {
     // 운동 모션 센서
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
     lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkFit: 'Joint clearance',
-    lblWkMagSkin: 'Magnet skin', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
+    lblWkMagSkin: 'Magnet skin', lblWkMagH: 'Magnet thickness', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
+    lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
     lblWkSwOn: 'Power switch', lblWkSwY: 'Switch Y', lblWkSwZ: 'Switch height',
-    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB grip',
+    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB grip',
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
@@ -390,7 +391,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the display cradle faces up; use bridge-friendly settings or support under the ESP32-cage ceiling.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×2 magnet · 40×20×${P.wkBatH} cell · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
     wkRowOverlap: '⚠ TP4056 and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
     wkMpuDepthFit: d => `⚠ MPU6050 pocket needs at least ${d}mm on the short side`,
@@ -511,10 +512,11 @@ const STATIC_I18N = {
     // 운동 모션 센서
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
     lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkFit: '결합 유격',
-    lblWkMagSkin: '자석 앞 스킨', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
+    lblWkMagSkin: '자석 앞 스킨', lblWkMagH: '자석 두께', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
+    lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
     lblWkSwOn: '전원 스위치', lblWkSwY: '스위치 Y', lblWkSwZ: '스위치 높이',
-    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 물림',
+    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 물림',
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
@@ -524,7 +526,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 화면 받침이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장에 브리지 설정 또는 서포트를 사용하세요.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×2 자석 · 40×20×${P.wkBatH} 셀 · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
     wkRowOverlap: '⚠ TP4056과 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
     wkMpuDepthFit: d => `⚠ MPU6050 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
@@ -789,12 +791,13 @@ const P = {
   tWidth: 62, tEdge: 11.5, tClr: 0.6, tWall: 2.5, tBridge: 3, tRound: 3,
   tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
   // --- 운동 모션 센서 (30×10×2 자석 + MPU6050) ---
-  wkWidth: 49.5, wkLength: 31, wkBodyH: 11.5, wkWall: 1.6, wkFit: 0.15, wkMagSkin: 0.6,
+  wkWidth: 49.5, wkLength: 31, wkBodyH: 11.5, wkWall: 1.6, wkFit: 0.15, wkMagSkin: 0.6, wkMagH: 2.0,
   wkBatH: 4.0,   // 배터리 실측 두께 (802040 공칭 8.0이지만 실제 셀에 맞춰 조절)
-  wkWireX: -14.0, wkWireY: 7.5,   // 2층 바닥 배터리 배선 구멍 — TP4056 날개(패드 열) 밑
+  wkWireX: -14.0, wkWireY: 7.5, wkWireLen: 32.0, wkWireW: 18.0,   // 2층 바닥 배터리 배선 구멍 — TP4056 날개(패드 열) 밑
   wkDivGrow: 0.3,  // 칸막이 벽을 USB 쪽으로 더 두껍게 (TP4056 포켓의 +X 끝만 짧아짐)
   wkDivBar: 7.5,
   wkDivH: 1.0,     // 칸막이 막대를 바닥 위로 세우는 높이
+  wkSolderW: 2.5,   // 납땜 릴리프 관통 슬롯 폭 (0 = 없음)
   wkSwOn: true, wkSwY: 0, wkSwZ: 9.0,   // 전원 스위치 (SPDT 슬라이드, 창 8.4×3.6)   // 칸막이 막대 길이 (낮출수록 바깥에서 중앙 쪽으로 더 파임, 0=칸막이 없음)
   wkChgX: -0.5,    // TP4056 포켓 X 오프셋 (음수 = USB 쪽으로, 칸막이도 같이 이동)
   wkUsbY: 0,       // USB 구멍 Y 오프셋
@@ -852,9 +855,9 @@ try {
   // (wkRev < 3)의 옛 저장본만 되돌리고, 그 뒤로는 사용자가 맞춘 수치를 덮지 않습니다.
   if (!saved.wkRev || saved.wkRev < 3) Object.assign(P, {
     wkWidth: 49.5, wkLength: 31, wkBodyH: 11.5, wkWall: 1.6, wkBatH: 4.0,
-    wkFit: 0.15, wkMagSkin: 0.6, wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5,
+    wkFit: 0.15, wkMagSkin: 0.6, wkMagH: 2.0, wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5,
     wkHallGap: 1, wkHallT: 3.25, wkRev: 8,
-    wkWireX: -14.0, wkWireY: 7.5,
+    wkWireX: -14.0, wkWireY: 7.5, wkWireLen: 32.0, wkWireW: 18.0,
   });
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
   if (saved.batType === '650' && !('batPose' in saved)) P.batPose = 'stand';
@@ -882,7 +885,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkWireX','wkWireY','wkDivBar','wkDivH','wkDivGrow','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
