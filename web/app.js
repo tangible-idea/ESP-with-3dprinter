@@ -103,6 +103,7 @@ const I18N = {
     wEspStandTop: (h) => `⚠ Upright ESP32 (height ${h}) touches the Layer 3 top plate — increase Layer 2·3 heights`,
     wModWall: '⚠ Charge module overlaps the top/bottom wall',
     wModCurve: '⚠ Charge module doesn\'t fit the curved wall — move Y toward center',
+    wEspGpioMissing: (l) => `⚠ This board has no ${l} — right-click the wire to pick another pin`,
     wTp4056Power: '⚠ TP4056 OUT is battery voltage, not regulated 5V — verify the ESP32 power input or add a regulator, and set charge current for your cell',
     wEspModOverlap: '⚠ ESP32 and charge module pockets overlap — raising the lift (Layer 2.5) lets them coexist',
     wEspLiftLow: (lift, h, min) => `⚠ ESP32 lift (${lift}) is lower than the charge module height (${h}) — raise it to at least ${min}`,
@@ -224,6 +225,7 @@ const I18N = {
     wModCurve: '⚠ 충전모듈이 곡면 벽과 맞지 않습니다 — Y를 중앙 쪽으로 옮기세요',
     wEspModOverlap: '⚠ ESP32와 충전모듈 포켓이 겹칩니다 — 띄움(2.5층)을 올리면 공존 가능',
     wEspLiftLow: (lift, h, min) => `⚠ ESP32 띄움(${lift})이 충전모듈 높이(${h})보다 낮습니다 — ${min} 이상으로 올리세요`,
+    wEspGpioMissing: (l) => `⚠ 이 보드에는 ${l} 핀이 없습니다 — 전선 우클릭으로 다른 핀을 고르세요`,
     wTp4056Power: '⚠ TP4056 OUT은 안정화된 5V가 아닌 배터리 전압입니다 — ESP32 전원 입력을 확인하거나 승압 회로를 추가하고, 충전 전류를 배터리에 맞추세요',
     wEspLiftTop: '⚠ 띄운 ESP32가 3층 상판에 닿습니다 — 띄움을 줄이거나 층 높이를 키우세요',
     wBeamMod: '⚠ 2.5층 받침 선이 충전모듈 자리를 가로지릅니다 — ESP32 위치를 옮기세요',
@@ -297,13 +299,14 @@ const STATIC_I18N = {
     secLayout2: 'Component layout (Layer 2)',
     tCenter: 'Center', tCenterTitle: 'Center (Y=0)',
     tNfcCenter: 'Center NFC pocket', tNfcCenterTitle: 'Center the NFC pocket (X=0, Y=0)',
+    lblEspType: 'ESP32 board', optEspC3mini: 'ESP32-C3 supermini (24×18)', optEspXiao: 'Seeed XIAO ESP32C3 (22.7×18, USB +0.4)',
     lblEspRot: 'ESP32 rotation',
     optEsp0: 'Flat (24×18)', optEsp90: 'Flat rotated (18×24)',
     optEspS0: 'Upright-wide (24×5, h18)', optEspS90: 'Upright-tall (5×24, h18)',
     optEspU0: 'Upright-USB down (18×5, h24)', optEspU90: 'Upright-USB down tall (5×18, h24)',
     lblEspLift: 'ESP32 lift (Layer 2.5)', lblEspZ: 'ESP32 Z fine-tune',
     lblEspHeader4: 'ESP32 4-pin header mount',
-    hintEspHeader4: 'Uses the USB-end 5V, GND, 3V3 and GPIO4 holes. A 3.7mm pin socket plus the 2.3mm header block leaves 6mm below the board.',
+    hintEspHeader4: 'Uses the USB-end 5V, GND, 3V3 and GPIO4 holes (GPIO10 on XIAO). A 3.7mm pin socket plus the 2.3mm header block leaves 6mm below the board.',
     lblEspBarGap: 'ESP32 insertion bar clearance (mm)',
     hintEspBarGap: 'Long-axis gap between the two insertion bars: lower is tighter, higher is looser. Bar height and board Z position stay unchanged.',
     lblModType: 'Charge module', optModGeneric: 'Existing module (19×14×4.5)',
@@ -432,13 +435,14 @@ const STATIC_I18N = {
     secLayout2: '부품 배치 (2층)',
     tCenter: '중앙', tCenterTitle: '중앙 정렬 (Y=0)',
     tNfcCenter: 'NFC 포켓 중앙으로', tNfcCenterTitle: 'NFC 포켓을 바닥 중앙으로 (X=0, Y=0)',
+    lblEspType: 'ESP32 보드', optEspC3mini: 'ESP32-C3 supermini (24×18)', optEspXiao: 'Seeed XIAO ESP32C3 (22.7×18, USB +0.4)',
     lblEspRot: 'ESP32 회전',
     optEsp0: '가로 (24×18)', optEsp90: '세로 (18×24)',
     optEspS0: '세움-가로 (24×5, 높이 18)', optEspS90: '세움-세로 (5×24, 높이 18)',
     optEspU0: '세움-USB아래 (18×5, 높이 24)', optEspU90: '세움-USB아래-세로 (5×18, 높이 24)',
     lblEspLift: 'ESP32 띄움 (2.5층)', lblEspZ: 'ESP32 Z 미세조정',
     lblEspHeader4: 'ESP32 4핀 헤더 고정',
-    hintEspHeader4: 'USB 쪽 끝의 5V·GND·3V3·GPIO4 홀을 사용합니다. 3.7mm 핀 소켓과 2.3mm 헤더 블록을 합쳐 보드 아래 6mm를 확보합니다.',
+    hintEspHeader4: 'USB 쪽 끝의 5V·GND·3V3·GPIO4(XIAO는 GPIO10) 홀을 사용합니다. 3.7mm 핀 소켓과 2.3mm 헤더 블록을 합쳐 보드 아래 6mm를 확보합니다.',
     lblEspBarGap: 'ESP32 끼움 막대 간격 여유 (mm)',
     hintEspBarGap: '보드 길이 방향의 양끝 끼움 막대 사이 여유: 낮추면 타이트, 올리면 널널합니다. 막대 높이와 보드 Z 위치는 그대로입니다.',
     lblModType: '충전모듈', optModGeneric: '기존 모듈 (19×14×4.5)',
@@ -635,7 +639,13 @@ const wireSlotSize = () => {
        : { w: 14, d: 5 };
 };
 const espStand = () => !noBat() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
-const ESP = { l: 24, w: 18, h: 4.2, usbZ: 2.6 };   // usbZ = USB 셸 z중심 (실측 1.0~4.2)
+// ESP32 보드 종류. ESP 객체는 applyEspType()이 현재 선택으로 덮어쓴다(참조를 공유하는 곳이 많아 교체 대신 갱신).
+// xiao: Seeed XIAO ESP32C3 — 폭 동일, 길이 1.3 짧음, PCB가 0.4 두꺼워 USB·부품면이 통째로 0.4 올라감(사용자 실측)
+const ESP_TYPES = {
+  c3mini: { l: 24, w: 18, h: 4.2, usbZ: 2.6 },     // usbZ = USB 셸 z중심 (실측 1.0~4.2)
+  xiao:   { l: 22.7, w: 18, h: 4.6, usbZ: 3.0, pcbRise: 0.4 },
+};
+const ESP = { ...ESP_TYPES.c3mini };
 // 기존 STL은 칩/제품명이 없는 19×14 범용 모듈. TP4056은 운동 센서 설계의 USB-C 실측값.
 const MOD_TYPES = {
   generic: { l: 19, w: 14, h: 4.5, usbZ: 2.9, usbOver: 0.0 },
@@ -809,6 +819,7 @@ const P = {
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
   swX: 0, swY: 0, swBodyX: 14.3, swBodyY: 14.3, steamOn: true,
+  espType: 'c3mini',   // 'c3mini' ESP32-C3 supermini | 'xiao' Seeed XIAO ESP32C3
   espX: 0, espY: 8, espRot: 0, espLift: 0, espZ: 0,
   espHeader4On: true, espBarGap: 0.2,
   modType: 'generic', modY: -9, oledSide: 'W', oledType: '049', oledZ: 0, oledProud: 0,
@@ -1038,6 +1049,8 @@ document.getElementById('wireRot').value = String(P.wireRot);
 document.getElementById('oledSide').value = P.oledSide;
 document.getElementById('oledType').value = P.oledType;
 document.getElementById('oledType').addEventListener('change', e => { P.oledType = e.target.value; queueRebuild(); });
+document.getElementById('espType').value = P.espType;
+document.getElementById('espType').addEventListener('change', e => { P.espType = e.target.value; queueRebuild(); });
 document.getElementById('modType').value = P.modType;
 document.getElementById('modType').addEventListener('change', e => { P.modType = e.target.value; queueRebuild(); });
 document.getElementById('batType').value = P.batType;
@@ -1202,6 +1215,7 @@ function syncControls() {
   document.getElementById('oledSide').value = P.oledSide;
   document.getElementById('oledType').value = P.oledType;
   document.getElementById('modType').value = P.modType;
+  document.getElementById('espType').value = P.espType;
   document.getElementById('oledPodOn').checked = P.oledPodOn;
   document.getElementById('coverOn').checked = P.coverOn;
   document.getElementById('batType').value = P.batType;
@@ -1471,6 +1485,24 @@ function normalize(g, centerXY = true) {
   return g;
 }
 
+// supermini 메시를 변형해 다른 보드 고스트/절삭 형상을 만든다:
+// USB 셸 구간(x 0~9)은 그대로 두고 나머지 길이만 압축, 바닥면(z=0) 위 모든 점을 pcbRise만큼 올림(PCB 두꺼워짐).
+function espVariantGeo(base, spec) {
+  const g = base.clone();
+  const pos = g.attributes.position;
+  const L0 = ESP_TYPES.c3mini.l, keep = LIFT_USB_SHELL_LEN;
+  const k = (spec.l - keep) / (L0 - keep);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    if (x > keep) pos.setX(i, keep + (x - keep) * k);
+    if (z > 0.05) pos.setZ(i, z + (spec.pcbRise || 0));
+  }
+  pos.needsUpdate = true;
+  g.computeVertexNormals();
+  g.computeBoundingBox();
+  return g;
+}
+
 async function loadAssets() {
   const [usb, sw, bat, esp, mod, oled, face, bunLid] = await Promise.all([
     loadSTL(usbHoleUrl),
@@ -1495,6 +1527,7 @@ async function loadAssets() {
 
   ASSETS.bat = normalize(bat);
   ASSETS.esp = normalize(esp, false);   // min corner 기준 (USB는 -x 끝)
+  ASSETS.espVariants = { c3mini: ASSETS.esp, xiao: espVariantGeo(ASSETS.esp, ESP_TYPES.xiao) };
   ASSETS.mod = normalize(mod, false);
   ASSETS.oled = normalize(oled, false);
   ASSETS.face = normalize(face);
@@ -1592,7 +1625,7 @@ const LIFT_SHOULDER_H = 2.5; // ESP32 받침선 홈 양끝 턱 높이
 const LIFT_REAR_RISE = 3.0, LIFT_REAR_W = 2.2; // USB 반대쪽 삽입 턱만 3mm 더 높임
 const ESP_HEADER4 = { blockH: 2.3, pinBelow: 3.7, pinD: 0.65, holeD: 1.0,
                       railW: 3.0, endWall: 1.4 };
-const USB_C_OFF = 7.5;   // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽)
+let USB_C_OFF = 7.5;     // 보드 중심 → USB 셸 중심 오프셋 (뒤집힌 후 길이축 +쪽) = ESP.l/2 − 셸 길이/2
 // USB-C 셸 실측(esp32_c3_supermini.stl): 폭 9.0 × 돌출길이 9.0 × 높이 3.2
 const LIFT_USB_SHELL_SIDE = 9.0, LIFT_USB_SHELL_LEN = 9.0, LIFT_USB_SHELL_H = 3.2;
 const LIFT_USB_FIT_CLR = 0.25;     // USB 셸 둘레 한쪽당 XY 끼움 여유
@@ -1975,9 +2008,9 @@ function buildFloor2() {
       b = add(b, rearPlate);
     }
     if (espHeader4Active()) {
-      // 사진 기준 USB 쪽 끝의 5V·GND·3V3·GPIO4 연속 4핀.
+      // 사진 기준 USB 쪽 끝의 5V·GND·3V3·GPIO4(XIAO는 GPIO10) 연속 4핀.
       // 보드를 Y축으로 뒤집었으므로 로컬 X가 반전되고, 90° 회전도 그대로 적용한다.
-      const headerPins = [ESP_PINS['5V'], ESP_PINS.GND, ESP_PINS['3V3'], ESP_PINS[4]]
+      const headerPins = ESP_HEADER4_PINS.map(n => ESP_PINS[n])
         .map(([dx, dy]) => rot90
           ? [P.espX - dy, P.espY - dx]
           : [P.espX - dx, P.espY + dy]);
@@ -2866,6 +2899,7 @@ function retexture() {
 }
 
 function rebuild() {
+  applyEspType(P.product === 'dimsum' ? P.espType : 'c3mini');
   if (P.product === 'todo') { rebuildTodo(); return; }
   if (P.product === 'workout') { rebuildWorkout(); return; }
   status.classList.add('on');
@@ -3117,7 +3151,31 @@ const ESP_PINS = {
   5: [-9, -8], 6: [-6.5, -8], 7: [-4, -8], 8: [-1.5, -8], 9: [1, -8],
   10: [3.5, -8], 20: [6, -8], 21: [8.5, -8],
 };
-const ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+const ESP_PINS_C3MINI = { ...ESP_PINS };
+// Seeed XIAO ESP32C3 (USB가 -x 끝, 위에서 볼 때): +y열 5V,GND,3V3,D10(10),D9(9),D8(8),D7(20)
+// −y열 D0(2),D1(3),D2(4),D3(5),D4(6),D5(7),D6(21). 7핀×2.54, PCB(USB 돌출 1mm 제외) 중앙 기준
+const ESP_PINS_XIAO = (() => {
+  const px = i => +(0.5 + (i - 3) * 2.54).toFixed(2), y = 7.62, m = {};
+  ['5V', 'GND', '3V3', 10, 9, 8, 20].forEach((n, i) => { m[n] = [px(i), y]; });
+  [2, 3, 4, 5, 6, 7, 21].forEach((n, i) => { m[n] = [px(i), -y]; });
+  return m;
+})();
+let ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+// 4핀 헤더 마운트: USB 쪽 끝 연속 4핀 (supermini 5V·GND·3V3·GPIO4 / XIAO 5V·GND·3V3·GPIO10)
+let ESP_HEADER4_PINS = ['5V', 'GND', '3V3', 4];
+// 보드 종류 반영: 치수·메시·핀맵을 한꺼번에 교체 (투두/운동 제품은 항상 supermini)
+function applyEspType(type) {
+  const key = ESP_TYPES[type] ? type : 'c3mini';
+  for (const k of Object.keys(ESP)) delete ESP[k];
+  Object.assign(ESP, ESP_TYPES[key]);
+  USB_C_OFF = ESP.l / 2 - LIFT_USB_SHELL_LEN / 2;
+  if (ASSETS.espVariants) ASSETS.esp = ASSETS.espVariants[key];
+  const pins = key === 'xiao' ? ESP_PINS_XIAO : ESP_PINS_C3MINI;
+  for (const k of Object.keys(ESP_PINS)) delete ESP_PINS[k];
+  Object.assign(ESP_PINS, pins);
+  ALL_GPIOS = Object.keys(pins).filter(k => /^\d+$/.test(k)).map(Number).sort((a, b) => a - b);
+  ESP_HEADER4_PINS = key === 'xiao' ? ['5V', 'GND', '3V3', 10] : ['5V', 'GND', '3V3', 4];
+}
 // 우클릭으로 핀을 바꿀 수 있는 배선 (태그 → P 키/이름). ESP32-C3는 I2C 핀도 자유 지정 가능
 const GPIO_ROLES = {
   gpio: { key: 'swGpio', name: 'roleSwitch' },
@@ -3602,6 +3660,9 @@ function updateInfo(ms, fit) {
   if (!noBat() && P.shape !== 'circle' && Math.abs(P.modY) + (mod.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push(t('wModWall'));
   if (!noBat() && P.shape !== 'circle' && mc.edgeX < mod.l - 2) warn.push(t('wModCurve'));
   if (!noBat() && P.modType === 'tp4056') warn.push(t('wTp4056Power'));
+  const missingGpio = [...new Set(['swGpio', 'sdaGpio', 'sclGpio', 'ledGpio', 'led2Gpio', 'bzGpio']
+    .map(k => +P[k]).filter(n => !ALL_GPIOS.includes(n)))];
+  if (missingGpio.length) warn.push(t('wEspGpioMissing', missingGpio.map(n => 'GPIO' + n).join(', ')));
   const espLifted = espLiftActive();
   if (mRect && rectsOverlap(eRect, mRect)) {
     if (!espLifted) warn.push(t('wEspModOverlap'));
