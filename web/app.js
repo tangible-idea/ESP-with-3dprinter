@@ -53,6 +53,8 @@ const I18N = {
     wtGrpPower: 'Power',
     wtUsbC: 'USB-C', wtEspDirect: 'ESP32 direct', wtNoBattery: 'no battery',
     wtGrpPowerChain: 'Power (battery → charger → ESP32)',
+    wtGrpPowerXiao: 'Power (battery → XIAO, onboard charging)',
+    wtXiaoPadNote: 'back-side pad', wtXiaoChgNote: 'charges the battery',
     wtBatPlus: 'Battery +', wtBatMinus: 'Battery −',
     wtChgBplus: 'Charger B+', wtChgBminus: 'Charger B−',
     wtChgOutPlus: 'Charger OUT+', wtChgOutMinus: 'Charger OUT−',
@@ -176,6 +178,8 @@ const I18N = {
     wtGrpPower: '전원',
     wtUsbC: 'USB-C', wtEspDirect: 'ESP32 직결', wtNoBattery: '배터리 없음',
     wtGrpPowerChain: '전원 (배터리 → 충전모듈 → ESP32)',
+    wtGrpPowerXiao: '전원 (배터리 → XIAO, 보드 자체 충전)',
+    wtXiaoPadNote: '뒷면 패드', wtXiaoChgNote: '배터리 충전 겸용',
     wtBatPlus: '배터리 +', wtBatMinus: '배터리 −',
     wtChgBplus: '충전모듈 B+', wtChgBminus: '충전모듈 B−',
     wtChgOutPlus: '충전모듈 OUT+', wtChgOutMinus: '충전모듈 OUT−',
@@ -312,7 +316,7 @@ const STATIC_I18N = {
     lblModType: 'Charge module', optModGeneric: 'Existing module (19×14×4.5)',
     optModTp4056: 'TP4056 USB-C (27×17.3×4.0)', lblModY: 'Charge module Y',
     hintModType: 'TP4056 uses the measured USB-C board outline. It is larger than the existing module, so the default case may need more space. Board sizes vary: check yours before printing. Its OUT pads are not regulated 5V; verify the ESP32 power input and charge current before wiring.',
-    lblEspOut: 'USB push-out (no battery)', lblEspGrip: 'Finger notches in pocket',
+    lblEspOut: 'USB push-out (docked)', lblEspGrip: 'Finger notches in pocket',
     lblSolder: 'Solder relief (pin rows)', lblSolderD: 'Relief depth',
     lblEspAutoDock: 'Auto-dock to wall', lblUsbThin: 'Thin wall at USB port', lblUsbWallT: 'Wall left at port', lblUsbThroat: 'USB throat setback',
     lblBatType: 'Battery capacity', optBat14280: '14280 350mAh (Ø14.2×28.2, cylindrical)',
@@ -448,7 +452,7 @@ const STATIC_I18N = {
     lblModType: '충전모듈', optModGeneric: '기존 모듈 (19×14×4.5)',
     optModTp4056: 'TP4056 USB-C (27×17.3×4.0)', lblModY: '충전모듈 Y',
     hintModType: 'TP4056은 실측한 USB-C 보드 외형을 기준으로 합니다. 기존 모듈보다 커서 기본 케이스의 폭·깊이나 부품 배치를 조정해야 할 수 있습니다. 제품마다 치수가 달라 출력 전 실물 확인이 필요합니다. OUT 단자는 안정화된 5V가 아니므로 ESP32 전원 입력과 충전 전류를 확인하세요.',
-    lblEspOut: 'USB 내밀기 (배터리 없음)', lblEspGrip: '포켓 집게 홈',
+    lblEspOut: 'USB 내밀기 (도킹)', lblEspGrip: '포켓 집게 홈',
     lblSolder: '납땜 릴리프 (핀 2열)', lblSolderD: '릴리프 깊이',
     lblEspAutoDock: '벽에 자동 도킹', lblUsbThin: 'USB 포트 벽 얇게', lblUsbWallT: '포트 둘레 남길 벽', lblUsbThroat: 'USB 목 뒤로 (0=최대 전진)',
     lblBatType: '배터리 용량', optBat14280: '14280 350mAh (Ø14.2×28.2, 원통형)',
@@ -616,6 +620,9 @@ const BAT_TYPES = {
 const batSpec = () => BAT_TYPES[P.batType] || BAT_TYPES['520'];
 const f1BaseH = () => P.f1On ? P.f1H : 0;
 const noBat = () => !P.f1On || P.batType === 'none';   // 1층/배터리 없음: 충전모듈도 빠지고 ESP32가 USB 직결
+// XIAO는 뒷면 BAT+/BAT− 패드로 보드 자체가 충전 — 배터리가 있어도 충전모듈 없이 ESP32 USB를 벽 구멍에 직결
+const espOnboardChg = () => P.espType === 'xiao';
+const noMod = () => noBat() || espOnboardChg();   // 충전모듈 없음 = ESP32 도킹 모드
 const batStand = () => !noBat() && P.batPose === 'stand';
 const batFlatRot = () => P.batPose === 'flatRot';
 const batFlatFoot = () => {
@@ -638,7 +645,7 @@ const wireSlotSize = () => {
        : mode === '90' ? { w: 5, d: 14 }
        : { w: 14, d: 5 };
 };
-const espStand = () => !noBat() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
+const espStand = () => !noMod() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot);
 // ESP32 보드 종류. ESP 객체는 applyEspType()이 현재 선택으로 덮어쓴다(참조를 공유하는 곳이 많아 교체 대신 갱신).
 // xiao: Seeed XIAO ESP32C3 — 폭 동일, 길이 1.3 짧음, PCB가 0.4 두꺼워 USB·부품면이 통째로 0.4 올라감(사용자 실측)
 const ESP_TYPES = {
@@ -919,7 +926,7 @@ for (const k of sliders) {
   el.addEventListener('input', () => {
     P[k] = +el.value;
     if (k === 'espLift')
-      document.getElementById('espBarGap').disabled = noBat() || espStand() || (P.espLift <= 0 && !P.espHeader4On);
+      document.getElementById('espBarGap').disabled = noMod() || espStand() || (P.espLift <= 0 && !P.espHeader4On);
     show(); queueRebuild();
   });
   show();
@@ -977,11 +984,11 @@ function applyShapeUI() {
 }
 // 배터리 없음: 배터리·충전모듈 컨트롤 잠금, ESP32는 동쪽 벽 자동 도킹(X/회전/띄움 잠금)
 function applyBatUI() {
-  const nb = noBat();
+  const nb = noMod();   // ESP32 도킹 관련 잠금은 충전모듈 유무 기준 (XIAO는 배터리가 있어도 도킹)
   const circ = P.shape === 'circle';
   document.getElementById('batType').disabled = !P.f1On;
   document.getElementById('modType').disabled = nb;
-  document.getElementById('batPose').disabled = nb;
+  document.getElementById('batPose').disabled = noBat();
   document.getElementById('batX').disabled = !batStand();
   const autoDock = nb && P.espAutoDock;   // 자동 도킹을 끄면 배터리 없음에서도 X/Y 자유
   document.getElementById('espX').disabled = autoDock;
@@ -1050,21 +1057,28 @@ document.getElementById('oledSide').value = P.oledSide;
 document.getElementById('oledType').value = P.oledType;
 document.getElementById('oledType').addEventListener('change', e => { P.oledType = e.target.value; queueRebuild(); });
 document.getElementById('espType').value = P.espType;
-document.getElementById('espType').addEventListener('change', e => { P.espType = e.target.value; queueRebuild(); });
+document.getElementById('espType').addEventListener('change', e => {
+  P.espType = e.target.value;
+  clampDockY();
+  applyBatUI();
+  queueRebuild();
+});
 document.getElementById('modType').value = P.modType;
 document.getElementById('modType').addEventListener('change', e => { P.modType = e.target.value; queueRebuild(); });
 document.getElementById('batType').value = P.batType;
 document.getElementById('batPose').value = P.batPose;
+// 도킹 진입 시(배터리 없음/XIAO): 도킹 Y가 벽 곡면 밖이면 수납 가능 범위로 자동 클램프
+function clampDockY() {
+  if (!noMod()) return;
+  const maxY = Math.max(0, innerHalfD() - (ESP.w + POCKET_CLR) / 2 - 1);
+  if (Math.abs(P.espY) > maxY) {
+    P.espY = Math.round(Math.sign(P.espY) * maxY * 2) / 2;
+    syncControls();
+  }
+}
 document.getElementById('batType').addEventListener('change', e => {
   P.batType = e.target.value;
-  // 배터리 없음 진입 시: 도킹 Y가 벽 곡면 밖이면 수납 가능 범위로 자동 클램프
-  if (noBat()) {
-    const maxY = Math.max(0, innerHalfD() - (ESP.w + POCKET_CLR) / 2 - 1);
-    if (Math.abs(P.espY) > maxY) {
-      P.espY = Math.round(Math.sign(P.espY) * maxY * 2) / 2;
-      syncControls();
-    }
-  }
+  clampDockY();
   applyBatUI();
   queueRebuild();
 });
@@ -1169,7 +1183,7 @@ document.getElementById('espAutoDock').addEventListener('change', e => {
 document.getElementById('usbThin').checked = P.usbThin;
 document.getElementById('usbThin').addEventListener('change', e => {
   P.usbThin = e.target.checked;
-  document.getElementById('usbWallT').disabled = !noBat() || !P.usbThin;
+  document.getElementById('usbWallT').disabled = !noMod() || !P.usbThin;
   queueRebuild();
 });
 document.getElementById('solderOn').checked = P.solderOn;
@@ -1635,10 +1649,10 @@ const LIFT_USB_MIN_SKIN = F2_PLATE; // 파되 USB 홈 밑면에는 0.8mm 바닥�
 const LIFT_USB_SUPPORT_DROP = 0.4; // 깊어진 USB 홈을 따라 양옆 받침은 절반만 낮춤
 const LIFT_Y_TIGHTEN = 0.15;       // 뒤집힌 ESP32의 케이스 앞뒤(Y) 홈을 0.15mm 조임
 function espHeader4Active() {
-  return !!P.espHeader4On && !noBat() && !espStand();
+  return !!P.espHeader4On && !noMod() && !espStand();
 }
 function espLiftActive() {
-  return !noBat() && !espStand() && (P.espLift > 0 || P.espHeader4On);
+  return !noMod() && !espStand() && (P.espLift > 0 || P.espHeader4On);
 }
 function espLiftTopZ() {
   return espHeader4Active()
@@ -1738,7 +1752,7 @@ function modCenter() {
 // 안쪽에 자리잡으므로, USB 플러그가 벽을 그만큼 덜 파고들어도 꽂힌다 (남는 벽살 = wall − espOut).
 // espAutoDock 을 끄면 벽에 붙이지 않고 espX/espY 그대로 — 위치를 직접 잡고 싶을 때
 function espDock() {
-  const out = noBat() ? P.espOut : 0;
+  const out = noMod() ? P.espOut : 0;
   const free = !P.espAutoDock;
   if (P.shape === 'circle') {
     const edgeX = flatPadX() - USB_PAD.t;
@@ -1913,11 +1927,11 @@ function buildFloor2() {
     b = add(b, pad);
   };
   if (!espLifted) {
-    const dk = noBat() ? espDock() : null;
+    const dk = noMod() ? espDock() : null;
     seatPad(dk ? ESP.l + POCKET_CLR : ef.w, dk ? ESP.w + POCKET_CLR : ef.d,
             dk ? dk.x : P.espX, dk ? dk.y : P.espY);
   }
-  if (!noBat()) {
+  if (!noMod()) {
     const mc = modCenter(), mod = modSpec();
     seatPad(mod.l + MOD_POCKET_BACK_CLEAR - MOD_POCKET_FRONT_INSET,
             mod.w + POCKET_CLR,
@@ -1958,7 +1972,7 @@ function buildFloor2() {
   const espPocket = () => {
     if (espStand())   // 세움은 보드가 이미 드러나 있어 집게 홈 불필요
       return meshBrush(espStandGeo(true), new THREE.Matrix4().makeTranslation(P.espX, P.espY, espBaseZ()));
-    const dk = noBat() ? espDock() : null;
+    const dk = noMod() ? espDock() : null;
     const cx = dk ? dk.x : P.espX, cy = dk ? dk.y : P.espY;
     const w = dk ? ESP.l + POCKET_CLR : ef.w, d = dk ? ESP.w + POCKET_CLR : ef.d;
     let cut = boxBrush(w, d, F2_PLATFORM + 2, cx, cy, F2_PART_BASE + P.espZ, 1.5);
@@ -2061,7 +2075,7 @@ function buildFloor2() {
   // 충전모듈 포켓: USB 셸은 전용 관통 구멍에 들어가므로 PCB 홈의 앞면만 0.8mm 물린다.
   // 뒤쪽은 실물 길이 공차를 위해 2.0mm 여유를 둔다. 앞 모서리를 둥글리면 목표 0.4mm보다
   // 벽살이 더 두꺼워지므로 포켓은 직각으로 절삭한다.
-  if (!noBat()) {
+  if (!noMod()) {
     const mc = modCenter();
     const mod = modSpec();
     b = sub(b, boxBrush(mod.l + MOD_POCKET_BACK_CLEAR - MOD_POCKET_FRONT_INSET,
@@ -2100,8 +2114,8 @@ function buildFloor2() {
 
   // USB-C 구멍 — 배터리 없음이면 ESP32 USB 정면, 아니면 충전모듈 USB 정면 (원형이면 플랫 패드 관통)
   {
-    const dk = noBat() ? espDock() : modCenter();
-    const usbZ = noBat() ? ESP.usbZ + P.espZ : modSpec().usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
+    const dk = noMod() ? espDock() : modCenter();
+    const usbZ = noMod() ? ESP.usbZ + P.espZ : modSpec().usbZ;   // 도킹: 구멍도 espZ 따라 통째로 이동
     const circ = P.shape === 'circle';
     const outerX = circ
       ? flatPadX()
@@ -2119,7 +2133,7 @@ function buildFloor2() {
 
     // 충전모듈 쪽은 외벽을 평평하게 두고 실제 USB 구멍만 남긴다.
     // 배터리 없는 ESP32 직결 모드에서만 선택형 외벽 리세스를 유지한다.
-    if (noBat() && P.usbThin) {
+    if (noMod() && P.usbThin) {
       const wallAtPort = circ ? USB_PAD.t : P.wall;
       const depth = Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL);
       const zHi = Math.min(P.f2H - RIDGE_H - 0.4,
@@ -2640,7 +2654,7 @@ function placeGhosts() {
     }
   }
   // 2층
-  if (noBat()) {
+  if (noMod()) {
     // 도킹: 충전모듈처럼 USB를 +X(동쪽 벽 구멍)로 돌려 안착
     const dk = espDock();
     const eg = ASSETS.esp.clone();
@@ -2659,7 +2673,7 @@ function placeGhosts() {
     eg.translate(-ESP.l / 2, -ESP.w / 2, 0);   // 중심 정렬 후 회전
     G[1].add(ghostMesh(eg, MATS.esp, T(P.espX, P.espY, F2_PART_BASE + P.espZ, rot)));
   }
-  if (!noBat()) {
+  if (!noMod()) {
     const mc = modCenter();
     const mod = modSpec();
     if (P.modType === 'tp4056') {
@@ -3161,6 +3175,8 @@ const ESP_PINS_XIAO = (() => {
   return m;
 })();
 let ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
+// XIAO 뒷면 BAT+(+y)/BAT−(−y) 패드 로컬 좌표 (보드 중심 기준, USB는 −x) — 대략 위치, 배선 시각화용
+const XIAO_BAT_PAD = [5, 1.5];
 // 4핀 헤더 마운트: USB 쪽 끝 연속 4핀 (supermini 5V·GND·3V3·GPIO4 / XIAO 5V·GND·3V3·GPIO10)
 let ESP_HEADER4_PINS = ['5V', 'GND', '3V3', 4];
 // 보드 종류 반영: 치수·메시·핀맵을 한꺼번에 교체 (투두/운동 제품은 항상 supermini)
@@ -3234,6 +3250,11 @@ function renderWireTable() {
   if (noBat()) {
     grp(t('wtGrpPower'));
     row(WIRE_COLORS.plus, t('wtUsbC'), t('wtEspDirect'), t('wtNoBattery'));
+  } else if (espOnboardChg()) {
+    grp(t('wtGrpPowerXiao'));
+    row(WIRE_COLORS.plus, t('wtBatPlus'), 'BAT+', t('wtXiaoPadNote'));
+    row(WIRE_COLORS.minus, t('wtBatMinus'), 'BAT−', t('wtXiaoPadNote'));
+    row(WIRE_COLORS.plus, t('wtUsbC'), t('wtEspDirect'), t('wtXiaoChgNote'));
   } else {
     grp(t('wtGrpPowerChain'));
     row(WIRE_COLORS.plus, t('wtBatPlus'), t('wtChgBplus'));
@@ -3331,7 +3352,7 @@ function updateWires() {
       return;
     }
     const z1b = G[0].position.z, z2b = G[1].position.z;
-    const mc = noBat() ? null : modCenter();
+    const mc = noMod() ? null : modCenter();
 
     // --- 배터리 → 충전모듈 B+/B− : 눕힘은 1층 배선구멍 경유, 세움은 2층 안에서 직접 ---
     const modW = mc ? mc.x - modSpec().l / 2 : 0;             // 모듈 서쪽(USB 반대) 끝
@@ -3361,9 +3382,31 @@ function updateWires() {
       }
     }
 
+    // --- 배터리 → XIAO 뒷면 BAT+/BAT− 패드 (보드 밑면, USB 반대쪽 절반) ---
+    if (!noBat() && espOnboardChg()) {
+      const dk = espDock();
+      const padZ = z2b + F2_PART_BASE + P.espZ;
+      for (const [sy, col, l1, l2] of [[+1, WIRE_COLORS.plus, t('wtBatPlus'), 'BAT+'],
+                                       [-1, WIRE_COLORS.minus, t('wtBatMinus'), 'BAT−']]) {
+        const pad = [dk.x - XIAO_BAT_PAD[0], dk.y - sy * XIAO_BAT_PAD[1], padZ];   // 도킹 180° → 로컬 반전
+        const start = batStand()
+          ? [P.batX + sy * 2, sy * 4, z2b + F2_PART_BASE + batStandHeight()]
+          : (() => {
+              const bs = batSpec();
+              const tab = batFlatRot()
+                ? [sy * 5, (P.wireY >= 0 ? 1 : -1) * (bs.L / 2 - 4)]
+                : [(P.wireX >= 0 ? 1 : -1) * (bs.L / 2 - 4), sy * 5];
+              return [tab[0], tab[1], z1b + F1_PLATE + batFlatHeight()];
+            })();
+        const via = batStand() ? [] : [[P.wireX + sy * 1.2, P.wireY, z2b - 2],
+                                       [P.wireX + sy * 1.2, P.wireY, holeTop]];
+        addWire([start, ...via, [pad[0] - 3, pad[1], padZ + 2], pad], col, l1, l2);
+      }
+    }
+
     // --- ESP32 핀 (pinout: USB쪽부터 북열 5V,G,3V3 / 남열 5,6,7,8=SDA,9=SCL) ---
     const espPin = (dx, dy) => {
-      if (noBat()) {   // 도킹: 180° 회전(USB가 +X) → 핀 로컬좌표 반전
+      if (noMod()) {   // 도킹: 180° 회전(USB가 +X) → 핀 로컬좌표 반전
         const dk = espDock();
         return [dk.x - dx, dk.y - dy, z2b + F2_PART_BASE + P.espZ + ESP.h];
       }
@@ -3628,12 +3671,12 @@ function updateInfo(ms, fit) {
   if (!noBat() && !batStand() && !insideInner(flatFoot.w / 2, flatFoot.d / 2))
     warn.push(t('wBatFit', flatFoot.w, flatFoot.d));
   const ef = espFoot();
-  const eRect = noBat()
+  const eRect = noMod()
     ? { x: espDock().x, y: espDock().y, w: ESP.l + POCKET_CLR, d: ESP.w + POCKET_CLR }
     : { x: P.espX, y: P.espY, w: ef.w, d: ef.d };
   const mc = modCenter();
   const mod = modSpec();
-  const mRect = noBat() ? null : { x: mc.x, y: mc.y, w: mod.l + POCKET_CLR, d: mod.w + POCKET_CLR };
+  const mRect = noMod() ? null : { x: mc.x, y: mc.y, w: mod.l + POCKET_CLR, d: mod.w + POCKET_CLR };
   const standFoot = batStandFoot();
   const bRectStand = batStand()
     ? { x: P.batX, y: 0, w: standFoot.w, d: standFoot.d } : null;
@@ -3648,7 +3691,7 @@ function updateInfo(ms, fit) {
     if (F2_PART_BASE + batStandHeight() > P.f2H + P.f3H - F3_PLATE - 0.3)
       warn.push(t('wBatStandTop', batStandHeight()));
   }
-  if (noBat()) {
+  if (noMod()) {
     // 도킹 모드: 동쪽 벽에 붙는 건 정상 — Y 방향과 가로 수납만 검사
     if (P.shape !== 'circle' && Math.abs(P.espY) + (ESP.w + POCKET_CLR) / 2 > innerHalfD() - 1)
       warn.push(t('wEspWallYNoBat'));
@@ -3657,9 +3700,9 @@ function updateInfo(ms, fit) {
   } else if (!insideInner(Math.abs(P.espX) + ef.w / 2, Math.abs(P.espY) + ef.d / 2)) warn.push(t('wEspWall'));
   if (espStand() && espBaseZ() + (espUsbDown() ? ESP.l : ESP.w) > P.f2H + P.f3H - F3_PLATE - 0.3)
     warn.push(t('wEspStandTop', espUsbDown() ? ESP.l : ESP.w));
-  if (!noBat() && P.shape !== 'circle' && Math.abs(P.modY) + (mod.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push(t('wModWall'));
-  if (!noBat() && P.shape !== 'circle' && mc.edgeX < mod.l - 2) warn.push(t('wModCurve'));
-  if (!noBat() && P.modType === 'tp4056') warn.push(t('wTp4056Power'));
+  if (!noMod() && P.shape !== 'circle' && Math.abs(P.modY) + (mod.w + POCKET_CLR) / 2 > innerHalfD() - 1) warn.push(t('wModWall'));
+  if (!noMod() && P.shape !== 'circle' && mc.edgeX < mod.l - 2) warn.push(t('wModCurve'));
+  if (!noMod() && P.modType === 'tp4056') warn.push(t('wTp4056Power'));
   const missingGpio = [...new Set(['swGpio', 'sdaGpio', 'sclGpio', 'ledGpio', 'led2Gpio', 'bzGpio']
     .map(k => +P[k]).filter(n => !ALL_GPIOS.includes(n)))];
   if (missingGpio.length) warn.push(t('wEspGpioMissing', missingGpio.map(n => 'GPIO' + n).join(', ')));
@@ -3795,20 +3838,20 @@ function updateInfo(ms, fit) {
   const wallAtPort = P.shape === 'circle' ? USB_PAD.t : P.wall;
   // 패널을 판 뒤 남는 살에서 다시 espOut 만큼 안쪽이 파이므로, 둘을 겹쳐서 실제 남는 두께를 본다
   const usbWall = P.usbThin ? Math.max(USB_MIN_WALL, Math.min(wallAtPort, P.usbWallT)) : wallAtPort;
-  if (noBat() && P.espAutoDock && P.espOut > 0) {
+  if (noMod() && P.espAutoDock && P.espOut > 0) {
     const left = usbWall - P.espOut;
     if (left < 0.8) warn.push(t('wEspOutWall', left.toFixed(1)));
   }
   // 자동 도킹을 끈 상태: 커넥터가 벽에서 멀면 케이블이 안 닿는다
-  if (noBat() && !P.espAutoDock) {
+  if (noMod() && !P.espAutoDock) {
     const gap = espDock().edgeX - (P.espX + ESP.l / 2);
     if (gap > 2) warn.push(t('wEspDockGap', gap.toFixed(1)));
   }
-  if (noBat() && P.usbThin && Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL) <= 0.05)
+  if (noMod() && P.usbThin && Math.min(wallAtPort - P.usbWallT, wallAtPort - USB_MIN_WALL) <= 0.05)
     warn.push(t('wUsbThinNoop', wallAtPort.toFixed(1)));
   // ESP32 집게 홈: 벽에 막혀 클립되면 손가락이 안 들어간다
   if (P.espGripOn && !espStand() && !espLifted) {
-    const dk = noBat() ? espDock() : null;
+    const dk = noMod() ? espDock() : null;
     const gw = dk ? ESP.l + POCKET_CLR : ef.w, gd = dk ? ESP.w + POCKET_CLR : ef.d;
     const room = espGripRoom(dk ? dk.x : P.espX, dk ? dk.y : P.espY, gw, gd);
     const best = Math.max(room.x, room.y);
@@ -3819,7 +3862,7 @@ function updateInfo(ms, fit) {
     const chBot = F2_PART_BASE + P.espZ - P.solderD;   // 채널 바닥 z
     if (chBot < 0.8) warn.push(t('wSolderFloor', chBot.toFixed(2)));
     if (nfcFits() && !nfcOnF1()) {   // 릴리프는 2층 바닥판 — 1층 포켓과는 만나지 않는다
-      const dk = noBat() ? espDock() : null;
+      const dk = noMod() ? espDock() : null;
       const cx = dk ? dk.x : P.espX, cy = dk ? dk.y : P.espY;
       const alongX = dk ? true : P.espRot !== 90;
       for (const rect of espSolderRects(cx, cy, alongX)) {
