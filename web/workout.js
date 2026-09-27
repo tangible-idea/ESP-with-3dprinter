@@ -1,10 +1,11 @@
 // 운동 모션 센서 — TW802040(40×20×8) 배터리 footprint에 맞춘 3단 적층 케이스.
-// 1) KY-035+자석+배터리 베이스, 2) TP4056+MPU6050 트레이, 3) ESP32+OLED 뚜껑.
+// 1) KY-035+자석+배터리 베이스, 2) 충전모듈 또는 XIAO+MPU6050 트레이, 3) SuperMini 또는 OLED 뚜껑.
 // 좌표: X=배터리 40mm 방향, Y=20mm/운동 상하 방향, Z=자석면→뚜껑.
 
 export function initWorkout(env) {
   const {
-    THREE, P, t, G, MATS, matCase, matCaseX, boxBrush, add, sub,
+    THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, XIAO_BAT_PAD,
+    matCase, matCaseX, boxBrush, add, sub,
     meshBrush, ASSETS,
     manToGeo, downloadSTL, status, getView, clearFloors, setFloorMeshes,
     markRulers, setRulerExtras, refreshWires = () => {},
@@ -12,9 +13,14 @@ export function initWorkout(env) {
 
   const BAT = { w: 40, d: 20 };   // 두께는 실측값(P.wkBatH)
   const ESP = { w: 24, d: 18, h: 4.2 };
+  // 기존 ESP_TYPES.xiao 치수(22.7×18×4.6)를 Workout 트레이에도 그대로 쓴다.
+  const XIAO = { w: ESP_TYPES.xiao.l, d: ESP_TYPES.xiao.w, h: ESP_TYPES.xiao.h,
+                 pcb: 1.0 + ESP_TYPES.xiao.pcbRise, usbZ: ESP_TYPES.xiao.usbZ };
   // TP4056 실측: 외형 27 × 17.3, 총높이 4.0 (USB-C 커넥터 포함), PCB만 1.2.
   // 긴 변 양쪽의 폭 2.6mm 날개(패드 열)는 부품이 없어 걸림턱으로 눌러 잡을 수 있다.
   const CHARGER = { w: 27, d: 17.3, h: 4.0, pcb: 1.2, wing: 2.6 };
+  const xiaoOn = () => P.wkEspType === 'xiao';
+  const trayBoard = () => xiaoOn() ? XIAO : CHARGER;
   const HALL = { w: 19, h: 15 };       // KY-035 PCB: X=19, 세움 높이 Z=15
   const MAG = { w: 30, d: 10 };   // 두께는 실측값(P.wkMagH)
   const OLED = { w: 25, d: 27.05, h: 3.5, winW: 23.2, winD: 12.4, winY: 0.975 };
@@ -65,24 +71,31 @@ export function initWorkout(env) {
     const W = P.wkWidth, D = P.wkLength, baseH = P.wkBodyH, wall = P.wkWall, mpu = mpuSpec();
     const innerW = W - 2 * wall;
     const innerHalfD = D / 2 - wall;
-    const pairW = CHARGER.w + CLR + mpu.w + CLR;
+    const board = trayBoard();
+    const pairW = board.w + CLR + mpu.w + CLR;
     const gap = Math.max(0.2, innerW - 1.0 - pairW);
     const left = -innerW / 2 + 0.5;
     // MPU 자리는 고정하고 TP4056만 wkChgX 만큼 옮긴다 — 음수면 USB(-X) 쪽으로 붙으면서
     // 두 포켓 사이 칸막이도 같이 USB 쪽으로 밀린다. 벽을 넘지 않게 잘라 넣는다.
-    const chargerX0 = left + (CHARGER.w + CLR) / 2;
-    const mpuX = chargerX0 + (CHARGER.w + CLR) / 2 + gap + (mpu.w + CLR) / 2;
-    const chargerMin = -innerW / 2 + (CHARGER.w + CLR) / 2;
-    const chargerMax = mpuX - (mpu.w + CLR) / 2 - (CHARGER.w + CLR) / 2 - 1.2;
+    const chargerX0 = left + (board.w + CLR) / 2;
+    const mpuX = chargerX0 + (board.w + CLR) / 2 + gap + (mpu.w + CLR) / 2;
+    // XIAO는 뚜껑 결합 텅보다 안쪽에 놓여야 보드 가장자리가 텅과 충돌하지 않는다.
+    const chargerMin = xiaoOn()
+      ? -jointDims({ W, D, wall }).inW / 2 + board.w / 2 + CLR
+      : -innerW / 2 + (board.w + CLR) / 2;
+    const chargerMax = mpuX - (mpu.w + CLR) / 2 - (board.w + CLR) / 2 - 1.2;
     const chargerX = Math.min(Math.max(chargerMin, chargerX0 + P.wkChgX),
                               Math.max(chargerMin, chargerMax));
+    const xiaoYLimit = jointDims({ W, D, wall }).inD / 2 - board.d / 2 - CLR;
+    const boardY = xiaoOn() ? Math.max(-xiaoYLimit,
+      Math.min(xiaoYLimit, P.wkUsbY)) : 0;
     // KY-035를 -Y 벽에 세우고, 보드 안쪽면에서 wkHallGap 떨어진 곳에 자석 가장자리를 둔다.
     const hallY = -innerHalfD + P.wkHallT / 2 + 0.25;
     const hallInnerY = hallY + P.wkHallT / 2;
     const batteryY = P.wkHallOn ? hallInnerY + 0.8 + (BAT.d + CLR) / 2 : 0;
     const magnetY = P.wkHallOn ? hallInnerY + P.wkHallGap + MAG.d / 2 : 0;
     return {
-      W, D, baseH, wall, innerW, innerHalfD, mpu, gap, chargerX, mpuX,
+      W, D, baseH, wall, innerW, innerHalfD, mpu, gap, chargerX, boardY, mpuX,
       hallY, hallInnerY, batteryY, magnetY, hallT: P.wkHallT,
       magnetZ: P.wkMagSkin, batteryZ: P.wkMagSkin + P.wkMagH + 0.2,
     };
@@ -121,11 +134,12 @@ export function initWorkout(env) {
   // -X 바깥면을 향하게 하고, 벽 두께에 맞춰 길이만 스케일한다.
   function usbCut(q) {
     const L = Math.max(3.0, q.wall + 1.6);
-    const z = SEAT_Z + USB_Z;
+    const z = SEAT_Z + (xiaoOn() ? XIAO.usbZ : USB_Z);
+    const y = xiaoOn() ? q.boardY : P.wkUsbY;
     if (!ASSETS || !ASSETS.usb)   // 에셋 로드 전이면 사각 개구부로 대체
-      return boxBrush(L + 1.0, 9.4, 3.6, -q.W / 2 + q.wall / 2, P.wkUsbY, z - 1.8, 1.0);
+      return boxBrush(L + 1.0, 9.4, 3.6, -q.W / 2 + q.wall / 2, y, z - 1.8, 1.0);
     const m = new THREE.Matrix4()
-      .makeTranslation(-(q.W / 2 + 0.4) + L / 2, P.wkUsbY, z)
+      .makeTranslation(-(q.W / 2 + 0.4) + L / 2, y, z)
       .multiply(new THREE.Matrix4().makeRotationZ(Math.PI))
       .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 3.5 / 3.8));
     return meshBrush(ASSETS.usb, m);
@@ -160,17 +174,18 @@ export function initWorkout(env) {
 
     // 칸막이 벽은 wkDivGrow 만큼 USB(-X) 쪽으로 더 두꺼워진다 — TP4056 포켓의 +X
     // 끝만 그만큼 짧아지고, USB 쪽 끝은 제자리라 커넥터 위치는 그대로다.
-    const grow = P.wkDivGrow;
-    const chgLen = Math.max(1.0, CHARGER.w + CLR - grow);
+    const board = trayBoard();
+    const grow = xiaoOn() ? 0 : P.wkDivGrow;
+    const chgLen = Math.max(1.0, board.w + CLR - grow);
     const chgCx = q.chargerX - grow / 2;
     const leftEdge = chgCx + chgLen / 2;
     const rightEdge = q.mpuX - (q.mpu.w + CLR) / 2;
-    tray = sub(tray, boxBrush(chgLen, CHARGER.d + CLR, POCKET_D + 0.2,
-                              chgCx, 0, SEAT_Z, 0.6));
+    tray = sub(tray, boxBrush(chgLen, board.d + CLR, POCKET_D + 0.2,
+                              chgCx, q.boardY, SEAT_Z, 0.6));
     tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, POCKET_D + 0.2,
                               q.mpuX, 0, SEAT_Z, 0.6));
     // 칸막이 벽 양쪽(TP4056 오른쪽 끝 · MPU 왼쪽 끝)과 MPU 오른쪽 끝에 관통 슬롯.
-    tray = solderRelief(tray, chgCx + chgLen / 2, CHARGER.d + CLR, -1);
+    if (!xiaoOn()) tray = solderRelief(tray, chgCx + chgLen / 2, board.d + CLR, -1);
     tray = solderRelief(tray, q.mpuX - (q.mpu.w + CLR) / 2, q.mpu.d + CLR, +1);
     tray = solderRelief(tray, q.mpuX + (q.mpu.w + CLR) / 2, q.mpu.d + CLR, -1);
 
@@ -199,13 +214,17 @@ export function initWorkout(env) {
     // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
     // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
     // 안쪽 캐비티 안으로 잘라 넣는다.
-    const slotW = P.wkWireLen, slotD = P.wkWireW;
+    // XIAO 뒷면의 BAT 패드 바로 아래만 열어 납땜부와 두 전선의 통로를 확보한다.
+    // 큰 기존 배선 슬롯은 보드 받침을 모두 없애므로 XIAO에서는 작은 고정 슬롯을 쓴다.
+    const slotW = xiaoOn() ? 7 : P.wkWireLen;
+    const slotD = xiaoOn() ? 6 : P.wkWireW;
     // 구멍이 커져 더 못 움직일 만큼 자리가 좁아지면 그냥 가운데로 붙인다.
     const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
     const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
     const clampPos = (v, lim) => (lim <= 0 ? 0 : Math.max(-lim, Math.min(lim, v)));
     tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 0.4,
-                              clampPos(P.wkWireX, limX), clampPos(P.wkWireY, limY),
+                              clampPos(xiaoOn() ? q.chargerX + XIAO_BAT_PAD[0] : P.wkWireX, limX),
+                              clampPos(xiaoOn() ? q.boardY : P.wkWireY, limY),
                               -0.2, Math.min(1.4, slotD / 2 - 0.1)));
     tray = sub(tray, usbCut(q));
     if (P.wkHallOn) {
@@ -214,7 +233,7 @@ export function initWorkout(env) {
       tray = sub(tray, boxBrush(HALL.w + CLR + 0.6, q.hallT + CLR + 0.6,
                                 TRAY_FLOOR_TOP + 0.4, 0, q.hallY, -0.1, 0.45));
     }
-    if (P.wkSwOn) {
+    if (P.wkSwOn && !xiaoOn()) {
       // 전원 스위치(SPDT 슬라이드)는 USB 반대쪽(+X) 짧은 벽에 레버가 밖으로 나오게
       // 끼운다. 창만 뚫고 양옆에 세로 리브를 세워 몸통을 잡는다 — 세로라 서포트 없음.
       const wx = q.W / 2 - q.wall / 2;
@@ -242,6 +261,7 @@ export function initWorkout(env) {
 
     // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다. 모서리 받침 돌기는
     // 끼울 때 걸려서 없앴고, 대신 -X 끝의 USB-C 소켓이 커넥터를 물어 고정한다.
+    if (!xiaoOn()) {
     const cageOuterW = ESP.w + CLR + 2.0, cageOuterD = ESP.d + CLR + 2.0;
     lid = add(lid, ring(cageOuterW, cageOuterD, ESP.w + CLR, ESP.d + CLR,
                         LID_CAGE_H, 0, 1.0));
@@ -257,6 +277,7 @@ export function initWorkout(env) {
     const cavX1 = blkX1 + 0.6, cavX0 = blkX0 - 0.6;
     lid = sub(lid, boxBrush(cavX1 - cavX0, cavW, LID_CAGE_H - cavZ0 + 0.4,
                             (cavX0 + cavX1) / 2, 0, cavZ0, 0.3));
+    }
     if (P.wkOledOn) {
       // OLED는 뚜껑 위에서 내려놓는 개방형 보호 림에 안착한다. 화면은 위로 보이고,
       // 헤더 쪽 4가닥은 상판 슬롯을 통과해 바로 아래 ESP32로 내려간다.
@@ -284,24 +305,36 @@ export function initWorkout(env) {
     ghostBox(G[0], [BAT.w, BAT.d, P.wkBatH], [0, q.batteryY, q.batteryZ + P.wkBatH / 2], MATS.bat);
     if (P.wkHallOn)
       ghostBox(G[0], [HALL.w, q.hallT, HALL.h], [0, q.hallY, 0.75 + HALL.h / 2], hallMat);
-    ghostBox(G[1], [CHARGER.w, CHARGER.d, CHARGER.pcb],
-             [q.chargerX, 0, SEAT_Z + CHARGER.pcb / 2], MATS.mod);
-    ghostBox(G[1], [9.0, 8.9, CHARGER.h - CHARGER.pcb],
-             [q.chargerX - CHARGER.w / 2 + 4.5, 0,
-              SEAT_Z + CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2], MATS.mod);
+    if (xiaoOn()) {
+      ghostBox(G[1], [XIAO.w, XIAO.d, XIAO.pcb],
+               [q.chargerX, q.boardY, SEAT_Z + XIAO.pcb / 2], MATS.esp);
+      ghostBox(G[1], [8.94, 9.0, 3.2],
+               [q.chargerX - XIAO.w / 2 + 3.5, q.boardY,
+                SEAT_Z + XIAO.usbZ], MATS.esp);
+      for (const sy of [-1, 1])
+        ghostBox(G[1], [2, 1.8, 0.1],
+                 [q.chargerX + XIAO_BAT_PAD[0], q.boardY + sy * XIAO_BAT_PAD[1],
+                  SEAT_Z - 0.06], MATS.mod);
+    } else {
+      ghostBox(G[1], [CHARGER.w, CHARGER.d, CHARGER.pcb],
+               [q.chargerX, 0, SEAT_Z + CHARGER.pcb / 2], MATS.mod);
+      ghostBox(G[1], [9.0, 8.9, CHARGER.h - CHARGER.pcb],
+               [q.chargerX - CHARGER.w / 2 + 4.5, 0,
+                SEAT_Z + CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2], MATS.mod);
+    }
     ghostBox(G[1], [q.mpu.w, q.mpu.d, q.mpu.h],
              [q.mpuX, 0, SEAT_Z + q.mpu.h / 2], mpuMat);
-    if (P.wkSwOn)
+    if (P.wkSwOn && !xiaoOn())
       ghostBox(G[1], [SW.body, SW.w, SW.d],
                [q.W / 2 - q.wall - SW.body / 2 + 0.6, P.wkSwY,
                 P.wkSwZ], switchMat);
     // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다 — 실물 STL로 표시해야
     // USB(-X)·안테나 방향이 한눈에 보인다. 에셋 로드 전이면 박스로 대체한다.
-    if (ASSETS && ASSETS.esp) {
+    if (!xiaoOn() && ASSETS && ASSETS.esp) {
       const eg = ASSETS.esp.clone();
       eg.translate(-ESP.w / 2, -ESP.d / 2, 0);   // min corner 기준 → 중심 정렬
       ghostGeo(G[2], eg, [0, 0, ESP_Z0], MATS.esp);
-    } else {
+    } else if (!xiaoOn()) {
       ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, ESP_Z0 + ESP.h / 2], MATS.esp);
     }
     if (P.wkOledOn) {
@@ -348,32 +381,48 @@ export function initWorkout(env) {
     const chgOutPlus = world(G[1], [q.chargerX + CHARGER.w / 2, -4.3, chgTop]);
     const chgOutMinus = world(G[1], [q.chargerX + CHARGER.w / 2, 4.3, chgTop]);
 
-    // ESP32-C3 SuperMini: USB가 -X를 향하는 뚜껑 포켓 기준 핀 좌표.
-    const espTop = ESP_Z0 + ESP.h;
-    const espPin = (x, y) => world(G[2], [x, y, espTop]);
-    const gpioPins = {
+    // SuperMini는 뚜껑, XIAO는 충전모듈 자리의 트레이에 놓인다.
+    const espTop = xiaoOn() ? SEAT_Z + XIAO.h : ESP_Z0 + ESP.h;
+    const espPin = (x, y) => xiaoOn()
+      ? world(G[1], [q.chargerX + x, q.boardY + y, espTop])
+      : world(G[2], [x, y, espTop]);
+    const miniPins = {
       4: [-1.5, 8], 3: [1, 8], 2: [3.5, 8], 1: [6, 8], 0: [8.5, 8],
       5: [-9, -8], 6: [-6.5, -8], 7: [-4, -8], 8: [-1.5, -8], 9: [1, -8],
       10: [3.5, -8], 20: [6, -8], 21: [8.5, -8],
     };
+    const gpioPins = xiaoOn() ? ESP_PINS_XIAO : miniPins;
     const espGpio = (n, fallback) => espPin(...(gpioPins[+n] || gpioPins[fallback]));
-    const esp5V = espPin(-9, 8), espGnd = espPin(-6.5, 8), esp3V3 = espPin(-4, 8);
-    const espHall = espGpio(P.wkHallGpio, 0);
+    const esp5V = xiaoOn() ? espPin(...ESP_PINS_XIAO['5V']) : espPin(-9, 8);
+    const espGnd = xiaoOn() ? espPin(...ESP_PINS_XIAO.GND) : espPin(-6.5, 8);
+    const esp3V3 = xiaoOn() ? espPin(...ESP_PINS_XIAO['3V3']) : espPin(-4, 8);
+    const espHall = espGpio(P.wkHallGpio, xiaoOn() ? 2 : 0);
     const espSda = espGpio(P.sdaGpio, 8), espScl = espGpio(P.sclGpio, 9);
 
-    wire(batPlus, chgBPlus, colors.plus, t('wtBatPlus'), 'B+');
-    wire(batMinus, chgBMinus, colors.minus, t('wtBatMinus'), 'B−');
-    if (P.wkSwOn) {
+    if (xiaoOn()) {
+      const padZ = SEAT_Z - 0.05;
+      wire(batPlus, world(G[1], [q.chargerX + XIAO_BAT_PAD[0],
+           q.boardY + XIAO_BAT_PAD[1], padZ]),
+           colors.plus, t('wtBatPlus'), 'B+');
+      wire(batMinus, world(G[1], [q.chargerX + XIAO_BAT_PAD[0],
+           q.boardY - XIAO_BAT_PAD[1], padZ]),
+           colors.minus, t('wtBatMinus'), 'B−');
+    } else {
+      wire(batPlus, chgBPlus, colors.plus, t('wtBatPlus'), 'B+');
+      wire(batMinus, chgBMinus, colors.minus, t('wtBatMinus'), 'B−');
+    }
+    // XIAO의 BAT 패드는 충전과 공급을 겸하므로 5V나 전원 스위치로 우회하지 않는다.
+    if (!xiaoOn() && P.wkSwOn) {
       // SPDT 가운데 다리(COM)로 들어와 바깥쪽 한 다리로 나간다. 남는 다리는 미사용.
       const sx = lastLayout.W / 2 - lastLayout.wall - 1.2;
       const swCom = world(G[1], [sx, P.wkSwY, P.wkSwZ]);
       const swOut = world(G[1], [sx, P.wkSwY + 2.54, P.wkSwZ]);
       wire(chgOutPlus, swCom, colors.plus, 'OUT+', 'SW ②');
       wire(swOut, esp5V, colors.plus, 'SW ①', '5V');
-    } else {
+    } else if (!xiaoOn()) {
       wire(chgOutPlus, esp5V, colors.plus, 'OUT+', '5V');
     }
-    wire(chgOutMinus, espGnd, colors.minus, 'OUT−', 'GND');
+    if (!xiaoOn()) wire(chgOutMinus, espGnd, colors.minus, 'OUT−', 'GND');
 
     // KY-035: 보드 상단 3핀을 S/AO, +, − 순서로 시각화한다.
     const hallZ = 0.75 + HALL.h;
@@ -426,13 +475,15 @@ export function initWorkout(env) {
     const needW = BAT.w + CLR + 2 * q.wall, needD = BAT.d + CLR + 2 * q.wall;
     if (q.W + 0.01 < needW || q.D + 0.01 < needD)
       warnings.push(t('wkBatteryFit', needW.toFixed(1), needD.toFixed(1)));
-    const pairNeedW = CHARGER.w + q.mpu.w + 2 * CLR + 1.0 + 2 * q.wall;
+    const pairNeedW = trayBoard().w + q.mpu.w + 2 * CLR + 1.0 + 2 * q.wall;
     if (q.W + 0.01 < pairNeedW) warnings.push(t('wkRowOverlap'));
     const mpuNeedD = q.mpu.d + CLR + 2 * q.wall;
     if (q.D + 0.01 < mpuNeedD) warnings.push(t('wkMpuDepthFit', mpuNeedD.toFixed(1)));
     const batteryTop = q.batteryZ + P.wkBatH;
     if (batteryTop > q.baseH - 0.4) warnings.push(t('wkBatteryHeight', (batteryTop + 0.4).toFixed(1)));
     if (q.mpu.h > TRAY_TOP - SEAT_Z - LID_CAGE_H - 0.8) warnings.push(t('wkMpuHeightFit'));
+    if (xiaoOn() && SEAT_Z + XIAO.h > TRAY_TOP - LID_CAGE_H - 0.2)
+      warnings.push(t('wkXiaoHeightFit'));
     const hallNeedD = BAT.d + CLR + q.hallT + CLR + 1.3 + 2 * q.wall;
     // KY-035는 트레이 바닥 슬롯을 지나 위로 올라오므로, 베이스 높이가 아니라
     // ESP32 케이지 밑면까지의 전체 여유가 기준이다.
@@ -493,7 +544,9 @@ export function initWorkout(env) {
       : 'workout_sensor_tw802040_base.stl');
   });
   document.getElementById('wkExTray').addEventListener('click', () => {
-    if (geos[1]) downloadSTL(geos[1].clone(), 'workout_sensor_electronics_tray.stl');
+    if (geos[1]) downloadSTL(geos[1].clone(), xiaoOn()
+      ? 'workout_sensor_xiao_electronics_tray.stl'
+      : 'workout_sensor_electronics_tray.stl');
   });
   document.getElementById('wkExLid').addEventListener('click', () => {
     if (!geos[2]) return;
@@ -503,9 +556,9 @@ export function initWorkout(env) {
     if (!P.wkOledOn) geo.rotateX(Math.PI);
     geo.computeBoundingBox();
     geo.translate(0, 0, -geo.boundingBox.min.z);
-    downloadSTL(geo, P.wkOledOn
-      ? 'workout_sensor_esp32_oled096_lid.stl'
-      : 'workout_sensor_esp32_lid.stl');
+    downloadSTL(geo, xiaoOn()
+      ? (P.wkOledOn ? 'workout_sensor_xiao_oled096_lid.stl' : 'workout_sensor_xiao_lid.stl')
+      : (P.wkOledOn ? 'workout_sensor_esp32_oled096_lid.stl' : 'workout_sensor_esp32_lid.stl'));
   });
 
   return { rebuildWorkout, applyWorkoutExplode, drawWorkoutWires };

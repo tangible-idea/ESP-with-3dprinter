@@ -392,14 +392,17 @@ const STATIC_I18N = {
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
+    lblWkEspType: 'ESP32 board',
+    hintWkEspType: 'XIAO replaces the charger in the electronics tray. Connect the battery directly to the B+ and B− pads on the back of the board; its USB-C port charges the battery. The power switch is unavailable in this layout.',
     lblWkOledOn: 'Use 0.96" OLED',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
-    hintWorkoutComp: 'Three stacked parts keep the footprint compact: optional KY-035+magnet+battery base, TP4056+MPU6050 tray, and an ESP32-C3 lid with an optional top-loading 0.96" OLED cradle. The 23.2×12.4mm display remains visible from above and its four wires pass through the lid to the ESP32. Verify each module silkscreen before wiring.',
+    hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and an optional 0.96" OLED cradle on the lid. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the display cradle faces up; use bridge-friendly settings or support under the ESP32-cage ceiling.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
-    wkRowOverlap: '⚠ TP4056 and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : 'TP4056 · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
+    wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
+    wkXiaoHeightFit: '⚠ XIAO is too tall for the tray; increase tray clearance before printing',
     wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
     wkMpuDepthFit: d => `⚠ MPU6050 pocket needs at least ${d}mm on the short side`,
     wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
@@ -528,14 +531,17 @@ const STATIC_I18N = {
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
+    lblWkEspType: 'ESP32 보드',
+    hintWkEspType: 'XIAO를 선택하면 전자부품 트레이의 충전모듈 자리에 배치합니다. 배터리 +/−를 보드 뒷면 B+/B− 패드에 직접 연결하고, XIAO USB-C 포트로 충전합니다. 이 배치에서는 전원 스위치를 사용할 수 없습니다.',
     lblWkOledOn: '0.96" OLED 사용',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
-    hintWorkoutComp: '컴팩트한 3단 구조입니다: 선택형 KY-035+자석+배터리 베이스, TP4056+MPU6050 트레이, 위에서 끼우는 선택형 0.96" OLED 받침이 있는 ESP32-C3 뚜껑. 23.2×12.4mm 화면은 위로 보이고 4가닥 배선은 뚜껑 슬롯을 통해 ESP32로 내려갑니다. 실제 배선 전 모듈 실크를 확인하세요.',
+    hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" OLED 받침이 있는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 화면 받침이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장에 브리지 설정 또는 서포트를 사용하세요.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · TP4056 · MPU6050 · ESP32-C3${oled ? ' · 0.96" OLED' : ''}`,
-    wkRowOverlap: '⚠ TP4056과 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : 'TP4056 · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
+    wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
+    wkXiaoHeightFit: '⚠ XIAO 높이가 트레이 여유 공간을 초과합니다. 출력 전 공간을 늘리세요',
     wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
     wkMpuDepthFit: d => `⚠ MPU6050 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
     wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
@@ -821,7 +827,7 @@ const P = {
   wkUsbFit: -0.2,  // ESP32 USB-C 소켓 물림 (셸 폭에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
-  wkHallGpio: 0, wkRev: 8,
+  wkHallGpio: 0, wkEspType: 'c3mini', wkRev: 8,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -956,7 +962,18 @@ for (const el of document.querySelectorAll('input[type=range]')) {
 const applyWorkoutOptionsUI = () => {
   for (const id of ['wkHallGap', 'wkHallT'])
     document.getElementById(id).disabled = !P.wkHallOn;
+  document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
+  document.getElementById('wkSwOn').disabled = P.wkEspType === 'xiao';
+  for (const id of ['wkUsbFit', 'wkDivGrow', 'wkChgX', 'wkWireLen', 'wkWireW', 'wkWireX', 'wkWireY'])
+    document.getElementById(id).disabled = P.wkEspType === 'xiao';
 };
+document.getElementById('wkEspType').value = P.wkEspType;
+document.getElementById('wkEspType').addEventListener('change', e => {
+  P.wkEspType = e.target.value;
+  if (P.wkEspType === 'xiao' && !ESP_PINS_XIAO[P.wkHallGpio]) P.wkHallGpio = 2;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
 document.getElementById('wkHallOn').checked = P.wkHallOn;
 document.getElementById('wkOledOn').checked = P.wkOledOn;
 applyWorkoutOptionsUI();
@@ -965,7 +982,7 @@ document.getElementById('wkHallOn').addEventListener('change', e => {
   applyWorkoutOptionsUI();
   queueRebuild();
 });
-document.getElementById('wkSwOn').checked = P.wkSwOn;
+document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
 document.getElementById('wkSwOn').addEventListener('change', e => {
   P.wkSwOn = e.target.checked;
   queueRebuild();
@@ -1262,8 +1279,9 @@ function syncControls() {
   document.getElementById('tEspOn').checked = P.tEspOn;
   document.getElementById('tOledOn').checked = P.tOledOn;
   document.getElementById('wkHallOn').checked = P.wkHallOn;
+  document.getElementById('wkEspType').value = P.wkEspType;
   document.getElementById('wkOledOn').checked = P.wkOledOn;
-  document.getElementById('wkSwOn').checked = P.wkSwOn;
+  document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   applyWorkoutOptionsUI();
   syncTexBtns();
 }
@@ -2913,7 +2931,7 @@ function retexture() {
 }
 
 function rebuild() {
-  applyEspType(P.product === 'dimsum' ? P.espType : 'c3mini');
+  applyEspType(P.product === 'dimsum' ? P.espType : P.product === 'workout' ? P.wkEspType : 'c3mini');
   if (P.product === 'todo') { rebuildTodo(); return; }
   if (P.product === 'workout') { rebuildWorkout(); return; }
   status.classList.add('on');
@@ -3174,12 +3192,13 @@ const ESP_PINS_XIAO = (() => {
   [2, 3, 4, 5, 6, 7, 21].forEach((n, i) => { m[n] = [px(i), -y]; });
   return m;
 })();
+if (P.wkEspType === 'xiao' && !ESP_PINS_XIAO[P.wkHallGpio]) P.wkHallGpio = 2;
 let ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
 // XIAO 뒷면 BAT+(+y)/BAT−(−y) 패드 로컬 좌표 (보드 중심 기준, USB는 −x) — 대략 위치, 배선 시각화용
 const XIAO_BAT_PAD = [5, 1.5];
 // 4핀 헤더 마운트: USB 쪽 끝 연속 4핀 (supermini 5V·GND·3V3·GPIO4 / XIAO 5V·GND·3V3·GPIO10)
 let ESP_HEADER4_PINS = ['5V', 'GND', '3V3', 4];
-// 보드 종류 반영: 치수·메시·핀맵을 한꺼번에 교체 (투두/운동 제품은 항상 supermini)
+// 보드 종류 반영: 치수·메시·핀맵을 한꺼번에 교체 (투두 제품은 supermini 고정)
 function applyEspType(type) {
   const key = ESP_TYPES[type] ? type : 'c3mini';
   for (const k of Object.keys(ESP)) delete ESP[k];
@@ -3216,16 +3235,23 @@ function renderWireTable() {
     `<tr><td><span class="sw" style="background:${hex(color)}"></span></td>` +
     `<td>${from}</td><td>${to}</td><td>${note}</td></tr>`);
   if (P.product === 'workout') {
-    grp(t('wtGrpPowerChain'));
-    row(WIRE_COLORS.plus, t('wtBatPlus'), t('wtChgBplus'));
-    row(WIRE_COLORS.minus, t('wtBatMinus'), t('wtChgBminus'));
-    if (P.wkSwOn) {
-      row(WIRE_COLORS.plus, t('wtChgOutPlus'), t('wtSwCom'));
-      row(WIRE_COLORS.plus, t('wtSwOut'), t('wtEsp5v'), t('wtSwNote'));
+    if (P.wkEspType === 'xiao') {
+      grp(t('wtGrpPowerXiao'));
+      row(WIRE_COLORS.plus, t('wtBatPlus'), 'B+', t('wtXiaoPadNote'));
+      row(WIRE_COLORS.minus, t('wtBatMinus'), 'B−', t('wtXiaoPadNote'));
+      row(WIRE_COLORS.plus, t('wtUsbC'), t('wtEspDirect'), t('wtXiaoChgNote'));
     } else {
-      row(WIRE_COLORS.plus, t('wtChgOutPlus'), t('wtEsp5v'));
+      grp(t('wtGrpPowerChain'));
+      row(WIRE_COLORS.plus, t('wtBatPlus'), t('wtChgBplus'));
+      row(WIRE_COLORS.minus, t('wtBatMinus'), t('wtChgBminus'));
+      if (P.wkSwOn) {
+        row(WIRE_COLORS.plus, t('wtChgOutPlus'), t('wtSwCom'));
+        row(WIRE_COLORS.plus, t('wtSwOut'), t('wtEsp5v'), t('wtSwNote'));
+      } else {
+        row(WIRE_COLORS.plus, t('wtChgOutPlus'), t('wtEsp5v'));
+      }
+      row(WIRE_COLORS.minus, t('wtChgOutMinus'), t('wtEspGnd'));
     }
-    row(WIRE_COLORS.minus, t('wtChgOutMinus'), t('wtEspGnd'));
     if (P.wkHallOn) {
       grp(t('wtGrpWorkoutHall'));
       row(WIRE_COLORS.plus, t('wtHallVcc'), t('wtEsp3v3'));
@@ -4098,7 +4124,8 @@ productSel.addEventListener('change', e => {
 }));
 // 운동 모션 센서 연결: 본체/뚜껑 2피스와 제품 전용 분해 위치를 주입한다.
 ({ rebuildWorkout, applyWorkoutExplode, drawWorkoutWires } = initWorkout({
-  THREE, P, t, G, MATS, matCase, matCaseX, boxBrush, add, sub,
+  THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, XIAO_BAT_PAD,
+  matCase, matCaseX, boxBrush, add, sub,
   meshBrush, ASSETS,
   manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,
   getView: () => ({ xray, showGhosts }),
