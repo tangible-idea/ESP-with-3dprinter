@@ -393,7 +393,10 @@ const STATIC_I18N = {
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
     lblWkEspType: 'ESP32 board',
-    hintWkEspType: 'XIAO replaces the charger in the electronics tray. Connect the battery directly to the B+ and B− pads on the back of the board; its USB-C port charges the battery. The power switch is unavailable in this layout.',
+    optWkEspXiao: 'Seeed XIAO ESP32C3',
+    hintWkEspType: 'XIAO replaces the charger in the electronics tray. Pocket X runs from the USB end to the rear; Y runs between the two pin rows. Adjust each finished pocket dimension below. The wire hole sits below the back-side B+/B− pads near D2/D3; connect to B+/B−, not the D2/D3 pins. USB-C charges the battery. The power switch is unavailable.',
+    lblWkXiaoPocketX: 'XIAO long side X (USB to rear)',
+    lblWkXiaoPocketY: 'XIAO short side Y (between pin rows)',
     lblWkEspCaseH: 'ESP section height',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
     lblWkOledOn: 'Use 0.96" OLED',
@@ -535,7 +538,10 @@ const STATIC_I18N = {
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
     lblWkEspType: 'ESP32 보드',
-    hintWkEspType: 'XIAO를 선택하면 전자부품 트레이의 충전모듈 자리에 배치합니다. 배터리 +/−를 보드 뒷면 B+/B− 패드에 직접 연결하고, XIAO USB-C 포트로 충전합니다. 이 배치에서는 전원 스위치를 사용할 수 없습니다.',
+    optWkEspXiao: 'Seeed XIAO ESP32C3',
+    hintWkEspType: 'XIAO는 충전모듈 자리에 배치합니다. 포켓 X는 USB가 있는 끝에서 반대쪽 끝까지, Y는 양쪽 핀 열 사이입니다. 아래에서 완성 포켓의 각 치수를 조절할 수 있습니다. 배선 구멍은 D2/D3 근처의 뒷면 B+/B− 패드 아래에 있습니다. 배터리는 D2/D3 핀이 아닌 B+/B−에 직결하고 USB-C로 충전합니다. 전원 스위치는 사용할 수 없습니다.',
+    lblWkXiaoPocketX: 'XIAO 긴 변 X (USB 방향)',
+    lblWkXiaoPocketY: 'XIAO 짧은 변 Y (핀 열 사이)',
     lblWkEspCaseH: 'ESP 수납부 높이',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
     lblWkOledOn: '0.96" OLED 사용',
@@ -833,7 +839,8 @@ const P = {
   wkUsbFit: -0.2,  // ESP32 USB-C 소켓 물림 (셸 폭에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
-  wkHallGpio: 0, wkEspType: 'c3mini', wkEspCaseH: 4.6, wkRev: 8,
+  wkHallGpio: 0, wkEspType: 'c3mini', wkEspCaseH: 4.6,
+  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkRev: 8,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -915,7 +922,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkXiaoPocketX','wkXiaoPocketY','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
@@ -972,6 +979,8 @@ const applyWorkoutOptionsUI = () => {
   document.getElementById('wkSwOn').disabled = P.wkEspType === 'xiao';
   for (const id of ['wkUsbFit', 'wkDivGrow', 'wkChgX', 'wkWireLen', 'wkWireW', 'wkWireX', 'wkWireY'])
     document.getElementById(id).disabled = P.wkEspType === 'xiao';
+  for (const id of ['wkXiaoPocketX', 'wkXiaoPocketY'])
+    document.getElementById(id).disabled = P.wkEspType !== 'xiao';
 };
 document.getElementById('wkEspType').value = P.wkEspType;
 document.getElementById('wkEspType').addEventListener('change', e => {
@@ -4130,7 +4139,7 @@ productSel.addEventListener('change', e => {
 }));
 // 운동 모션 센서 연결: 본체/뚜껑 2피스와 제품 전용 분해 위치를 주입한다.
 ({ rebuildWorkout, applyWorkoutExplode, drawWorkoutWires } = initWorkout({
-  THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, XIAO_BAT_PAD,
+  THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO,
   matCase, matCaseX, boxBrush, add, sub,
   meshBrush, ASSETS,
   manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,

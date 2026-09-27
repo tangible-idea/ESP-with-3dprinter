@@ -4,7 +4,7 @@
 
 export function initWorkout(env) {
   const {
-    THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, XIAO_BAT_PAD,
+    THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO,
     matCase, matCaseX, boxBrush, add, sub,
     meshBrush, ASSETS,
     manToGeo, downloadSTL, status, getView, clearFloors, setFloorMeshes,
@@ -13,18 +13,30 @@ export function initWorkout(env) {
 
   const BAT = { w: 40, d: 20 };   // 두께는 실측값(P.wkBatH)
   const ESP = { w: 24, d: 18, h: 4.2 };
-  // 기존 ESP_TYPES.xiao 치수(22.7×18×4.6)를 Workout 트레이에도 그대로 쓴다.
-  const XIAO = { w: ESP_TYPES.xiao.l, d: ESP_TYPES.xiao.w, h: ESP_TYPES.xiao.h,
+  const XIAO = { h: ESP_TYPES.xiao.h,
                  pcb: 1.0 + ESP_TYPES.xiao.pcbRise, usbZ: ESP_TYPES.xiao.usbZ };
+  // 뒷면 BAT−는 D2(GPIO4), BAT+는 D3(GPIO5) 근처. 핀 자체에 배터리를 잇는 것이 아니다.
+  // Seeed 뒷면 핀아웃 기준: USB는 −X, D0~D6 핀 열은 −Y.
+  const XIAO_BAT_PADS = {
+    minus: [ESP_PINS_XIAO[4][0], -4.4],
+    plus: [ESP_PINS_XIAO[5][0], -4.4],
+  };
+  const XIAO_BAT_SLOT = [
+    (XIAO_BAT_PADS.plus[0] + XIAO_BAT_PADS.minus[0]) / 2,
+    -3.8,  // 핀 열 쪽 받침을 남기면서 두 패드 아래를 관통
+  ];
   // TP4056 실측: 외형 27 × 17.3, 총높이 4.0 (USB-C 커넥터 포함), PCB만 1.2.
   // 긴 변 양쪽의 폭 2.6mm 날개(패드 열)는 부품이 없어 걸림턱으로 눌러 잡을 수 있다.
   const CHARGER = { w: 27, d: 17.3, h: 4.0, pcb: 1.2, wing: 2.6 };
+  const CLR = 0.4;
   const xiaoOn = () => P.wkEspType === 'xiao';
-  const trayBoard = () => xiaoOn() ? XIAO : CHARGER;
+  // 포켓 절삭에서 CLR을 더하므로, 슬라이더의 완성 치수에서 미리 뺀다.
+  const trayBoard = () => xiaoOn()
+    ? { ...XIAO, w: P.wkXiaoPocketX - CLR, d: P.wkXiaoPocketY - CLR }
+    : CHARGER;
   const HALL = { w: 19, h: 15 };       // KY-035 PCB: X=19, 세움 높이 Z=15
   const MAG = { w: 30, d: 10 };   // 두께는 실측값(P.wkMagH)
   const OLED = { w: 25, d: 27.05, h: 3.5, winW: 23.2, winD: 12.4, winY: 0.975 };
-  const CLR = 0.4;
   const OLED_CLR = 0.4, OLED_RIM = 1.6, OLED_RIM_H = 4.2;
   const OLED_CAV_W = OLED.w + OLED_CLR, OLED_CAV_D = OLED.d + OLED_CLR;
   const OLED_OUT_W = OLED_CAV_W + 2 * OLED_RIM, OLED_OUT_D = OLED_CAV_D + 2 * OLED_RIM;
@@ -144,12 +156,18 @@ export function initWorkout(env) {
     const L = Math.max(3.0, q.wall + 1.6);
     const z = SEAT_Z + (xiaoOn() ? XIAO.usbZ : USB_Z);
     const y = xiaoOn() ? q.boardY : P.wkUsbY;
+    // 원래 나팔형 USB 구멍에서 XIAO 쪽만 폭 약 0.4mm, 높이 약 0.36mm 축소.
+    const usbYScale = xiaoOn() ? 0.96 : 1;
+    const usbZScale = (xiaoOn() ? 3.2 : 3.5) / 3.8;
     if (!ASSETS || !ASSETS.usb)   // 에셋 로드 전이면 사각 개구부로 대체
-      return boxBrush(L + 1.0, 9.4, 3.6, -q.W / 2 + q.wall / 2, y, z - 1.8, 1.0);
+      return boxBrush(L + 1.0, xiaoOn() ? 9.0 : 9.4,
+                      xiaoOn() ? 3.3 : 3.6,
+                      -q.W / 2 + q.wall / 2, y,
+                      z - (xiaoOn() ? 1.65 : 1.8), 1.0);
     const m = new THREE.Matrix4()
       .makeTranslation(-(q.W / 2 + 0.4) + L / 2, y, z)
       .multiply(new THREE.Matrix4().makeRotationZ(Math.PI))
-      .multiply(new THREE.Matrix4().makeScale(L / 9, 1, 3.5 / 3.8));
+      .multiply(new THREE.Matrix4().makeScale(L / 9, usbYScale, usbZScale));
     return meshBrush(ASSETS.usb, m);
   }
 
@@ -231,8 +249,8 @@ export function initWorkout(env) {
     const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
     const clampPos = (v, lim) => (lim <= 0 ? 0 : Math.max(-lim, Math.min(lim, v)));
     tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 0.4,
-                              clampPos(xiaoOn() ? q.chargerX + XIAO_BAT_PAD[0] : P.wkWireX, limX),
-                              clampPos(xiaoOn() ? q.boardY : P.wkWireY, limY),
+                              clampPos(xiaoOn() ? q.chargerX + XIAO_BAT_SLOT[0] : P.wkWireX, limX),
+                              clampPos(xiaoOn() ? q.boardY + XIAO_BAT_SLOT[1] : P.wkWireY, limY),
                               -0.2, Math.min(1.4, slotD / 2 - 0.1)));
     tray = sub(tray, usbCut(q));
     if (P.wkHallOn) {
@@ -317,14 +335,15 @@ export function initWorkout(env) {
     if (P.wkHallOn)
       ghostBox(G[0], [HALL.w, q.hallT, HALL.h], [0, q.hallY, 0.75 + HALL.h / 2], hallMat);
     if (xiaoOn()) {
-      ghostBox(G[1], [XIAO.w, XIAO.d, XIAO.pcb],
+      const board = trayBoard();
+      ghostBox(G[1], [board.w, board.d, XIAO.pcb],
                [q.chargerX, q.boardY, SEAT_Z + XIAO.pcb / 2], MATS.esp);
       ghostBox(G[1], [8.94, 9.0, 3.2],
-               [q.chargerX - XIAO.w / 2 + 3.5, q.boardY,
+               [q.chargerX - board.w / 2 + 3.5, q.boardY,
                 SEAT_Z + XIAO.usbZ], MATS.esp);
-      for (const sy of [-1, 1])
+      for (const pad of Object.values(XIAO_BAT_PADS))
         ghostBox(G[1], [2, 1.8, 0.1],
-                 [q.chargerX + XIAO_BAT_PAD[0], q.boardY + sy * XIAO_BAT_PAD[1],
+                 [q.chargerX + pad[0], q.boardY + pad[1],
                   SEAT_Z - 0.06], MATS.mod);
     } else {
       ghostBox(G[1], [CHARGER.w, CHARGER.d, CHARGER.pcb],
@@ -412,11 +431,11 @@ export function initWorkout(env) {
 
     if (xiaoOn()) {
       const padZ = SEAT_Z - 0.05;
-      wire(batPlus, world(G[1], [q.chargerX + XIAO_BAT_PAD[0],
-           q.boardY + XIAO_BAT_PAD[1], padZ]),
+      wire(batPlus, world(G[1], [q.chargerX + XIAO_BAT_PADS.plus[0],
+           q.boardY + XIAO_BAT_PADS.plus[1], padZ]),
            colors.plus, t('wtBatPlus'), 'B+');
-      wire(batMinus, world(G[1], [q.chargerX + XIAO_BAT_PAD[0],
-           q.boardY - XIAO_BAT_PAD[1], padZ]),
+      wire(batMinus, world(G[1], [q.chargerX + XIAO_BAT_PADS.minus[0],
+           q.boardY + XIAO_BAT_PADS.minus[1], padZ]),
            colors.minus, t('wtBatMinus'), 'B−');
     } else {
       wire(batPlus, chgBPlus, colors.plus, t('wtBatPlus'), 'B+');
