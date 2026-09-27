@@ -38,7 +38,7 @@ export function initWorkout(env) {
   // 넣는다. SEAT_Z = 파낸 자리의 바닥(= 보드 안착면), TRAY_FLOOR_TOP = 바닥 윗면.
   // 트레이 바닥은 베드에 그대로 닿는 통짜 판이다. 결합 홈이 밑면에서 JOINT_H 만큼
   // 파고들어오므로 그보다 POCKET_D + 여유만큼 두꺼워야 한다.
-  const TRAY_TOP = 12.2, TRAY_FLOOR = 3.8, TRAY_FLOOR_TOP = TRAY_FLOOR;
+  const TRAY_TOP_DEFAULT = 12.2, TRAY_FLOOR = 3.8, TRAY_FLOOR_TOP = TRAY_FLOOR;
   const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
   // 배터리 배선 관통 슬롯 — 크기는 wkWireLen(X) × wkWireW(Y)로 조절한다.
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
@@ -46,7 +46,7 @@ export function initWorkout(env) {
   const USB_SOCK_WALL = 1.2;
   const SW = { w: 8.4, d: 3.6, body: 4.0 };   // SPDT 슬라이드 스위치 (창 8.4 × 3.6)
   const ESP_Z0 = 0.2, ESP_PCB = 1.0;   // 뚜껑 밑 보드 안착 높이 / PCB 두께
-  const LID_CAGE_H = 4.6, LID_PLATE = 1.8;
+  const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
   let geos = [null, null, null], meshes = [null, null, null], lastLayout = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
@@ -69,6 +69,13 @@ export function initWorkout(env) {
 
   function layout() {
     const W = P.wkWidth, D = P.wkLength, baseH = P.wkBodyH, wall = P.wkWall, mpu = mpuSpec();
+    // 뚜껑 결합 텅(2.2mm)이 상판 아래에 남도록 최소 0.2mm 여유를 둔다.
+    const espCaseH = Math.max(JOINT_H + 0.2,
+      Math.min(12, Number(P.wkEspCaseH) || LID_CAGE_DEFAULT));
+    // SuperMini는 케이지와 외벽을 같이 높인다. XIAO는 트레이 외벽을 높이고 뚜껑의
+    // 결합부 깊이는 고정해 보드 위 공간을 확보한다. 기본값 4.6은 기존 형상과 동일.
+    const trayTop = TRAY_TOP_DEFAULT + espCaseH - LID_CAGE_DEFAULT;
+    const lidCageH = xiaoOn() ? LID_CAGE_DEFAULT : espCaseH;
     const innerW = W - 2 * wall;
     const innerHalfD = D / 2 - wall;
     const board = trayBoard();
@@ -95,7 +102,8 @@ export function initWorkout(env) {
     const batteryY = P.wkHallOn ? hallInnerY + 0.8 + (BAT.d + CLR) / 2 : 0;
     const magnetY = P.wkHallOn ? hallInnerY + P.wkHallGap + MAG.d / 2 : 0;
     return {
-      W, D, baseH, wall, innerW, innerHalfD, mpu, gap, chargerX, boardY, mpuX,
+      W, D, baseH, wall, trayTop, lidCageH, innerW, innerHalfD,
+      mpu, gap, chargerX, boardY, mpuX,
       hallY, hallInnerY, batteryY, magnetY, hallT: P.wkHallT,
       magnetZ: P.wkMagSkin, batteryZ: P.wkMagSkin + P.wkMagH + 0.2,
     };
@@ -154,7 +162,7 @@ export function initWorkout(env) {
     tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.2,
                           -0.2, Math.max(0.8, r - q.wall)));
     tray = add(tray, ring(q.W, q.D, q.W - 2 * q.wall, q.D - 2 * q.wall,
-                          TRAY_TOP - TRAY_FLOOR, TRAY_FLOOR, r));
+                          q.trayTop - TRAY_FLOOR, TRAY_FLOOR, r));
     // 모듈 자리: 바닥을 보드 외형대로 파서 떨어뜨려 넣는다. 깊이는 PCB 두께라
     // 보드 윗면이 바닥과 거의 나란해지고, 사방 벽이 그대로 자리잡기 역할을 한다.
     // 납땜 릴리프: 보드 밑면 패드 열에 납이 볼록하게 남으면 보드가 뜬다. 그 줄을
@@ -204,7 +212,7 @@ export function initWorkout(env) {
     // 막대를 바닥 위로 더 세워 두 모듈이 서로 밀리지 않게 한다. ESP32 케이지에 닿지
     // 않는 높이까지만 올라간다.
     const divH = Math.min(P.wkDivH,
-                          TRAY_TOP - LID_CAGE_H - TRAY_FLOOR_TOP - 0.3);
+                          q.trayTop - q.lidCageH - TRAY_FLOOR_TOP - 0.3);
     if (divH > 0.05 && barEnd > 1.5 && rightEdge - leftEdge > 0.05)
       for (const sy of [-1, 1])
         tray = add(tray, boxBrush(rightEdge - leftEdge, barEnd - 1.5, divH,
@@ -239,24 +247,27 @@ export function initWorkout(env) {
       const wx = q.W / 2 - q.wall / 2;
       tray = sub(tray, boxBrush(q.wall + 2.0, SW.w + 0.3, SW.d + 0.3,
                                 wx, P.wkSwY, P.wkSwZ - (SW.d + 0.3) / 2, 0.4));
-      for (const sy of [-1, 1])
-        tray = add(tray, boxBrush(1.2, 1.2, SW.d + 3.0,
-                                  q.W / 2 - q.wall - 0.6,
-                                  P.wkSwY + sy * (SW.w + 0.3 + 1.2) / 2,
-                                  P.wkSwZ - (SW.d + 3.0) / 2 + 0.4, 0.3));
+      const ribZ = P.wkSwZ - (SW.d + 3.0) / 2 + 0.4;
+      const ribH = Math.min(SW.d + 3.0, q.trayTop - 0.2 - ribZ);
+      if (ribH > 0.1)
+        for (const sy of [-1, 1])
+          tray = add(tray, boxBrush(1.2, 1.2, ribH,
+                                    q.W / 2 - q.wall - 0.6,
+                                    P.wkSwY + sy * (SW.w + 0.3 + 1.2) / 2,
+                                    ribZ, 0.3));
     }
     tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
-                          TRAY_TOP - JOINT_H, Math.max(0.8, r - q.wall)));
+                          q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
     return tray;
   }
 
   function buildLid() {
     const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
     const j = jointDims(q), fit = P.wkFit;
-    let lid = boxBrush(q.W, q.D, LID_PLATE, 0, 0, LID_CAGE_H, r);
+    let lid = boxBrush(q.W, q.D, LID_PLATE, 0, 0, q.lidCageH, r);
     lid = add(lid, ring(j.outW - 2 * fit, j.outD - 2 * fit,
                         j.inW + 2 * fit, j.inD + 2 * fit,
-                        JOINT_H, LID_CAGE_H - JOINT_H,
+                        JOINT_H, q.lidCageH - JOINT_H,
                         Math.max(0.6, r - q.wall - fit)));
 
     // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다. 모서리 받침 돌기는
@@ -264,28 +275,28 @@ export function initWorkout(env) {
     if (!xiaoOn()) {
     const cageOuterW = ESP.w + CLR + 2.0, cageOuterD = ESP.d + CLR + 2.0;
     lid = add(lid, ring(cageOuterW, cageOuterD, ESP.w + CLR, ESP.d + CLR,
-                        LID_CAGE_H, 0, 1.0));
+                        q.lidCageH, 0, 1.0));
 
     // wkUsbFit은 셸 폭에 더하는 값이라 음수면 조여서 물린다(간섭 끼움).
     const cavW = USB_C.w + P.wkUsbFit;
     const cavZ0 = ESP_Z0 + ESP_PCB;
     const blkX1 = -(ESP.w + CLR) / 2;
     const blkX0 = -cageOuterW / 2 - USB_C.over - 0.4;
-    lid = add(lid, boxBrush(blkX1 - blkX0, cavW + 2 * USB_SOCK_WALL, LID_CAGE_H,
+    lid = add(lid, boxBrush(blkX1 - blkX0, cavW + 2 * USB_SOCK_WALL, q.lidCageH,
                             (blkX0 + blkX1) / 2, 0, 0, 0.6));
     // 커넥터가 들어갈 길 — 소켓 바깥부터 케이지 벽을 지나 보드 자리까지 관통시킨다.
     const cavX1 = blkX1 + 0.6, cavX0 = blkX0 - 0.6;
-    lid = sub(lid, boxBrush(cavX1 - cavX0, cavW, LID_CAGE_H - cavZ0 + 0.4,
+    lid = sub(lid, boxBrush(cavX1 - cavX0, cavW, q.lidCageH - cavZ0 + 0.4,
                             (cavX0 + cavX1) / 2, 0, cavZ0, 0.3));
     }
     if (P.wkOledOn) {
       // OLED는 뚜껑 위에서 내려놓는 개방형 보호 림에 안착한다. 화면은 위로 보이고,
       // 헤더 쪽 4가닥은 상판 슬롯을 통과해 바로 아래 ESP32로 내려간다.
-      const lidTop = LID_CAGE_H + LID_PLATE;
+      const lidTop = q.lidCageH + LID_PLATE;
       lid = add(lid, ring(OLED_OUT_W, OLED_OUT_D, OLED_CAV_W, OLED_CAV_D,
                           OLED_RIM_H, lidTop, 1.4));
       lid = sub(lid, boxBrush(12, 3.2, LID_PLATE + 0.8,
-                              0, -OLED.d / 2 + 1.7, LID_CAGE_H - 0.4, 0.65));
+                              0, -OLED.d / 2 + 1.7, q.lidCageH - 0.4, 0.65));
     }
     return lid;
   }
@@ -338,7 +349,7 @@ export function initWorkout(env) {
       ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, ESP_Z0 + ESP.h / 2], MATS.esp);
     }
     if (P.wkOledOn) {
-      const lidTop = LID_CAGE_H + LID_PLATE;
+      const lidTop = q.lidCageH + LID_PLATE;
       ghostBox(G[2], [OLED.w, OLED.d, OLED.h],
                [0, 0, lidTop + 0.1 + OLED.h / 2], oledBoardMat);
       ghostBox(G[2], [OLED.winW, OLED.winD, 0.45],
@@ -447,7 +458,7 @@ export function initWorkout(env) {
 
     // 0.96" OLED: MPU6050과 GPIO8/9 I2C 버스를 공유한다.
     if (P.wkOledOn) {
-      const oledZ = LID_CAGE_H + LID_PLATE + OLED.h + 0.15;
+      const oledZ = q.lidCageH + LID_PLATE + OLED.h + 0.15;
       const oledPin = i => world(G[2], [-3.81 + i * 2.54, -OLED.d / 2 + 1.5, oledZ]);
       const oGnd = oledPin(0), oVcc = oledPin(1), oScl = oledPin(2), oSda = oledPin(3);
       wire(oVcc, esp3V3, colors.plus, 'VCC', '3V3');
@@ -481,14 +492,16 @@ export function initWorkout(env) {
     if (q.D + 0.01 < mpuNeedD) warnings.push(t('wkMpuDepthFit', mpuNeedD.toFixed(1)));
     const batteryTop = q.batteryZ + P.wkBatH;
     if (batteryTop > q.baseH - 0.4) warnings.push(t('wkBatteryHeight', (batteryTop + 0.4).toFixed(1)));
-    if (q.mpu.h > TRAY_TOP - SEAT_Z - LID_CAGE_H - 0.8) warnings.push(t('wkMpuHeightFit'));
-    if (xiaoOn() && SEAT_Z + XIAO.h > TRAY_TOP - LID_CAGE_H - 0.2)
+    if (q.mpu.h > q.trayTop - SEAT_Z - q.lidCageH - 0.8) warnings.push(t('wkMpuHeightFit'));
+    if (xiaoOn() && SEAT_Z + XIAO.h > q.trayTop - q.lidCageH - 0.2)
       warnings.push(t('wkXiaoHeightFit'));
+    if (!xiaoOn() && ESP_Z0 + ESP.h > q.lidCageH - 0.2 + 0.01)
+      warnings.push(t('wkEspHeightFit'));
     const hallNeedD = BAT.d + CLR + q.hallT + CLR + 1.3 + 2 * q.wall;
     // KY-035는 트레이 바닥 슬롯을 지나 위로 올라오므로, 베이스 높이가 아니라
     // ESP32 케이지 밑면까지의 전체 여유가 기준이다.
-    const hallCeil = q.baseH + (TRAY_TOP - LID_CAGE_H);
-    const hallNeedH = 0.75 + HALL.h + 0.4 - (TRAY_TOP - LID_CAGE_H);
+    const hallCeil = q.baseH + (q.trayTop - q.lidCageH);
+    const hallNeedH = 0.75 + HALL.h + 0.4 - (q.trayTop - q.lidCageH);
     if (P.wkHallOn && (q.D < hallNeedD || 0.75 + HALL.h + 0.4 > hallCeil))
       warnings.push(t('wkHallFit', hallNeedD.toFixed(1), hallNeedH.toFixed(1)));
     if (P.wkOledOn && (q.W < OLED_OUT_W || q.D < OLED_OUT_D))
@@ -501,8 +514,8 @@ export function initWorkout(env) {
     const gap = 18 * +document.getElementById('explode').value;
     G[0].position.set(0, 0, 0);
     G[1].position.set(0, 0, lastLayout.baseH + gap);
-    const trayTopWorld = lastLayout.baseH + TRAY_TOP;
-    G[2].position.set(0, 0, trayTopWorld - LID_CAGE_H + gap * 2);
+    const trayTopWorld = lastLayout.baseH + lastLayout.trayTop;
+    G[2].position.set(0, 0, trayTopWorld - lastLayout.lidCageH + gap * 2);
     for (let i = 3; i < G.length; i++) G[i].position.set(0, 0, 0);
     markRulers();
     refreshWires();
@@ -521,7 +534,7 @@ export function initWorkout(env) {
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
         setFloorMeshes(meshes); lastLayout = layout(); placeGhosts(lastLayout);
         applyWorkoutExplode(); setRulerExtras('workout', workoutRulerDims(lastLayout));
-        const totalH = lastLayout.baseH + TRAY_TOP + LID_PLATE
+        const totalH = lastLayout.baseH + lastLayout.trayTop + LID_PLATE
           + (P.wkOledOn ? OLED_RIM_H : 0);
         const totalW = P.wkOledOn ? Math.max(lastLayout.W, OLED_OUT_W) : lastLayout.W;
         const totalD = P.wkOledOn ? Math.max(lastLayout.D, OLED_OUT_D) : lastLayout.D;

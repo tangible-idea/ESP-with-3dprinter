@@ -394,6 +394,8 @@ const STATIC_I18N = {
     secWorkoutComp: 'Electronics layout',
     lblWkEspType: 'ESP32 board',
     hintWkEspType: 'XIAO replaces the charger in the electronics tray. Connect the battery directly to the B+ and B− pads on the back of the board; its USB-C port charges the battery. The power switch is unavailable in this layout.',
+    lblWkEspCaseH: 'ESP section height',
+    hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
     lblWkOledOn: 'Use 0.96" OLED',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
     hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and an optional 0.96" OLED cradle on the lid. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
@@ -403,6 +405,7 @@ const STATIC_I18N = {
     workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : 'TP4056 · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkXiaoHeightFit: '⚠ XIAO is too tall for the tray; increase tray clearance before printing',
+    wkEspHeightFit: '⚠ SuperMini does not fit below the lid plate; increase ESP section height',
     wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
     wkMpuDepthFit: d => `⚠ MPU6050 pocket needs at least ${d}mm on the short side`,
     wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
@@ -533,6 +536,8 @@ const STATIC_I18N = {
     secWorkoutComp: '전자부품 배치',
     lblWkEspType: 'ESP32 보드',
     hintWkEspType: 'XIAO를 선택하면 전자부품 트레이의 충전모듈 자리에 배치합니다. 배터리 +/−를 보드 뒷면 B+/B− 패드에 직접 연결하고, XIAO USB-C 포트로 충전합니다. 이 배치에서는 전원 스위치를 사용할 수 없습니다.',
+    lblWkEspCaseH: 'ESP 수납부 높이',
+    hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
     lblWkOledOn: '0.96" OLED 사용',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
     hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" OLED 받침이 있는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
@@ -542,6 +547,7 @@ const STATIC_I18N = {
     workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : 'TP4056 · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkXiaoHeightFit: '⚠ XIAO 높이가 트레이 여유 공간을 초과합니다. 출력 전 공간을 늘리세요',
+    wkEspHeightFit: '⚠ SuperMini가 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
     wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
     wkMpuDepthFit: d => `⚠ MPU6050 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
     wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
@@ -827,7 +833,7 @@ const P = {
   wkUsbFit: -0.2,  // ESP32 USB-C 소켓 물림 (셸 폭에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
-  wkHallGpio: 0, wkEspType: 'c3mini', wkRev: 8,
+  wkHallGpio: 0, wkEspType: 'c3mini', wkEspCaseH: 4.6, wkRev: 8,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -909,7 +915,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
