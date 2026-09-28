@@ -79,6 +79,23 @@ export function initWorkout(env) {
                         Math.max(0.35, r - (outW - inW) / 2)));
   }
 
+  // 걸림 꼬다리 단면(X-Z): 벽면 x0에서 -X로 lip 만큼 나온 수평 밑면 + 코 + 45° 윗면.
+  // Y 방향으로 len 만큼 뽑아 cy에 가운데 맞춘다. 벽 안으로 0.2 파묻어 확실히 합쳐지게 한다.
+  function clipGeo(lip, nose, len, x0, cy, z0) {
+    const s = new THREE.Shape();
+    s.moveTo(x0 + 0.2, z0);
+    s.lineTo(x0 - lip, z0);
+    s.lineTo(x0 - lip, z0 + nose);
+    s.lineTo(x0, z0 + nose + lip);
+    s.lineTo(x0 + 0.2, z0 + nose + lip);
+    s.closePath();
+    const g = new THREE.ExtrudeGeometry(s, { depth: len, bevelEnabled: false });
+    g.deleteAttribute('uv');
+    g.rotateX(Math.PI / 2);          // 단면 y → z, 뽑은 방향 z → -y
+    g.translate(0, cy + len / 2, 0);
+    return g;
+  }
+
   function layout() {
     const W = P.wkWidth, D = P.wkLength, baseH = P.wkBodyH, wall = P.wkWall, mpu = mpuSpec();
     // 뚜껑 결합 텅(2.2mm)이 상판 아래에 남도록 최소 0.2mm 여유를 둔다.
@@ -229,13 +246,25 @@ export function initWorkout(env) {
 
     // 막대를 바닥 위로 더 세워 두 모듈이 서로 밀리지 않게 한다. ESP32 케이지에 닿지
     // 않는 높이까지만 올라간다.
-    const divH = Math.min(P.wkDivH,
-                          q.trayTop - q.lidCageH - TRAY_FLOOR_TOP - 0.3);
+    // XIAO 클립: 두 막대 윗끝에 포켓(-X) 쪽으로 꼬다리를 내밀어 보드 뒤끝을 눌러 잡는다.
+    // 밑면은 PCB 윗면 바로 위의 수평 걸림면, 윗면은 45° 경사라 USB 쪽을 먼저 넣고
+    // 뒤끝을 누르면 딸깍 걸린다. 1mm 안쪽 돌출이라 서포트 없이 출력된다.
+    const lip = xiaoOn() ? P.wkClipLip : 0;
+    const clipZ0 = SEAT_Z + XIAO.pcb + 0.1, clipNose = 0.3;
+    const divLimit = q.trayTop - q.lidCageH - TRAY_FLOOR_TOP - 0.3;
+    const divH = Math.min(lip > 0.05
+                            ? Math.max(P.wkDivH, clipZ0 + clipNose + lip - TRAY_FLOOR_TOP)
+                            : P.wkDivH,
+                          divLimit);
+    const barLen = barEnd - 1.5;
     if (divH > 0.05 && barEnd > 1.5 && rightEdge - leftEdge > 0.05)
-      for (const sy of [-1, 1])
-        tray = add(tray, boxBrush(rightEdge - leftEdge, barEnd - 1.5, divH,
-                                  (leftEdge + rightEdge) / 2, sy * (1.5 + barEnd) / 2,
-                                  TRAY_FLOOR_TOP, 0.3));
+      for (const sy of [-1, 1]) {
+        const by = sy * (1.5 + barEnd) / 2;
+        tray = add(tray, boxBrush(rightEdge - leftEdge, barLen, divH,
+                                  (leftEdge + rightEdge) / 2, by, TRAY_FLOOR_TOP, 0.3));
+        if (lip > 0.05 && TRAY_FLOOR_TOP + divH >= clipZ0 + clipNose + lip - 0.01)
+          tray = add(tray, meshBrush(clipGeo(lip, clipNose, barLen, leftEdge, by, clipZ0)));
+      }
 
     // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
     // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
