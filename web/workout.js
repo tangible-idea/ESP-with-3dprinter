@@ -29,7 +29,9 @@ export function initWorkout(env) {
     tp4056: { w: 27, d: 17.3, h: 4.0, pcb: 1.2, usbZ: 1.2 + (4.0 - 1.2) / 2 },
     generic: { w: 19, d: 14, h: 4.5, pcb: 1.2, usbZ: 2.9 },
   };
-  const chargerSpec = () => CHARGERS[P.wkModType] || CHARGERS.tp4056;
+  // 외형 X·Y는 슬라이더(wkChgW/wkChgD) 실측값으로 덮어쓴다 — 포켓·배선 구멍·받침 턱이 따라온다.
+  const chargerSpec = () => ({ ...(CHARGERS[P.wkModType] || CHARGERS.tp4056),
+                               w: Number(P.wkChgW) || 27, d: Number(P.wkChgD) || 17.3 });
   const CLR = 0.4;
   const xiaoOn = () => P.wkEspType === 'xiao';
   // 포켓 절삭에서 CLR을 더하므로, 슬라이더의 완성 치수에서 미리 뺀다.
@@ -55,20 +57,17 @@ export function initWorkout(env) {
   // 높이는 보드 안착면 기준으로 맞춰, 바닥이 얇아져도 보드 위 여유는 그대로 둔다.
   let BASE_JOINT_H, POCKET_D, TRAY_FLOOR, TRAY_FLOOR_TOP, TRAY_TOP_DEFAULT, SEAT_Z;
   function syncFloor() {
-    const F = Math.min(4.4, Math.max(0.4, Number(P.wkTrayFloor) || 2.6));
-    let joint = 1.4, pocket = 0.8, cover = 0.4;
-    if (F >= 2.6) {
-      // 두꺼워지면 결합을 2.2까지 깊게 하고, 그 이상은 덮개로 보탠다.
-      joint = Math.min(2.2, 1.4 + (F - 2.6));
-      cover = F - joint - pocket;
+    const F = Math.min(4.4, Math.max(0.4, Number(P.wkTrayFloor) || 3.4));
+    let joint = 2.2, pocket = 0.8, cover = 0.4;
+    if (F >= 3.4) {
+      cover = F - joint - pocket;   // 더 두꺼우면 덮개로 보탠다
     } else {
-      // 얇아지면 포켓 0.8→0.4, 결합 1.4→0.8, 포켓 0.4→0, 결합 0.8→0 순으로 깎는다.
-      // 결합이 0.4 밑이면 텅이 제 역할을 못 하므로 아예 없애고 평판으로 얹는다.
-      let cut = 2.6 - F;
+      // 결합 깊이(2.2)를 가장 늦게 깎는다: 포켓 0.8→0 을 먼저 없애고, 그래도 얇으면
+      // 결합을 줄인다. 결합이 0.8 밑이면 텅이 제 역할을 못 하므로 아예 없애고 평판으로 얹는다.
+      let cut = 3.4 - F;
       const take = (v, min) => { const d = Math.min(cut, v - min); cut -= d; return v - d; };
-      pocket = take(pocket, 0.4); joint = take(joint, 0.8);
       pocket = take(pocket, 0); joint = take(joint, 0);
-      if (joint < 0.4) joint = 0;
+      if (joint < 0.8) joint = 0;
       cover = F - joint - pocket;
     }
     BASE_JOINT_H = joint; POCKET_D = pocket;
@@ -173,6 +172,9 @@ export function initWorkout(env) {
     return {
       W, D, baseH, wall, trayTop, lidCageH, innerW, innerHalfD,
       mpu, gap, chargerX, boardY, mpuX, mpuDepth, mpuSeatZ,
+      // 스위치 창 위로 벽이 1mm는 남아야 하고, 몸통이 뚜껑에 닿지 않게 높이를 묶는다.
+      swZ: Math.max(TRAY_FLOOR_TOP + SW.d / 2 + 0.3,
+                    Math.min(P.wkSwZ, trayTop - 1.0 - (SW.d + 0.3) / 2)),
       hallY, hallInnerY, batteryY, magnetY, hallT: P.wkHallT,
       magnetZ: P.wkMagSkin, batteryZ: P.wkMagSkin + P.wkMagH + 0.2,
     };
@@ -200,10 +202,11 @@ export function initWorkout(env) {
     // 결합부 암수를 뒤집었다: 1층이 텅을 위로 세우고 2층이 밑면에 홈을 판다.
     // 그래야 2층 밑면이 완전히 평평해져 바닥 밑에 서포트가 생기지 않는다.
     const j = jointDims(q), fit = P.wkFit;
+    // 텅은 홈보다 0.2 낮게 — 홈 천장(브리지)이 처져도 끝까지 들어간다.
     if (BASE_JOINT_H > 0)
       body = add(body, ring(j.outW - 2 * fit, j.outD - 2 * fit,
                             j.inW + 2 * fit, j.inD + 2 * fit,
-                            BASE_JOINT_H, q.baseH, Math.max(0.6, r - q.wall - fit)));
+                            BASE_JOINT_H - 0.2, q.baseH, Math.max(0.6, r - q.wall - fit)));
     return body;
   }
 
@@ -248,13 +251,23 @@ export function initWorkout(env) {
     function solderRelief(t, edgeX, depthY, dir = -1) {
       const sw = P.wkSolderW;
       if (sw <= 0.1) return t;
-      const lim = jointDims(q).inW / 2 - 0.5;           // 결합 홈 안쪽 한계
+      // 결합 홈이 없으면 어디든 관통해도 된다.
+      const lim = BASE_JOINT_H > 0 ? jointDims(q).inW / 2 - 0.5 : Infinity;
       const clamp = v => Math.max(-lim, Math.min(lim, v));
-      const a = clamp(edgeX), b = clamp(edgeX + dir * sw);
-      const x0 = Math.min(a, b), x1 = Math.max(a, b);
-      if (x1 - x0 < 0.4) return t;
-      return sub(t, boxBrush(x1 - x0, depthY, TRAY_FLOOR + 0.4,
-                             (x0 + x1) / 2, 0, -0.2, 0.3));
+      const r0 = Math.min(edgeX, edgeX + dir * sw), r1 = Math.max(edgeX, edgeX + dir * sw);
+      const x0 = clamp(r0), x1 = clamp(r1);
+      if (x1 - x0 >= 0.4)
+        t = sub(t, boxBrush(x1 - x0, depthY, TRAY_FLOOR + 0.4,
+                            (x0 + x1) / 2, 0, -0.2, 0.3));
+      // 한계선 밖(홈 위)으로 넘어간 부분은 관통 대신 홈 덮개 위까지만 파서, 슬롯이
+      // 포켓 끝에 닿게 한다. 안 그러면 관통 구멍만 포켓 가운데에 떠 보인다.
+      const zb = BASE_JOINT_H + 0.3;
+      if (zb < TRAY_FLOOR - 0.1)
+        for (const [o0, o1] of [[r0, Math.min(r1, -lim + 0.2)], [Math.max(r0, lim - 0.2), r1]])
+          if (o1 - o0 > 0.3)
+            t = sub(t, boxBrush(o1 - o0, depthY, TRAY_FLOOR + 0.2 - zb,
+                                (o0 + o1) / 2, 0, zb, 0.3));
+      return t;
     }
 
     // 칸막이 벽은 wkDivGrow 만큼 USB(-X) 쪽으로 더 두꺼워진다 — TP4056 포켓의 +X
@@ -270,10 +283,18 @@ export function initWorkout(env) {
     if (q.mpuDepth > 0.05)
       tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, q.mpuDepth + 0.2,
                                 q.mpuX, 0, q.mpuSeatZ, 0.6));
-    // 칸막이 벽 양쪽(TP4056 오른쪽 끝 · MPU 왼쪽 끝)과 MPU 오른쪽 끝에 관통 슬롯.
+    // 칸막이 벽 양쪽(TP4056 오른쪽 끝 · MPU 왼쪽 끝 = GY-521 핀헤더 쪽)에 관통 슬롯.
     if (!xiaoOn()) tray = solderRelief(tray, chgCx + chgLen / 2, board.d + CLR, -1);
     tray = solderRelief(tray, q.mpuX - (q.mpu.w + CLR) / 2, q.mpu.d + CLR, +1);
-    tray = solderRelief(tray, q.mpuX + (q.mpu.w + CLR) / 2, q.mpu.d + CLR, -1);
+    // GY-521 반대쪽(+X, 스위치 쪽) 두 모서리의 고정 구멍(Ø3)에 끼우는 둥근 핀 2개.
+    // 높이는 PCB(1.6) 위로 0.8 더 — MPU 윗면과 스위치 받침에는 닿지 않는다.
+    const pegD = P.wkMpuPegD, pegIn = P.wkMpuPegIn;
+    if (pegD > 0.5)
+      for (const sy of [-1, 1])
+        tray = add(tray, boxBrush(pegD, pegD, 2.5,
+                                  q.mpuX + q.mpu.w / 2 - pegIn,
+                                  sy * (q.mpu.d / 2 - pegIn),
+                                  q.mpuSeatZ - 0.1, pegD / 2));
 
     // 칸막이 벽은 가운데 배선 홈(3.0)을 두고 막대 두 개(' - - ')만 남긴다. 막대 길이는
     // wkDivBar로 조절 — 값을 낮출수록 파인 곳이 바깥에서 중앙 쪽으로 밀려오고,
@@ -345,23 +366,32 @@ export function initWorkout(env) {
       tray = sub(tray, boxBrush(HALL.w + CLR + 0.6, q.hallT + CLR + 0.6,
                                 TRAY_FLOOR_TOP + 0.4, 0, q.hallY, -0.1, 0.45));
     }
+    tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
+                          q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
     if (P.wkSwOn && !xiaoOn()) {
       // 전원 스위치(SPDT 슬라이드)는 USB 반대쪽(+X) 짧은 벽에 레버가 밖으로 나오게
-      // 끼운다. 창만 뚫고 양옆에 세로 리브를 세워 몸통을 잡는다 — 세로라 서포트 없음.
+      // 끼운다. 뚜껑 결합 홈을 판 뒤에 붙여야 리브가 홈에 깎이지 않는다(그 자리 뚜껑
+      // 텅은 비워 둠). 창을 뚫고 양옆 세로 리브가 몸통을 잡으며, 두 리브 사이에 받침 선반을
+      // 걸쳐 몸통 밑을 받친다. 선반은 리브 사이 브리지라 서포트 없이 출력된다.
       const wx = q.W / 2 - q.wall / 2;
       tray = sub(tray, boxBrush(q.wall + 2.0, SW.w + 0.3, SW.d + 0.3,
-                                wx, P.wkSwY, P.wkSwZ - (SW.d + 0.3) / 2, 0.4));
-      const ribZ = P.wkSwZ - (SW.d + 3.0) / 2 + 0.4;
-      const ribH = Math.min(SW.d + 3.0, q.trayTop - 0.2 - ribZ);
+                                wx, P.wkSwY, q.swZ - (SW.d + 0.3) / 2, 0.4));
+      const swBottom = q.swZ - (SW.d + 0.3) / 2;
+      // 리브와 선반은 바로 밑 MPU 윗면에 닿지 않는 높이에서 시작한다.
+      const mpuTop = q.mpuSeatZ + q.mpu.h + 0.3;
+      const ribZ = Math.max(mpuTop, swBottom - 1.2);
+      const ribH = q.trayTop - 0.2 - ribZ;
       if (ribH > 0.1)
         for (const sy of [-1, 1])
           tray = add(tray, boxBrush(1.2, 1.2, ribH,
                                     q.W / 2 - q.wall - 0.6,
                                     P.wkSwY + sy * (SW.w + 0.3 + 1.2) / 2,
                                     ribZ, 0.3));
+      if (swBottom - ribZ > 0.4)
+        tray = add(tray, boxBrush(SW.body - 0.4, SW.w + 0.3 + 2.4, swBottom - ribZ,
+                                  q.W / 2 - q.wall - (SW.body - 0.4) / 2 + 0.2,
+                                  P.wkSwY, ribZ, 0.3));
     }
-    tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
-                          q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
     return tray;
   }
 
@@ -373,6 +403,14 @@ export function initWorkout(env) {
                         j.inW + 2 * fit, j.inD + 2 * fit,
                         JOINT_H, q.lidCageH - JOINT_H,
                         Math.max(0.6, r - q.wall - fit)));
+    // 전원 스위치 몸통과 리브가 결합 텅 높이까지 올라오므로 그 자리 텅만 비워 둔다.
+    // 나머지 세 변의 텅으로도 뚜껑 위치는 충분히 잡힌다.
+    if (P.wkSwOn && !xiaoOn()) {
+      const nx0 = q.W / 2 - q.wall - SW.body - 0.6;
+      lid = sub(lid, boxBrush(q.W / 2 + 1 - nx0, SW.w + 0.3 + 2.4 + 1.0, JOINT_H + 0.2,
+                              (nx0 + q.W / 2 + 1) / 2, P.wkSwY,
+                              q.lidCageH - JOINT_H - 0.2, 0.4));
+    }
 
     // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다. 모서리 받침 돌기는
     // 끼울 때 걸려서 없앴고, 대신 -X 끝의 USB-C 소켓이 커넥터를 물어 고정한다.
@@ -444,7 +482,7 @@ export function initWorkout(env) {
     if (P.wkSwOn && !xiaoOn())
       ghostBox(G[1], [SW.body, SW.w, SW.d],
                [q.W / 2 - q.wall - SW.body / 2 + 0.6, P.wkSwY,
-                P.wkSwZ], switchMat);
+                q.swZ], switchMat);
     // ESP32-C3 SuperMini는 뚜껑 밑 케이지에 아래에서 끼워 넣는다 — 실물 STL로 표시해야
     // USB(-X)·안테나 방향이 한눈에 보인다. 에셋 로드 전이면 박스로 대체한다.
     if (!xiaoOn() && ASSETS && ASSETS.esp) {
@@ -533,8 +571,8 @@ export function initWorkout(env) {
     if (!xiaoOn() && P.wkSwOn) {
       // SPDT 가운데 다리(COM)로 들어와 바깥쪽 한 다리로 나간다. 남는 다리는 미사용.
       const sx = lastLayout.W / 2 - lastLayout.wall - 1.2;
-      const swCom = world(G[1], [sx, P.wkSwY, P.wkSwZ]);
-      const swOut = world(G[1], [sx, P.wkSwY + 2.54, P.wkSwZ]);
+      const swCom = world(G[1], [sx, P.wkSwY, lastLayout.swZ]);
+      const swOut = world(G[1], [sx, P.wkSwY + 2.54, lastLayout.swZ]);
       wire(chgOutPlus, swCom, colors.plus, 'OUT+', 'SW ②');
       wire(swOut, esp5V, colors.plus, 'SW ①', '5V');
     } else if (!xiaoOn()) {
