@@ -82,7 +82,10 @@ export function initWorkout(env) {
   const USB_C = { w: 8.94, d: 3.26, over: 1.5 };
   const USB_SOCK_WALL = 1.2;
   const SW = { w: 8.4, d: 3.6, body: 4.0 };   // SPDT 슬라이드 스위치 (창 8.4 × 3.6)
-  const ESP_Z0 = 0.2, ESP_PCB = 1.0;   // 뚜껑 밑 보드 안착 높이 / PCB 두께
+  const ESP_PCB = 1.0;   // PCB 두께
+  // SuperMini는 부품면(USB 셸)이 뚜껑 상판 쪽을 향하게 끼워 상판에 0.2 띄워 닿는다.
+  // 케이지가 깊어지면 보드는 상판 쪽에 붙고 남는 여유는 열린 밑쪽으로 간다.
+  const espZ0 = q => Math.max(0.2, q.lidCageH - 0.2 - ESP.h);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
   let geos = [null, null, null], meshes = [null, null, null], lastLayout = null;
@@ -429,9 +432,10 @@ export function initWorkout(env) {
     lid = add(lid, ring(cageOuterW, cageOuterD, ESP.w + CLR, ESP.d + CLR,
                         q.lidCageH, 0, 1.0));
 
-    // wkUsbFit은 셸 폭에 더하는 값이라 음수면 조여서 물린다(간섭 끼움).
+    // wkUsbFit은 셸 폭(8.94)에 더하는 값. 출력하면 구멍이 0.1~0.2 좁아지므로 기본 +0.3으로
+    // 살짝 여유를 두고, 음수로 내리면 조여서 물린다.
     const cavW = USB_C.w + P.wkUsbFit;
-    const cavZ0 = ESP_Z0 + ESP_PCB;
+    const cavZ0 = espZ0(q) + ESP_PCB;
     const blkX1 = -(ESP.w + CLR) / 2;
     const blkX0 = -cageOuterW / 2 - USB_C.over - 0.4;
     lid = add(lid, boxBrush(blkX1 - blkX0, cavW + 2 * USB_SOCK_WALL, q.lidCageH,
@@ -498,9 +502,9 @@ export function initWorkout(env) {
     if (!xiaoOn() && ASSETS && ASSETS.esp) {
       const eg = ASSETS.esp.clone();
       eg.translate(-ESP.w / 2, -ESP.d / 2, 0);   // min corner 기준 → 중심 정렬
-      ghostGeo(G[2], eg, [0, 0, ESP_Z0], MATS.esp);
+      ghostGeo(G[2], eg, [0, 0, espZ0(q)], MATS.esp);
     } else if (!xiaoOn()) {
-      ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, ESP_Z0 + ESP.h / 2], MATS.esp);
+      ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, espZ0(q) + ESP.h / 2], MATS.esp);
     }
     if (P.wkOledOn) {
       const lidTop = q.lidCageH + LID_PLATE;
@@ -548,7 +552,7 @@ export function initWorkout(env) {
     const chgOutMinus = world(G[1], [q.chargerX + CHARGER.w / 2, 4.3, chgTop]);
 
     // SuperMini는 뚜껑, XIAO는 충전모듈 자리의 트레이에 놓인다.
-    const espTop = xiaoOn() ? SEAT_Z + XIAO.h : ESP_Z0 + ESP.h;
+    const espTop = xiaoOn() ? SEAT_Z + XIAO.h : espZ0(q) + ESP.h;
     const espPin = (x, y) => xiaoOn()
       ? world(G[1], [q.chargerX + x, q.boardY + y, espTop])
       : world(G[2], [x, y, espTop]);
@@ -650,7 +654,7 @@ export function initWorkout(env) {
     if (q.mpu.h > q.trayTop - q.mpuSeatZ - q.lidCageH - 0.8) warnings.push(t('wkMpuHeightFit'));
     if (xiaoOn() && SEAT_Z + XIAO.h > q.trayTop - q.lidCageH - 0.2)
       warnings.push(t('wkXiaoHeightFit'));
-    if (!xiaoOn() && ESP_Z0 + ESP.h > q.lidCageH - 0.2 + 0.01)
+    if (!xiaoOn() && espZ0(q) + ESP.h > q.lidCageH - 0.2 + 0.01)
       warnings.push(t('wkEspHeightFit'));
     const hallNeedD = BAT.d + CLR + q.hallT + CLR + 1.3 + 2 * q.wall;
     // KY-035는 트레이 바닥 슬롯을 지나 위로 올라오므로, 베이스 높이가 아니라

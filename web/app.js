@@ -388,7 +388,7 @@ const STATIC_I18N = {
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
     lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
     lblWkSwOn: 'Power switch', lblWkSwY: 'Switch Y', lblWkSwZ: 'Switch height',
-    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkXiaoLedge: 'XIAO hole end ledge', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB grip',
+    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkXiaoLedge: 'XIAO hole end ledge', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB slot fit (+ = looser)',
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
@@ -534,7 +534,7 @@ const STATIC_I18N = {
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
     lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
     lblWkSwOn: '전원 스위치', lblWkSwY: '스위치 Y', lblWkSwZ: '스위치 높이',
-    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkXiaoLedge: 'XIAO 구멍 끝 턱', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 물림',
+    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkXiaoLedge: 'XIAO 구멍 끝 턱', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 구멍 여유 (+ = 헐겁게)',
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
@@ -839,11 +839,11 @@ const P = {
   wkSwOn: true, wkSwY: 0, wkSwZ: 9.0,   // 전원 스위치 (SPDT 슬라이드, 창 8.4×3.6)   // 칸막이 막대 길이 (낮출수록 바깥에서 중앙 쪽으로 더 파임, 0=칸막이 없음)
   wkChgX: -0.5,    // TP4056 포켓 X 오프셋 (음수 = USB 쪽으로, 칸막이도 같이 이동)
   wkUsbY: 0,       // USB 구멍 Y 오프셋
-  wkUsbFit: -0.2,  // ESP32 USB-C 소켓 물림 (셸 폭에 더하는 값, 음수 = 조여서 물림)
+  wkUsbFit: 0.3,   // ESP32 USB-C 소켓 여유 (셸 폭 8.94에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
-  wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 4.6,
-  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 9,
+  wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
+  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 11,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -901,6 +901,16 @@ try {
   });
   // rev 9: 2층 바닥 기본값을 결합 깊이 2.2가 유지되는 3.4로 되돌린다.
   if (!saved.wkRev || saved.wkRev < 9) { P.wkTrayFloor = 3.4; P.wkRev = 9; }
+  // rev 10: 뚜껑 USB 소켓이 셸보다 좁아(8.74) 출력하면 안 들어갔다 — 예전 기본값만 넓힌다.
+  if (!saved.wkRev || saved.wkRev < 10) {
+    if (!('wkUsbFit' in saved) || saved.wkUsbFit === -0.2) P.wkUsbFit = 0.3;
+    P.wkRev = 10;
+  }
+  // rev 11: ESP 수납부 기본 깊이 4.6 → 5.2. 보드 4.2에 위아래 0.2뿐이라 실물이 안 들어갔다.
+  if (!saved.wkRev || saved.wkRev < 11) {
+    if (!('wkEspCaseH' in saved) || saved.wkEspCaseH === 4.6) P.wkEspCaseH = 5.2;
+    P.wkRev = 11;
+  }
   // 충전모듈 크기 슬라이더가 없던 저장본은 선택된 모듈의 기본 치수로 채운다.
   if (!('wkChgW' in saved) && P.wkModType === 'generic') { P.wkChgW = 19; P.wkChgD = 14; }
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
