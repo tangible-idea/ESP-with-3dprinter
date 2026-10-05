@@ -86,6 +86,13 @@ export function initWorkout(env) {
   // SuperMini는 부품면(USB 셸)이 뚜껑 상판 쪽을 향하게 끼워 상판에 0.2 띄워 닿는다.
   // 케이지가 깊어지면 보드는 상판 쪽에 붙고 남는 여유는 열린 밑쪽으로 간다.
   const espZ0 = q => Math.max(0.2, q.lidCageH - 0.2 - ESP.h);
+  // 핀헤더를 부품면 쪽(위)으로 납땜해 뚜껑 상판을 관통시키는 모드. 핀은 2.54 피치 8개씩
+  // 두 줄(±8). 헤더 플라스틱 2.5는 상판 밑, 긴 핀(6.0)이 상판 위로 올라온다.
+  const pinsUp = () => !xiaoOn() && P.wkEspPinsUp;
+  const MINI_PIN_ROW_Y = 8, HEADER_BODY = 2.5, HEADER_PIN = 6.0;
+  const miniPinX = i => -0.25 + (i - 3.5) * 2.54;
+  // OLED는 핀 끝 위로 wkOledLift 만큼 띄워 얹는다 (핀 모드가 아니면 상판에 바로 앉음).
+  const oledLift = () => (P.wkOledOn && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
   let geos = [null, null, null], meshes = [null, null, null], lastLayout = null;
@@ -445,12 +452,28 @@ export function initWorkout(env) {
     lid = sub(lid, boxBrush(cavX1 - cavX0, cavW, q.lidCageH - cavZ0 + 0.4,
                             (cavX0 + cavX1) / 2, 0, cavZ0, 0.3));
     }
+    if (pinsUp()) {
+      // 납땜된 핀헤더 16핀이 상판을 지나 위로 나오는 구멍. 0.64 각핀은 대각이 0.9라
+      // Ø1.0은 출력 후 줄어든 구멍에 안 들어갔다 — 기본 Ø1.2 원형.
+      const hd = P.wkPinHoleD;
+      for (const sy of [-1, 1])
+        for (let i = 0; i < 8; i++)
+          lid = sub(lid, boxBrush(hd, hd, LID_PLATE + 1.0, miniPinX(i),
+                                  sy * MINI_PIN_ROW_Y, q.lidCageH - 0.5, hd / 2));
+    }
     if (P.wkOledOn) {
       // OLED는 뚜껑 위에서 내려놓는 개방형 보호 림에 안착한다. 화면은 위로 보이고,
-      // 헤더 쪽 4가닥은 상판 슬롯을 통과해 바로 아래 ESP32로 내려간다.
-      const lidTop = q.lidCageH + LID_PLATE;
+      // 헤더 쪽 4가닥은 상판 슬롯을 통과해 바로 아래 ESP32로 내려간다. 핀 관통 모드면
+      // 네 모서리 받침 위로 띄워, 상판 위로 올라온 ESP 핀 끝이 OLED에 닿지 않게 한다.
+      const lidTop = q.lidCageH + LID_PLATE, lift = oledLift();
       lid = add(lid, ring(OLED_OUT_W, OLED_OUT_D, OLED_CAV_W, OLED_CAV_D,
-                          OLED_RIM_H, lidTop, 1.4));
+                          OLED_RIM_H + lift, lidTop, 1.4));
+      if (lift > 0.05)
+        for (const sx of [-1, 1])
+          for (const sy of [-1, 1])
+            lid = add(lid, boxBrush(3.0, 3.0, lift + 0.1,
+                                    sx * (OLED_CAV_W / 2 - 1.4), sy * (OLED_CAV_D / 2 - 1.4),
+                                    lidTop - 0.1, 0.4));
       lid = sub(lid, boxBrush(12, 3.2, LID_PLATE + 0.8,
                               0, -OLED.d / 2 + 1.7, q.lidCageH - 0.4, 0.65));
     }
@@ -506,8 +529,20 @@ export function initWorkout(env) {
     } else if (!xiaoOn()) {
       ghostBox(G[2], [ESP.w, ESP.d, ESP.h], [0, 0, espZ0(q) + ESP.h / 2], MATS.esp);
     }
+    if (pinsUp()) {
+      // 헤더 플라스틱(PCB 위)과 위로 솟은 긴 핀
+      const pcbTop = espZ0(q) + 1.3;
+      for (const sy of [-1, 1]) {
+        ghostBox(G[2], [8 * 2.54, 2.5, HEADER_BODY],
+                 [miniPinX(3.5), sy * MINI_PIN_ROW_Y, pcbTop + HEADER_BODY / 2], switchMat);
+        for (let i = 0; i < 8; i++)
+          ghostBox(G[2], [0.64, 0.64, HEADER_PIN],
+                   [miniPinX(i), sy * MINI_PIN_ROW_Y, pcbTop + HEADER_BODY + HEADER_PIN / 2],
+                   MATS.mod);
+      }
+    }
     if (P.wkOledOn) {
-      const lidTop = q.lidCageH + LID_PLATE;
+      const lidTop = q.lidCageH + LID_PLATE + oledLift();
       ghostBox(G[2], [OLED.w, OLED.d, OLED.h],
                [0, 0, lidTop + 0.1 + OLED.h / 2], oledBoardMat);
       ghostBox(G[2], [OLED.winW, OLED.winD, 0.45],
@@ -552,7 +587,11 @@ export function initWorkout(env) {
     const chgOutMinus = world(G[1], [q.chargerX + CHARGER.w / 2, 4.3, chgTop]);
 
     // SuperMini는 뚜껑, XIAO는 충전모듈 자리의 트레이에 놓인다.
-    const espTop = xiaoOn() ? SEAT_Z + XIAO.h : espZ0(q) + ESP.h;
+    // 핀 관통 모드면 배선이 상판 위로 나온 핀 끝에서 시작한다.
+    const espTop = xiaoOn() ? SEAT_Z + XIAO.h
+      : pinsUp() ? Math.min(espZ0(q) + 1.3 + HEADER_BODY + HEADER_PIN,
+                            q.lidCageH + LID_PLATE + oledLift() - 0.3)
+      : espZ0(q) + ESP.h;
     const espPin = (x, y) => xiaoOn()
       ? world(G[1], [q.chargerX + x, q.boardY + y, espTop])
       : world(G[2], [x, y, espTop]);
@@ -617,7 +656,7 @@ export function initWorkout(env) {
 
     // 0.96" OLED: MPU6050과 GPIO8/9 I2C 버스를 공유한다.
     if (P.wkOledOn) {
-      const oledZ = q.lidCageH + LID_PLATE + OLED.h + 0.15;
+      const oledZ = q.lidCageH + LID_PLATE + oledLift() + OLED.h + 0.15;
       const oledPin = i => world(G[2], [-3.81 + i * 2.54, -OLED.d / 2 + 1.5, oledZ]);
       const oGnd = oledPin(0), oVcc = oledPin(1), oScl = oledPin(2), oSda = oledPin(3);
       wire(oVcc, esp3V3, colors.plus, 'VCC', '3V3');
@@ -656,6 +695,14 @@ export function initWorkout(env) {
       warnings.push(t('wkXiaoHeightFit'));
     if (!xiaoOn() && espZ0(q) + ESP.h > q.lidCageH - 0.2 + 0.01)
       warnings.push(t('wkEspHeightFit'));
+    if (pinsUp()) {
+      const pcbTop = espZ0(q) + 1.3;
+      if (pcbTop + HEADER_BODY > q.lidCageH + 0.01) warnings.push(t('wkHeaderFit'));
+      // 상판 위로 나온 핀 길이 — OLED 밑면(띄움 높이)보다 0.3 낮게 잘라야 한다.
+      const stick = pcbTop + HEADER_BODY + HEADER_PIN - (q.lidCageH + LID_PLATE);
+      if (P.wkOledOn && stick > oledLift() - 0.3)
+        warnings.push(t('wkPinTrim', stick.toFixed(1), Math.max(0, oledLift() - 0.3).toFixed(1)));
+    }
     const hallNeedD = BAT.d + CLR + q.hallT + CLR + 1.3 + 2 * q.wall;
     // KY-035는 트레이 바닥 슬롯을 지나 위로 올라오므로, 베이스 높이가 아니라
     // ESP32 케이지 밑면까지의 전체 여유가 기준이다.
@@ -694,7 +741,7 @@ export function initWorkout(env) {
         setFloorMeshes(meshes); lastLayout = layout(); placeGhosts(lastLayout);
         applyWorkoutExplode(); setRulerExtras('workout', workoutRulerDims(lastLayout));
         const totalH = lastLayout.baseH + lastLayout.trayTop + LID_PLATE
-          + (P.wkOledOn ? OLED_RIM_H : 0);
+          + (P.wkOledOn ? OLED_RIM_H + oledLift() : 0);
         const totalW = P.wkOledOn ? Math.max(lastLayout.W, OLED_OUT_W) : lastLayout.W;
         const totalD = P.wkOledOn ? Math.max(lastLayout.D, OLED_OUT_D) : lastLayout.D;
         document.getElementById('dims').textContent =

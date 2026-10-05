@@ -410,6 +410,9 @@ const STATIC_I18N = {
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkXiaoHeightFit: '⚠ XIAO is too tall for the tray; increase tray clearance before printing',
     wkEspHeightFit: '⚠ SuperMini does not fit below the lid plate; increase ESP section height',
+    wkHeaderFit: '⚠ The pin header body hits the lid plate; increase ESP section height',
+    wkPinTrim: (stick, keep) => `ℹ ESP pins stick ${stick} mm above the lid — trim them to ${keep} mm or raise the OLED lift`,
+    lblWkEspPinsUp: 'SuperMini pins up through lid', lblWkOledLift: 'OLED lift above pins', lblWkPinHoleD: 'Pin hole size',
     wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
     wkMpuDepthFit: d => `⚠ MPU6050 pocket needs at least ${d}mm on the short side`,
     wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
@@ -556,6 +559,9 @@ const STATIC_I18N = {
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkXiaoHeightFit: '⚠ XIAO 높이가 트레이 여유 공간을 초과합니다. 출력 전 공간을 늘리세요',
     wkEspHeightFit: '⚠ SuperMini가 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
+    wkHeaderFit: '⚠ 핀헤더 플라스틱이 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
+    wkPinTrim: (stick, keep) => `ℹ ESP 핀이 뚜껑 위로 ${stick}mm 나옵니다 — ${keep}mm 이하로 자르거나 OLED 띄움을 늘리세요`,
+    lblWkEspPinsUp: 'SuperMini 핀헤더 뚜껑 관통', lblWkOledLift: 'OLED 띄움 높이', lblWkPinHoleD: '핀 구멍 크기',
     wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
     wkMpuDepthFit: d => `⚠ MPU6050 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
     wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
@@ -840,10 +846,10 @@ const P = {
   wkChgX: -0.5,    // TP4056 포켓 X 오프셋 (음수 = USB 쪽으로, 칸막이도 같이 이동)
   wkUsbY: 0,       // USB 구멍 Y 오프셋
   wkUsbFit: 0.3,   // ESP32 USB-C 소켓 여유 (셸 폭 8.94에 더하는 값, 음수 = 조여서 물림)
-  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
+  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
   wkHallGap: 1, wkHallT: 3.25,
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
-  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 11,
+  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 13,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -911,6 +917,16 @@ try {
     if (!('wkEspCaseH' in saved) || saved.wkEspCaseH === 4.6) P.wkEspCaseH = 5.2;
     P.wkRev = 11;
   }
+  // rev 12: 핀 구멍을 딤섬 클리커와 같은 Ø1.0으로 (예전 기본 1.5 타원은 너무 헐거웠다).
+  if (!saved.wkRev || saved.wkRev < 12) {
+    if (saved.wkPinHoleD === 1.5) P.wkPinHoleD = 1.0;
+    P.wkRev = 12;
+  }
+  // rev 13: Ø1.0은 출력 후 구멍이 줄어 0.64 각핀(대각 0.9)이 안 들어갔다 → 1.2.
+  if (!saved.wkRev || saved.wkRev < 13) {
+    if (saved.wkPinHoleD === undefined || saved.wkPinHoleD === 1.5 || saved.wkPinHoleD === 1) P.wkPinHoleD = 1.2;
+    P.wkRev = 13;
+  }
   // 충전모듈 크기 슬라이더가 없던 저장본은 선택된 모듈의 기본 치수로 채운다.
   if (!('wkChgW' in saved) && P.wkModType === 'generic') { P.wkChgW = 19; P.wkChgD = 14; }
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
@@ -939,7 +955,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
@@ -995,6 +1011,8 @@ const applyWorkoutOptionsUI = () => {
   document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   document.getElementById('wkSwOn').disabled = P.wkEspType === 'xiao';
   document.getElementById('wkModType').disabled = P.wkEspType === 'xiao';
+  for (const id of ['wkEspPinsUp', 'wkPinHoleD', 'wkOledLift'])
+    document.getElementById(id).disabled = P.wkEspType === 'xiao';
   for (const id of ['wkUsbFit', 'wkDivGrow', 'wkChgX', 'wkChgW', 'wkChgD', 'wkChgLedge', 'wkWireLen', 'wkWireW', 'wkWireX', 'wkWireY'])
     document.getElementById(id).disabled = P.wkEspType === 'xiao';
   for (const id of ['wkXiaoPocketX', 'wkXiaoPocketY', 'wkXiaoLedge', 'wkClipLip'])
@@ -1033,6 +1051,11 @@ document.getElementById('wkSwOn').addEventListener('change', e => {
 });
 document.getElementById('wkOledOn').addEventListener('change', e => {
   P.wkOledOn = e.target.checked;
+  queueRebuild();
+});
+document.getElementById('wkEspPinsUp').checked = P.wkEspPinsUp;
+document.getElementById('wkEspPinsUp').addEventListener('change', e => {
+  P.wkEspPinsUp = e.target.checked;
   queueRebuild();
 });
 // 모양 선택: 원형이면 W=지름, D/R 슬라이더는 비활성. 원형 전환 시 기본 Ø54 보장
@@ -1326,6 +1349,7 @@ function syncControls() {
   document.getElementById('wkEspType').value = P.wkEspType;
   document.getElementById('wkModType').value = P.wkModType;
   document.getElementById('wkOledOn').checked = P.wkOledOn;
+  document.getElementById('wkEspPinsUp').checked = P.wkEspPinsUp;
   document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   applyWorkoutOptionsUI();
   syncTexBtns();
