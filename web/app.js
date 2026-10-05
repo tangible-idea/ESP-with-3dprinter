@@ -388,16 +388,17 @@ const STATIC_I18N = {
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
     lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
     lblWkSwOn: 'Power switch', lblWkSwY: 'Switch Y', lblWkSwZ: 'Switch height',
-    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB grip',
+    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkXiaoLedge: 'XIAO hole end ledge', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB grip',
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
     lblWkEspType: 'ESP32 board',
     optWkEspXiao: 'Seeed XIAO ESP32C3',
-    hintWkEspType: 'XIAO replaces the charger in the electronics tray. Pocket X runs from the USB end to the rear; Y runs between the two pin rows. Adjust each finished pocket dimension below. The wire hole sits below the back-side B+/B− pads near D2/D3; connect to B+/B−, not the D2/D3 pins. USB-C charges the battery. The power switch is unavailable.',
+    hintWkEspType: 'XIAO replaces the charger in the electronics tray. Pocket X runs from the USB end to the rear; Y runs between the two pin rows. Adjust each finished pocket dimension below. The pocket floor is open to layer 1 so the board can pass through tilted; laid flat it rests on the X-end ledges. Connect the battery to the back-side B+/B− pads, not the D2/D3 pins. USB-C charges the battery. The power switch is unavailable.',
     lblWkXiaoPocketX: 'XIAO long side X (USB to rear)',
     lblWkXiaoPocketY: 'XIAO short side Y (between pin rows)',
     lblWkEspCaseH: 'ESP section height',
+    lblWkMpuPocket: 'MPU6050 pocket depth', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. Thinner floors first make the board pockets shallower, then the layer 1↔2 joint; below about 0.8 mm the joint is removed and the layers just stack. Thicker floors deepen the joint up to 2.2 mm. Reprint layer 1 after changing it.',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
     lblWkOledOn: 'Use 0.96" OLED',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
@@ -405,7 +406,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the display cradle faces up; use bridge-friendly settings or support under the ESP32-cage ceiling.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : 'TP4056 · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkXiaoHeightFit: '⚠ XIAO is too tall for the tray; increase tray clearance before printing',
     wkEspHeightFit: '⚠ SuperMini does not fit below the lid plate; increase ESP section height',
@@ -533,16 +534,17 @@ const STATIC_I18N = {
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
     lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
     lblWkSwOn: '전원 스위치', lblWkSwY: '스위치 Y', lblWkSwZ: '스위치 높이',
-    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 물림',
+    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkXiaoLedge: 'XIAO 구멍 끝 턱', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 물림',
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
     lblWkEspType: 'ESP32 보드',
     optWkEspXiao: 'Seeed XIAO ESP32C3',
-    hintWkEspType: 'XIAO는 충전모듈 자리에 배치합니다. 포켓 X는 USB가 있는 끝에서 반대쪽 끝까지, Y는 양쪽 핀 열 사이입니다. 아래에서 완성 포켓의 각 치수를 조절할 수 있습니다. 배선 구멍은 D2/D3 근처의 뒷면 B+/B− 패드 아래에 있습니다. 배터리는 D2/D3 핀이 아닌 B+/B−에 직결하고 USB-C로 충전합니다. 전원 스위치는 사용할 수 없습니다.',
+    hintWkEspType: 'XIAO는 충전모듈 자리에 배치합니다. 포켓 X는 USB가 있는 끝에서 반대쪽 끝까지, Y는 양쪽 핀 열 사이입니다. 아래에서 완성 포켓의 각 치수를 조절할 수 있습니다. 포켓 바닥은 1층까지 뚫려 있어 보드를 비스듬히 기울이면 드나들고, 평평하게 놓으면 X 양 끝 턱에 걸쳐 앉습니다. 배터리는 D2/D3 핀이 아닌 B+/B−에 직결하고 USB-C로 충전합니다. 전원 스위치는 사용할 수 없습니다.',
     lblWkXiaoPocketX: 'XIAO 긴 변 X (USB 방향)',
     lblWkXiaoPocketY: 'XIAO 짧은 변 Y (핀 열 사이)',
     lblWkEspCaseH: 'ESP 수납부 높이',
+    lblWkMpuPocket: 'MPU6050 자리 깊이', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '얇게 하면 보드 포켓이 먼저 얕아지고 그다음 1층↔2층 결합이 얕아집니다. 약 0.8mm 밑에서는 결합 텅이 없어지고 그냥 얹히는 평판이 됩니다. 두껍게 하면 결합이 2.2mm까지 깊어집니다. 바꾸면 1층도 다시 출력하세요.',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
     lblWkOledOn: '0.96" OLED 사용',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
@@ -550,7 +552,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 화면 받침이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장에 브리지 설정 또는 서포트를 사용하세요.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : 'TP4056 · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkXiaoHeightFit: '⚠ XIAO 높이가 트레이 여유 공간을 초과합니다. 출력 전 공간을 늘리세요',
     wkEspHeightFit: '⚠ SuperMini가 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
@@ -840,8 +842,8 @@ const P = {
   wkUsbFit: -0.2,  // ESP32 USB-C 소켓 물림 (셸 폭에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
-  wkHallGpio: 0, wkEspType: 'c3mini', wkEspCaseH: 4.6,
-  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkRev: 8,
+  wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkEspCaseH: 4.6,
+  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 2.6, wkMpuPocket: 1.6, wkChgLedge: 1.5, wkRev: 8,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -923,7 +925,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkXiaoPocketX','wkXiaoPocketY','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkChgLedge','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
@@ -978,12 +980,18 @@ const applyWorkoutOptionsUI = () => {
     document.getElementById(id).disabled = !P.wkHallOn;
   document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   document.getElementById('wkSwOn').disabled = P.wkEspType === 'xiao';
-  for (const id of ['wkUsbFit', 'wkDivGrow', 'wkChgX', 'wkWireLen', 'wkWireW', 'wkWireX', 'wkWireY'])
+  document.getElementById('wkModType').disabled = P.wkEspType === 'xiao';
+  for (const id of ['wkUsbFit', 'wkDivGrow', 'wkChgX', 'wkChgLedge', 'wkWireLen', 'wkWireW', 'wkWireX', 'wkWireY'])
     document.getElementById(id).disabled = P.wkEspType === 'xiao';
-  for (const id of ['wkXiaoPocketX', 'wkXiaoPocketY', 'wkClipLip'])
+  for (const id of ['wkXiaoPocketX', 'wkXiaoPocketY', 'wkXiaoLedge', 'wkClipLip'])
     document.getElementById(id).disabled = P.wkEspType !== 'xiao';
 };
 document.getElementById('wkEspType').value = P.wkEspType;
+document.getElementById('wkModType').value = P.wkModType;
+document.getElementById('wkModType').addEventListener('change', e => {
+  P.wkModType = e.target.value;
+  queueRebuild();
+});
 document.getElementById('wkEspType').addEventListener('change', e => {
   P.wkEspType = e.target.value;
   if (P.wkEspType === 'xiao' && !ESP_PINS_XIAO[P.wkHallGpio]) P.wkHallGpio = 2;
@@ -1296,6 +1304,7 @@ function syncControls() {
   document.getElementById('tOledOn').checked = P.tOledOn;
   document.getElementById('wkHallOn').checked = P.wkHallOn;
   document.getElementById('wkEspType').value = P.wkEspType;
+  document.getElementById('wkModType').value = P.wkModType;
   document.getElementById('wkOledOn').checked = P.wkOledOn;
   document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   applyWorkoutOptionsUI();

@@ -21,19 +21,21 @@ export function initWorkout(env) {
     minus: [ESP_PINS_XIAO[4][0], -4.4],
     plus: [ESP_PINS_XIAO[5][0], -4.4],
   };
-  const XIAO_BAT_SLOT = [
-    (XIAO_BAT_PADS.plus[0] + XIAO_BAT_PADS.minus[0]) / 2,
-    -3.8,  // 핀 열 쪽 받침을 남기면서 두 패드 아래를 관통
-  ];
   // TP4056 실측: 외형 27 × 17.3, 총높이 4.0 (USB-C 커넥터 포함), PCB만 1.2.
   // 긴 변 양쪽의 폭 2.6mm 날개(패드 열)는 부품이 없어 걸림턱으로 눌러 잡을 수 있다.
-  const CHARGER = { w: 27, d: 17.3, h: 4.0, pcb: 1.2, wing: 2.6 };
+  // generic은 메인 디자인의 기존 소형 충전모듈(19 × 14 × 4.5)과 같은 치수.
+  // usbZ = 보드 밑면 기준 USB 셸 z중심.
+  const CHARGERS = {
+    tp4056: { w: 27, d: 17.3, h: 4.0, pcb: 1.2, usbZ: 1.2 + (4.0 - 1.2) / 2 },
+    generic: { w: 19, d: 14, h: 4.5, pcb: 1.2, usbZ: 2.9 },
+  };
+  const chargerSpec = () => CHARGERS[P.wkModType] || CHARGERS.tp4056;
   const CLR = 0.4;
   const xiaoOn = () => P.wkEspType === 'xiao';
   // 포켓 절삭에서 CLR을 더하므로, 슬라이더의 완성 치수에서 미리 뺀다.
   const trayBoard = () => xiaoOn()
     ? { ...XIAO, w: P.wkXiaoPocketX - CLR, d: P.wkXiaoPocketY - CLR }
-    : CHARGER;
+    : chargerSpec();
   const HALL = { w: 19, h: 15 };       // KY-035 PCB: X=19, 세움 높이 Z=15
   const MAG = { w: 30, d: 10 };   // 두께는 실측값(P.wkMagH)
   const OLED = { w: 25, d: 27.05, h: 3.5, winW: 23.2, winD: 12.4, winY: 0.975 };
@@ -42,16 +44,40 @@ export function initWorkout(env) {
   const OLED_OUT_W = OLED_CAV_W + 2 * OLED_RIM, OLED_OUT_D = OLED_CAV_D + 2 * OLED_RIM;
   // 결합부: 텅이 얇으면 베드에서 떨어져 나가거나 조립 중 부러진다. 벽 두께의 85%를
   // 그대로 쓰고(최대 1.6), 물림 깊이도 2.2로 늘려 옆으로 흔들리지 않게 한다.
+  // 뚜껑 결합은 2.2 고정. 1층↔2층 결합 깊이는 2층 바닥 두께(wkTrayFloor)에서 정해진다.
   const JOINT_H = 2.2;
   const jointW = () => Math.min(1.6, Math.max(0.9, P.wkWall * 0.85));
-  // USB-C 셸은 PCB 위에 얹히므로 셸 z중심 = PCB + (총높이 - PCB)/2.
-  const USB_Z = CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2;
-  // 트레이 바닥은 2.0 두께로 깔고, 모듈 외형대로 POCKET_D 만큼 파서 보드를 떨어뜨려
-  // 넣는다. SEAT_Z = 파낸 자리의 바닥(= 보드 안착면), TRAY_FLOOR_TOP = 바닥 윗면.
-  // 트레이 바닥은 베드에 그대로 닿는 통짜 판이다. 결합 홈이 밑면에서 JOINT_H 만큼
-  // 파고들어오므로 그보다 POCKET_D + 여유만큼 두꺼워야 한다.
-  const TRAY_TOP_DEFAULT = 12.2, TRAY_FLOOR = 3.8, TRAY_FLOOR_TOP = TRAY_FLOOR;
-  const POCKET_D = 1.2, SEAT_Z = TRAY_FLOOR_TOP - POCKET_D;
+  // 모듈 외형대로 바닥을 POCKET_D 만큼 파서 보드를 떨어뜨려 넣는다.
+  // SEAT_Z = 파낸 자리의 바닥(= 보드 안착면), TRAY_FLOOR_TOP = 바닥 윗면.
+  // 트레이 바닥은 베드에 그대로 닿는 통짜 판이다. 결합 홈이 밑면에서 BASE_JOINT_H 만큼
+  // 파고들고 MPU·충전모듈 포켓 끝이 그 홈 위에 걸리므로, 바닥 = 홈 + 0.4 덮개 + 포켓.
+  // 두께는 wkTrayFloor 하나로 정하고 아래 syncFloor()가 셋으로 나눈다. 트레이 전체
+  // 높이는 보드 안착면 기준으로 맞춰, 바닥이 얇아져도 보드 위 여유는 그대로 둔다.
+  let BASE_JOINT_H, POCKET_D, TRAY_FLOOR, TRAY_FLOOR_TOP, TRAY_TOP_DEFAULT, SEAT_Z;
+  function syncFloor() {
+    const F = Math.min(4.4, Math.max(0.4, Number(P.wkTrayFloor) || 2.6));
+    let joint = 1.4, pocket = 0.8, cover = 0.4;
+    if (F >= 2.6) {
+      // 두꺼워지면 결합을 2.2까지 깊게 하고, 그 이상은 덮개로 보탠다.
+      joint = Math.min(2.2, 1.4 + (F - 2.6));
+      cover = F - joint - pocket;
+    } else {
+      // 얇아지면 포켓 0.8→0.4, 결합 1.4→0.8, 포켓 0.4→0, 결합 0.8→0 순으로 깎는다.
+      // 결합이 0.4 밑이면 텅이 제 역할을 못 하므로 아예 없애고 평판으로 얹는다.
+      let cut = 2.6 - F;
+      const take = (v, min) => { const d = Math.min(cut, v - min); cut -= d; return v - d; };
+      pocket = take(pocket, 0.4); joint = take(joint, 0.8);
+      pocket = take(pocket, 0); joint = take(joint, 0);
+      if (joint < 0.4) joint = 0;
+      cover = F - joint - pocket;
+    }
+    BASE_JOINT_H = joint; POCKET_D = pocket;
+    TRAY_FLOOR = TRAY_FLOOR_TOP = F;
+    SEAT_Z = F - pocket;
+    TRAY_TOP_DEFAULT = SEAT_Z + 9.2;
+    return cover;
+  }
+  syncFloor();
   // 배터리 배선 관통 슬롯 — 크기는 wkWireLen(X) × wkWireW(Y)로 조절한다.
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
   const USB_C = { w: 8.94, d: 3.26, over: 1.5 };
@@ -97,6 +123,7 @@ export function initWorkout(env) {
   }
 
   function layout() {
+    syncFloor();
     const W = P.wkWidth, D = P.wkLength, baseH = P.wkBodyH, wall = P.wkWall, mpu = mpuSpec();
     // 뚜껑 결합 텅(2.2mm)이 상판 아래에 남도록 최소 0.2mm 여유를 둔다.
     const espCaseH = Math.max(JOINT_H + 0.2,
@@ -114,10 +141,23 @@ export function initWorkout(env) {
     // MPU 자리는 고정하고 TP4056만 wkChgX 만큼 옮긴다 — 음수면 USB(-X) 쪽으로 붙으면서
     // 두 포켓 사이 칸막이도 같이 USB 쪽으로 밀린다. 벽을 넘지 않게 잘라 넣는다.
     const chargerX0 = left + (board.w + CLR) / 2;
-    const mpuX = chargerX0 + (board.w + CLR) / 2 + gap + (mpu.w + CLR) / 2;
+    let mpuX = chargerX0 + (board.w + CLR) / 2 + gap + (mpu.w + CLR) / 2;
+    // MPU 포켓은 wkMpuPocket 만큼 따로 깊게 판다(바닥 밑 0.4는 남김). +X 끝이 1층 결합
+    // 홈 위에 걸치는데, 홈 덮개(0.2)보다 깊이 파야 하면 MPU를 홈 안쪽으로 당긴다.
+    // 칸막이 자리(2.4)가 모자라 못 당기면 덮개가 남는 깊이까지만 판다.
+    const jd = jointDims({ W, D, wall });
+    const mpuHalfW = (mpu.w + CLR) / 2, mpuHalfD = (mpu.d + CLR) / 2;
+    let mpuDepth = Math.max(0, Math.min(Number(P.wkMpuPocket) || 0, TRAY_FLOOR - 0.4));
+    if (BASE_JOINT_H > 0 && TRAY_FLOOR - mpuDepth < BASE_JOINT_H + 0.2) {
+      const over = mpuX + mpuHalfW - jd.inW / 2;
+      if (over > 0 && gap - over >= 2.4 && mpuHalfD <= jd.inD / 2) mpuX -= over;
+      else if (over > 0 || mpuHalfD > jd.inD / 2)
+        mpuDepth = Math.min(mpuDepth, TRAY_FLOOR - BASE_JOINT_H - 0.2);
+    }
+    const mpuSeatZ = TRAY_FLOOR - mpuDepth;
     // XIAO는 뚜껑 결합 텅보다 안쪽에 놓여야 보드 가장자리가 텅과 충돌하지 않는다.
     const chargerMin = xiaoOn()
-      ? -jointDims({ W, D, wall }).inW / 2 + board.w / 2 + CLR
+      ? -jd.inW / 2 + board.w / 2 + CLR
       : -innerW / 2 + (board.w + CLR) / 2;
     const chargerMax = mpuX - (mpu.w + CLR) / 2 - (board.w + CLR) / 2 - 1.2;
     const chargerX = Math.min(Math.max(chargerMin, chargerX0 + P.wkChgX),
@@ -132,7 +172,7 @@ export function initWorkout(env) {
     const magnetY = P.wkHallOn ? hallInnerY + P.wkHallGap + MAG.d / 2 : 0;
     return {
       W, D, baseH, wall, trayTop, lidCageH, innerW, innerHalfD,
-      mpu, gap, chargerX, boardY, mpuX,
+      mpu, gap, chargerX, boardY, mpuX, mpuDepth, mpuSeatZ,
       hallY, hallInnerY, batteryY, magnetY, hallT: P.wkHallT,
       magnetZ: P.wkMagSkin, batteryZ: P.wkMagSkin + P.wkMagH + 0.2,
     };
@@ -160,9 +200,10 @@ export function initWorkout(env) {
     // 결합부 암수를 뒤집었다: 1층이 텅을 위로 세우고 2층이 밑면에 홈을 판다.
     // 그래야 2층 밑면이 완전히 평평해져 바닥 밑에 서포트가 생기지 않는다.
     const j = jointDims(q), fit = P.wkFit;
-    body = add(body, ring(j.outW - 2 * fit, j.outD - 2 * fit,
-                          j.inW + 2 * fit, j.inD + 2 * fit,
-                          JOINT_H, q.baseH, Math.max(0.6, r - q.wall - fit)));
+    if (BASE_JOINT_H > 0)
+      body = add(body, ring(j.outW - 2 * fit, j.outD - 2 * fit,
+                            j.inW + 2 * fit, j.inD + 2 * fit,
+                            BASE_JOINT_H, q.baseH, Math.max(0.6, r - q.wall - fit)));
     return body;
   }
 
@@ -171,7 +212,7 @@ export function initWorkout(env) {
   // -X 바깥면을 향하게 하고, 벽 두께에 맞춰 길이만 스케일한다.
   function usbCut(q) {
     const L = Math.max(3.0, q.wall + 1.6);
-    const z = SEAT_Z + (xiaoOn() ? XIAO.usbZ : USB_Z);
+    const z = SEAT_Z + (xiaoOn() ? XIAO.usbZ : chargerSpec().usbZ);
     const y = xiaoOn() ? q.boardY : P.wkUsbY;
     // 원래 나팔형 USB 구멍에서 XIAO 쪽만 폭 약 0.4mm, 높이 약 0.36mm 축소.
     const usbYScale = xiaoOn() ? 0.96 : 1;
@@ -194,15 +235,16 @@ export function initWorkout(env) {
     // 바닥판은 베드에 평평하게 놓인다. 결합 홈만 밑면에서 위로 파고들어오므로
     // 서포트가 필요한 곳은 폭 1mm 남짓의 홈 천장(브리지)뿐이다.
     let tray = boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, 0, r);
-    tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.2,
-                          -0.2, Math.max(0.8, r - q.wall)));
+    if (BASE_JOINT_H > 0)
+      tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, BASE_JOINT_H + 0.2,
+                            -0.2, Math.max(0.8, r - q.wall)));
     tray = add(tray, ring(q.W, q.D, q.W - 2 * q.wall, q.D - 2 * q.wall,
                           q.trayTop - TRAY_FLOOR, TRAY_FLOOR, r));
-    // 모듈 자리: 바닥을 보드 외형대로 파서 떨어뜨려 넣는다. 깊이는 PCB 두께라
-    // 보드 윗면이 바닥과 거의 나란해지고, 사방 벽이 그대로 자리잡기 역할을 한다.
+    // 모듈 자리: 바닥을 보드 외형대로 POCKET_D만큼 파서 떨어뜨려 넣는다.
+    // 얕아도 사방 벽이 보드를 자리잡아 준다.
     // 납땜 릴리프: 보드 밑면 패드 열에 납이 볼록하게 남으면 보드가 뜬다. 그 줄을
     // 바닥까지 아예 관통시켜 납이 얼마나 두껍든 걸리지 않게 한다. 단, 결합 홈
-    // (밑면에서 JOINT_H) 자리는 건드리지 않도록 바깥쪽 한계선 안으로 잘라 넣는다.
+    // (밑면에서 BASE_JOINT_H) 자리는 건드리지 않도록 바깥쪽 한계선 안으로 잘라 넣는다.
     function solderRelief(t, edgeX, depthY, dir = -1) {
       const sw = P.wkSolderW;
       if (sw <= 0.1) return t;
@@ -225,8 +267,9 @@ export function initWorkout(env) {
     const rightEdge = q.mpuX - (q.mpu.w + CLR) / 2;
     tray = sub(tray, boxBrush(chgLen, board.d + CLR, POCKET_D + 0.2,
                               chgCx, q.boardY, SEAT_Z, 0.6));
-    tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, POCKET_D + 0.2,
-                              q.mpuX, 0, SEAT_Z, 0.6));
+    if (q.mpuDepth > 0.05)
+      tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, q.mpuDepth + 0.2,
+                                q.mpuX, 0, q.mpuSeatZ, 0.6));
     // 칸막이 벽 양쪽(TP4056 오른쪽 끝 · MPU 왼쪽 끝)과 MPU 오른쪽 끝에 관통 슬롯.
     if (!xiaoOn()) tray = solderRelief(tray, chgCx + chgLen / 2, board.d + CLR, -1);
     tray = solderRelief(tray, q.mpuX - (q.mpu.w + CLR) / 2, q.mpu.d + CLR, +1);
@@ -269,18 +312,32 @@ export function initWorkout(env) {
     // 배터리 +/− 두 가닥이 베이스에서 올라오는 관통 구멍. 기본 위치는 B+/B− 패드가
     // 있는 -X 끝(USB 구멍 옆)이고, wkWireX/wkWireY로 옮길 수 있다. 벽을 뚫지 않도록
     // 안쪽 캐비티 안으로 잘라 넣는다.
-    // XIAO 뒷면의 BAT 패드 바로 아래만 열어 납땜부와 두 전선의 통로를 확보한다.
-    // 큰 기존 배선 슬롯은 보드 받침을 모두 없애므로 XIAO에서는 작은 고정 슬롯을 쓴다.
-    const slotW = xiaoOn() ? 7 : P.wkWireLen;
-    const slotD = xiaoOn() ? 6 : P.wkWireW;
-    // 구멍이 커져 더 못 움직일 만큼 자리가 좁아지면 그냥 가운데로 붙인다.
-    const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
-    const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
-    const clampPos = (v, lim) => (lim <= 0 ? 0 : Math.max(-lim, Math.min(lim, v)));
-    tray = sub(tray, boxBrush(slotW, slotD, TRAY_FLOOR + 0.4,
-                              clampPos(xiaoOn() ? q.chargerX + XIAO_BAT_SLOT[0] : P.wkWireX, limX),
-                              clampPos(xiaoOn() ? q.boardY + XIAO_BAT_SLOT[1] : P.wkWireY, limY),
-                              -0.2, Math.min(1.4, slotD / 2 - 0.1)));
+    if (xiaoOn()) {
+      // XIAO는 포켓 바닥을 통째로 뚫어 1층과 이어 준다. Y는 포켓 폭 그대로라 보드를
+      // 비스듬히 기울이면 구멍을 드나들고, 평평하게 놓으면 X 양 끝 턱(wkXiaoLedge)에
+      // 걸쳐 앉는다. 포켓은 결합 홈 안쪽에 놓이므로 구멍도 홈을 건드리지 않는다.
+      const holeW = Math.max(4, board.w + CLR - 2 * P.wkXiaoLedge);
+      tray = sub(tray, boxBrush(holeW, board.d + CLR, TRAY_FLOOR + 0.4,
+                                q.chargerX, q.boardY, -0.2, 0.6));
+    } else {
+      // 구멍이 커져 더 못 움직일 만큼 자리가 좁아지면 그냥 가운데로 붙인다.
+      const slotW = P.wkWireLen, slotD = P.wkWireW;
+      const limX = q.W / 2 - q.wall - slotW / 2 - 0.4;
+      const limY = q.innerHalfD - jointW() - slotD / 2 - 0.4;
+      const clampPos = (v, lim) => (lim <= 0 ? 0 : Math.max(-lim, Math.min(lim, v)));
+      const sx = clampPos(P.wkWireX, limX), sy = clampPos(P.wkWireY, limY);
+      // 구멍은 TP4056 포켓 안쪽, 테두리 받침 턱(wkChgLedge) 안으로만 낸다. 그래야
+      // 보드가 사방 턱에 걸쳐 앉고, 칸막이 막대나 MPU 자리 밑이 뚫려 공중에 뜨지 않는다.
+      const ledge = Math.max(0, Math.min(P.wkChgLedge, (board.d + CLR) / 2 - 1));
+      const x0 = Math.max(sx - slotW / 2, chgCx - chgLen / 2 + ledge);
+      const x1 = Math.min(sx + slotW / 2, chgCx + chgLen / 2 - ledge);
+      const y0 = Math.max(sy - slotD / 2, q.boardY - (board.d + CLR) / 2 + ledge);
+      const y1 = Math.min(sy + slotD / 2, q.boardY + (board.d + CLR) / 2 - ledge);
+      if (x1 - x0 > 1 && y1 - y0 > 1)
+        tray = sub(tray, boxBrush(x1 - x0, y1 - y0, TRAY_FLOOR + 0.4,
+                                  (x0 + x1) / 2, (y0 + y1) / 2, -0.2,
+                                  Math.min(1.4, (y1 - y0) / 2 - 0.1, (x1 - x0) / 2 - 0.1)));
+    }
     tray = sub(tray, usbCut(q));
     if (P.wkHallOn) {
       // 베이스가 KY-035(높이 15)보다 낮아도 되도록 결합 텅과 트레이 바닥을 관통하는
@@ -375,14 +432,15 @@ export function initWorkout(env) {
                  [q.chargerX + pad[0], q.boardY + pad[1],
                   SEAT_Z - 0.06], MATS.mod);
     } else {
+      const CHARGER = chargerSpec();
       ghostBox(G[1], [CHARGER.w, CHARGER.d, CHARGER.pcb],
                [q.chargerX, 0, SEAT_Z + CHARGER.pcb / 2], MATS.mod);
       ghostBox(G[1], [9.0, 8.9, CHARGER.h - CHARGER.pcb],
                [q.chargerX - CHARGER.w / 2 + 4.5, 0,
-                SEAT_Z + CHARGER.pcb + (CHARGER.h - CHARGER.pcb) / 2], MATS.mod);
+                SEAT_Z + CHARGER.usbZ], MATS.mod);
     }
     ghostBox(G[1], [q.mpu.w, q.mpu.d, q.mpu.h],
-             [q.mpuX, 0, SEAT_Z + q.mpu.h / 2], mpuMat);
+             [q.mpuX, 0, q.mpuSeatZ + q.mpu.h / 2], mpuMat);
     if (P.wkSwOn && !xiaoOn())
       ghostBox(G[1], [SW.body, SW.w, SW.d],
                [q.W / 2 - q.wall - SW.body / 2 + 0.6, P.wkSwY,
@@ -434,6 +492,7 @@ export function initWorkout(env) {
     const batTop = q.batteryZ + P.wkBatH;
     const batPlus = world(G[0], [-BAT.w / 2 + 2, q.batteryY - 3.2, batTop]);
     const batMinus = world(G[0], [-BAT.w / 2 + 2, q.batteryY + 3.2, batTop]);
+    const CHARGER = chargerSpec();
     const chgTop = SEAT_Z + CHARGER.pcb;
     const chgBPlus = world(G[1], [q.chargerX - CHARGER.w / 2, -4.3, chgTop]);
     const chgBMinus = world(G[1], [q.chargerX - CHARGER.w / 2, 4.3, chgTop]);
@@ -495,7 +554,7 @@ export function initWorkout(env) {
     }
 
     // GY-521/MPU6050 헤더의 앞 4개 논리 핀: VCC, GND, SCL, SDA.
-    const mpuTop = SEAT_Z + q.mpu.h;
+    const mpuTop = q.mpuSeatZ + q.mpu.h;
     const mpuPin = x => world(G[1], [q.mpuX + x, -q.mpu.d / 2, mpuTop]);
     const mpuVcc = mpuPin(-5), mpuGnd = mpuPin(-1.7);
     const mpuScl = mpuPin(1.7), mpuSda = mpuPin(5);
@@ -540,7 +599,7 @@ export function initWorkout(env) {
     if (q.D + 0.01 < mpuNeedD) warnings.push(t('wkMpuDepthFit', mpuNeedD.toFixed(1)));
     const batteryTop = q.batteryZ + P.wkBatH;
     if (batteryTop > q.baseH - 0.4) warnings.push(t('wkBatteryHeight', (batteryTop + 0.4).toFixed(1)));
-    if (q.mpu.h > q.trayTop - SEAT_Z - q.lidCageH - 0.8) warnings.push(t('wkMpuHeightFit'));
+    if (q.mpu.h > q.trayTop - q.mpuSeatZ - q.lidCageH - 0.8) warnings.push(t('wkMpuHeightFit'));
     if (xiaoOn() && SEAT_Z + XIAO.h > q.trayTop - q.lidCageH - 0.2)
       warnings.push(t('wkXiaoHeightFit'));
     if (!xiaoOn() && ESP_Z0 + ESP.h > q.lidCageH - 0.2 + 0.01)
