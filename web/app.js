@@ -398,7 +398,7 @@ const STATIC_I18N = {
     lblWkXiaoPocketX: 'XIAO long side X (USB to rear)',
     lblWkXiaoPocketY: 'XIAO short side Y (between pin rows)',
     lblWkEspCaseH: 'ESP section height',
-    lblWkMpuPocket: 'MPU6050 pocket depth', lblWkMpuPegD: 'MPU6050 peg diameter', lblWkMpuPegIn: 'MPU6050 peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
+    lblWkMpuPocket: 'MPU6050 pocket depth', lblWkMpuX: 'MPU6050 X (− = toward charger)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 peg diameter', lblWkMpuPegIn: 'MPU6050 peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
     lblWkOledOn: 'Use 0.96" OLED',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
@@ -544,7 +544,7 @@ const STATIC_I18N = {
     lblWkXiaoPocketX: 'XIAO 긴 변 X (USB 방향)',
     lblWkXiaoPocketY: 'XIAO 짧은 변 Y (핀 열 사이)',
     lblWkEspCaseH: 'ESP 수납부 높이',
-    lblWkMpuPocket: 'MPU6050 자리 깊이', lblWkMpuPegD: 'MPU6050 고정 핀 지름', lblWkMpuPegIn: 'MPU6050 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
+    lblWkMpuPocket: 'MPU6050 자리 깊이', lblWkMpuX: 'MPU6050 X (− = 충전모듈 쪽)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 고정 핀 지름', lblWkMpuPegIn: 'MPU6050 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
     lblWkOledOn: '0.96" OLED 사용',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
@@ -843,7 +843,7 @@ const P = {
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true,
   wkHallGap: 1, wkHallT: 3.25,
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 4.6,
-  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 9,
+  wkXiaoPocketX: 22.5, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 9,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -929,7 +929,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuPegD','wkMpuPegIn','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkChgLedge','wkHallGap','wkHallT',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;

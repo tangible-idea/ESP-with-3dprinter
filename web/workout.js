@@ -146,18 +146,28 @@ export function initWorkout(env) {
     // 칸막이 자리(2.4)가 모자라 못 당기면 덮개가 남는 깊이까지만 판다.
     const jd = jointDims({ W, D, wall });
     const mpuHalfW = (mpu.w + CLR) / 2, mpuHalfD = (mpu.d + CLR) / 2;
-    let mpuDepth = Math.max(0, Math.min(Number(P.wkMpuPocket) || 0, TRAY_FLOOR - 0.4));
-    if (BASE_JOINT_H > 0 && TRAY_FLOOR - mpuDepth < BASE_JOINT_H + 0.2) {
-      const over = mpuX + mpuHalfW - jd.inW / 2;
-      if (over > 0 && gap - over >= 2.4 && mpuHalfD <= jd.inD / 2) mpuX -= over;
-      else if (over > 0 || mpuHalfD > jd.inD / 2)
-        mpuDepth = Math.min(mpuDepth, TRAY_FLOOR - BASE_JOINT_H - 0.2);
-    }
-    const mpuSeatZ = TRAY_FLOOR - mpuDepth;
     // XIAO는 뚜껑 결합 텅보다 안쪽에 놓여야 보드 가장자리가 텅과 충돌하지 않는다.
     const chargerMin = xiaoOn()
       ? -jd.inW / 2 + board.w / 2 + CLR
       : -innerW / 2 + (board.w + CLR) / 2;
+    // wkMpuX/wkMpuY로 MPU 자리를 옮긴다. X는 +X 벽에 붙은 자리가 한계이고, 음수면
+    // 충전모듈 쪽으로 오되(충전모듈은 -X 끝까지 밀려남) 칸막이 자리 1.2는 남긴다.
+    // Y는 벽 안쪽까지.
+    const chgRight0 = chargerMin + (board.w + CLR) / 2;
+    mpuX = Math.max(Math.min(mpuX, chgRight0 + 1.2 + mpuHalfW),
+                    Math.min(mpuX, mpuX + (Number(P.wkMpuX) || 0)));
+    const mpuYLim = Math.max(0, innerHalfD - 0.5 - mpuHalfD);
+    const mpuY = Math.max(-mpuYLim, Math.min(mpuYLim, Number(P.wkMpuY) || 0));
+    let mpuDepth = Math.max(0, Math.min(Number(P.wkMpuPocket) || 0, TRAY_FLOOR - 0.4));
+    if (BASE_JOINT_H > 0 && TRAY_FLOOR - mpuDepth < BASE_JOINT_H + 0.2) {
+      const over = mpuX + mpuHalfW - jd.inW / 2;
+      const room = mpuX - mpuHalfW - chgRight0;
+      const insideY = Math.abs(mpuY) + mpuHalfD <= jd.inD / 2;
+      if (over > 0 && room - over >= 2.4 && insideY) mpuX -= over;
+      else if (over > 0 || !insideY)
+        mpuDepth = Math.min(mpuDepth, TRAY_FLOOR - BASE_JOINT_H - 0.2);
+    }
+    const mpuSeatZ = TRAY_FLOOR - mpuDepth;
     const chargerMax = mpuX - (mpu.w + CLR) / 2 - (board.w + CLR) / 2 - 1.2;
     const chargerX = Math.min(Math.max(chargerMin, chargerX0 + P.wkChgX),
                               Math.max(chargerMin, chargerMax));
@@ -171,7 +181,7 @@ export function initWorkout(env) {
     const magnetY = P.wkHallOn ? hallInnerY + P.wkHallGap + MAG.d / 2 : 0;
     return {
       W, D, baseH, wall, trayTop, lidCageH, innerW, innerHalfD,
-      mpu, gap, chargerX, boardY, mpuX, mpuDepth, mpuSeatZ,
+      mpu, gap, chargerX, boardY, mpuX, mpuY, mpuDepth, mpuSeatZ,
       // 스위치 창 위로 벽이 1mm는 남아야 하고, 몸통이 뚜껑에 닿지 않게 높이를 묶는다.
       swZ: Math.max(TRAY_FLOOR_TOP + SW.d / 2 + 0.3,
                     Math.min(P.wkSwZ, trayTop - 1.0 - (SW.d + 0.3) / 2)),
@@ -248,7 +258,7 @@ export function initWorkout(env) {
     // 납땜 릴리프: 보드 밑면 패드 열에 납이 볼록하게 남으면 보드가 뜬다. 그 줄을
     // 바닥까지 아예 관통시켜 납이 얼마나 두껍든 걸리지 않게 한다. 단, 결합 홈
     // (밑면에서 BASE_JOINT_H) 자리는 건드리지 않도록 바깥쪽 한계선 안으로 잘라 넣는다.
-    function solderRelief(t, edgeX, depthY, dir = -1) {
+    function solderRelief(t, edgeX, depthY, dir = -1, cy = 0) {
       const sw = P.wkSolderW;
       if (sw <= 0.1) return t;
       // 결합 홈이 없으면 어디든 관통해도 된다.
@@ -258,7 +268,7 @@ export function initWorkout(env) {
       const x0 = clamp(r0), x1 = clamp(r1);
       if (x1 - x0 >= 0.4)
         t = sub(t, boxBrush(x1 - x0, depthY, TRAY_FLOOR + 0.4,
-                            (x0 + x1) / 2, 0, -0.2, 0.3));
+                            (x0 + x1) / 2, cy, -0.2, 0.3));
       // 한계선 밖(홈 위)으로 넘어간 부분은 관통 대신 홈 덮개 위까지만 파서, 슬롯이
       // 포켓 끝에 닿게 한다. 안 그러면 관통 구멍만 포켓 가운데에 떠 보인다.
       const zb = BASE_JOINT_H + 0.3;
@@ -266,7 +276,7 @@ export function initWorkout(env) {
         for (const [o0, o1] of [[r0, Math.min(r1, -lim + 0.2)], [Math.max(r0, lim - 0.2), r1]])
           if (o1 - o0 > 0.3)
             t = sub(t, boxBrush(o1 - o0, depthY, TRAY_FLOOR + 0.2 - zb,
-                                (o0 + o1) / 2, 0, zb, 0.3));
+                                (o0 + o1) / 2, cy, zb, 0.3));
       return t;
     }
 
@@ -282,10 +292,10 @@ export function initWorkout(env) {
                               chgCx, q.boardY, SEAT_Z, 0.6));
     if (q.mpuDepth > 0.05)
       tray = sub(tray, boxBrush(q.mpu.w + CLR, q.mpu.d + CLR, q.mpuDepth + 0.2,
-                                q.mpuX, 0, q.mpuSeatZ, 0.6));
+                                q.mpuX, q.mpuY, q.mpuSeatZ, 0.6));
     // 칸막이 벽 양쪽(TP4056 오른쪽 끝 · MPU 왼쪽 끝 = GY-521 핀헤더 쪽)에 관통 슬롯.
     if (!xiaoOn()) tray = solderRelief(tray, chgCx + chgLen / 2, board.d + CLR, -1);
-    tray = solderRelief(tray, q.mpuX - (q.mpu.w + CLR) / 2, q.mpu.d + CLR, +1);
+    tray = solderRelief(tray, q.mpuX - (q.mpu.w + CLR) / 2, q.mpu.d + CLR, +1, q.mpuY);
     // GY-521 반대쪽(+X, 스위치 쪽) 두 모서리의 고정 구멍(Ø3)에 끼우는 둥근 핀 2개.
     // 높이는 PCB(1.6) 위로 0.8 더 — MPU 윗면과 스위치 받침에는 닿지 않는다.
     const pegD = P.wkMpuPegD, pegIn = P.wkMpuPegIn;
@@ -293,7 +303,7 @@ export function initWorkout(env) {
       for (const sy of [-1, 1])
         tray = add(tray, boxBrush(pegD, pegD, 2.5,
                                   q.mpuX + q.mpu.w / 2 - pegIn,
-                                  sy * (q.mpu.d / 2 - pegIn),
+                                  q.mpuY + sy * (q.mpu.d / 2 - pegIn),
                                   q.mpuSeatZ - 0.1, pegD / 2));
 
     // 칸막이 벽은 가운데 배선 홈(3.0)을 두고 막대 두 개(' - - ')만 남긴다. 막대 길이는
@@ -478,7 +488,7 @@ export function initWorkout(env) {
                 SEAT_Z + CHARGER.usbZ], MATS.mod);
     }
     ghostBox(G[1], [q.mpu.w, q.mpu.d, q.mpu.h],
-             [q.mpuX, 0, q.mpuSeatZ + q.mpu.h / 2], mpuMat);
+             [q.mpuX, q.mpuY, q.mpuSeatZ + q.mpu.h / 2], mpuMat);
     if (P.wkSwOn && !xiaoOn())
       ghostBox(G[1], [SW.body, SW.w, SW.d],
                [q.W / 2 - q.wall - SW.body / 2 + 0.6, P.wkSwY,
@@ -593,7 +603,7 @@ export function initWorkout(env) {
 
     // GY-521/MPU6050 헤더의 앞 4개 논리 핀: VCC, GND, SCL, SDA.
     const mpuTop = q.mpuSeatZ + q.mpu.h;
-    const mpuPin = x => world(G[1], [q.mpuX + x, -q.mpu.d / 2, mpuTop]);
+    const mpuPin = x => world(G[1], [q.mpuX + x, q.mpuY - q.mpu.d / 2, mpuTop]);
     const mpuVcc = mpuPin(-5), mpuGnd = mpuPin(-1.7);
     const mpuScl = mpuPin(1.7), mpuSda = mpuPin(5);
     wire(mpuVcc, esp3V3, colors.plus, 'VCC', null);
