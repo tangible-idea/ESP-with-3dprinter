@@ -22,6 +22,8 @@ import { initTodo } from './todo.js';
 import { TEXTURES, loadHeightMap, applySideTexture } from './texture.js';
 let rebuildTodo = () => {};   // initTodo(env) 실행 후 실제 함수로 채워짐 (rebuild()에서 호출)
 import { initWorkout } from './workout.js';
+import { initPlant } from './plant.js';
+let rebuildPlant = () => {}, applyPlantExplode = () => {};
 let rebuildWorkout = () => {};
 let applyWorkoutExplode = () => {};
 let drawWorkoutWires = () => {};
@@ -36,6 +38,10 @@ const I18N = {
     title: 'Configurator',
     titleTodo: 'Todo Supporter Configurator',
     titleWorkout: 'Workout Motion Sensor Configurator',
+    titlePlant: 'Plant Care (XIAO Soil Sensor) Configurator',
+    plantDims: (l, w, h, ms) => `Soil sensor case ${l} × ${w} × ${h}mm · CSG ${ms}ms`,
+    plWarnExt: need => `⚠ OLED overlaps the XIAO area — set lid raise to at least ${need}mm`,
+    plWarnRib: '⚠ OLED pocket hits the PCB standoffs — move OLED position back toward 0',
     // 층 이름 (STL 빌드 오류 메시지용)
     layerNames: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4', 'OLED pod', 'OLED cover'],
     buildErr: (name, msg) => `⚠ ${name} build error: ${msg}`,
@@ -164,6 +170,10 @@ const I18N = {
     title: '🥟 딤섬 클리커 컨피규레이터',
     titleTodo: '투두 서포터 컨피규레이터',
     titleWorkout: '운동 모션 센서 컨피규레이터',
+    titlePlant: '식물관리 (XIAO 토양센서) 컨피규레이터',
+    plantDims: (l, w, h, ms) => `토양센서 케이스 ${l} × ${w} × ${h}mm · CSG ${ms}ms`,
+    plWarnExt: need => `⚠ OLED가 XIAO 자리와 겹침 — 뚜껑 올림을 ${need}mm 이상으로`,
+    plWarnRib: '⚠ OLED 포켓이 PCB 스탠드오프와 겹침 — OLED 위치를 0 쪽으로',
     layerNames: ['1층', '2층', '3층', '4층', 'OLED 포드', 'OLED 커버'],
     buildErr: (name, msg) => `⚠ ${name} 생성 오류: ${msg}`,
     texErr: name => `⚠ "${name}" 텍스처 이미지를 불러오지 못했습니다.`,
@@ -380,6 +390,12 @@ const STATIC_I18N = {
     secProduct: 'Product', lblProduct: 'Design',
     optProdDimsum: 'Dim Sum Clicker', optProdTodo: 'Todo Supporter (iMac)',
     optProdWorkout: 'Workout Motion Sensor',
+    optProdPlant: 'Plant Care (XIAO Soil Sensor)',
+    secPlantCase: 'Lid & 0.96" OLED', lblPlOledOn: 'Add 0.96" OLED', lblPlExt: 'Lid raise',
+    lblPlOledX: 'OLED position (+ = probe side)', lblPlOledClr: 'OLED pocket clearance',
+    hintPlantCase: 'Uses the original Seeed case STLs. Only the top part is modified: the lid is lifted by "Lid raise" and the gap is filled with the original wall profile (LED light pipe and PCB standoffs are lengthened too), so the button, probe slot and snap fit are unchanged. The 0.96" OLED (25×27, 3.5 thick) lies face-down against the inside of the lid, header end toward the probe, and shows through a 23.2×12.4 window. Desolder the header or trim the pins and wire it to the XIAO: SDA→D4, SCL→D5, VCC→3V3, GND→GND. Fix it with a strip of double-sided tape.',
+    secPlantExport: 'STL export', btnPlExTop: 'Top (lid + OLED).stl', btnPlExBot: 'Bottom (original).stl',
+    hintPlantExport: 'The top exports in the original print orientation (lid face on the bed, no supports). The bottom is the original file, unchanged.',
     hintProduct: 'Choose which 3D design to configure. Each product has its own settings below.',
     // 운동 모션 센서
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
@@ -529,6 +545,12 @@ const STATIC_I18N = {
     secProduct: '제품', lblProduct: '디자인',
     optProdDimsum: '딤섬 클리커', optProdTodo: '투두 서포터 (아이맥)',
     optProdWorkout: '운동 모션 센서',
+    optProdPlant: '식물관리 (XIAO 토양센서)',
+    secPlantCase: '뚜껑 & 0.96" OLED', lblPlOledOn: '0.96" OLED 추가', lblPlExt: '뚜껑 올림',
+    lblPlOledX: 'OLED 위치 (+ = 탐침 쪽)', lblPlOledClr: 'OLED 포켓 유격',
+    hintPlantCase: 'Seeed 원본 케이스 STL을 사용합니다. 상판만 개조합니다 — 뚜껑을 "뚜껑 올림"만큼 띄우고 그 사이를 원본 벽 단면으로 채우므로(LED 라이트파이프·PCB 스탠드오프도 함께 연장) 버튼·탐침 슬롯·결합부는 그대로입니다. 0.96" OLED(25×27, 두께 3.5)는 화면이 뚜껑 안쪽면에 닿게 엎어 넣고, 핀 쪽을 탐침 방향으로 둡니다. 창은 23.2×12.4입니다. 핀헤더는 떼거나 짧게 자르고 XIAO에 직접 배선하세요: SDA→D4, SCL→D5, VCC→3V3, GND→GND. 양면테이프 한 줄로 고정하세요.',
+    secPlantExport: 'STL 내보내기', btnPlExTop: '상판 (뚜껑 + OLED).stl', btnPlExBot: '하판 (원본).stl',
+    hintPlantExport: '상판은 원본과 같은 출력 방향(뚜껑면이 베드, 서포트 불필요)으로 저장됩니다. 하판은 원본 파일 그대로입니다.',
     hintProduct: '설계할 3D 디자인을 선택하세요. 제품마다 아래에 별도 설정이 있습니다.',
     // 운동 모션 센서
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
@@ -829,7 +851,9 @@ const POCKET_CLR = 0.4;
 // 파라미터 & UI 바인딩
 // ------------------------------------------------------------------
 const P = {
-  product: 'todo',   // 'dimsum' 딤섬 | 'todo' 아이맥 클립 | 'workout' 자석 운동 모션 센서
+  product: 'todo',   // 'dimsum' 딤섬 | 'todo' 아이맥 클립 | 'workout' 자석 운동 모션 센서 | 'plant' 식물관리(XIAO 토양센서)
+  // --- 식물관리 (Seeed XIAO Soil Moisture Sensor 케이스 + 0.96" OLED) ---
+  plOledOn: true, plExt: 4.0, plOledX: 0, plOledClr: 0.4,
   // --- 투두 서포터 (아이맥 우측하단 코너 ㄷ자 클립) ---
   tWidth: 62, tEdge: 11.5, tClr: 0.6, tWall: 2.5, tBridge: 3, tRound: 3,
   tFront: 15, tBack: 30, tEspOn: true, tOledOn: true,
@@ -956,6 +980,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
 let retexTimer = null;
@@ -3003,6 +3028,7 @@ function rebuild() {
   applyEspType(P.product === 'dimsum' ? P.espType : P.product === 'workout' ? P.wkEspType : 'c3mini');
   if (P.product === 'todo') { rebuildTodo(); return; }
   if (P.product === 'workout') { rebuildWorkout(); return; }
+  if (P.product === 'plant') { rebuildPlant(); return; }
   status.classList.add('on');
   setTimeout(() => {
     const buildErrs = [];
@@ -3092,6 +3118,7 @@ function checkFit() {
 // 분해/조립
 function applyExplode() {
   if (P.product === 'workout') { applyWorkoutExplode(); return; }
+  if (P.product === 'plant') { applyPlantExplode(); return; }
   const e = +document.getElementById('explode').value;
   const gap = 26 * e;
   const base1 = f1BaseH();
@@ -4163,7 +4190,9 @@ function applyProductUI() {
   document.body.classList.toggle('prod-dimsum', P.product === 'dimsum');
   document.body.classList.toggle('prod-todo', P.product === 'todo');
   document.body.classList.toggle('prod-workout', P.product === 'workout');
-  const titleKey = P.product === 'workout' ? 'titleWorkout' : P.product === 'todo' ? 'titleTodo' : 'title';
+  document.body.classList.toggle('prod-plant', P.product === 'plant');
+  const titleKey = P.product === 'workout' ? 'titleWorkout' : P.product === 'todo' ? 'titleTodo'
+    : P.product === 'plant' ? 'titlePlant' : 'title';
   const heading = document.querySelector('.phead h1');
   if (heading) heading.textContent = t(titleKey);
   document.title = t(titleKey);
@@ -4201,6 +4230,14 @@ productSel.addEventListener('change', e => {
   clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
   setFloorMeshes: meshes => { floorMeshes = meshes; },
   refreshWires: updateWires,
+}));
+// 식물관리(XIAO 토양센서): 제조사 케이스 STL을 불러와 상판만 개조한다.
+({ rebuildPlant, applyPlantExplode } = initPlant({
+  THREE, P, t, G, MATS, OLED_TYPES, matCase, matCaseX,
+  boxBrush, add, sub, meshBrush, manToGeo, loadSTL, downloadSTL, status, queueRebuild, markRulers,
+  getView: () => ({ xray, showGhosts }),
+  clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; texGeos = [null, null, null, null]; },
+  setFloorMeshes: meshes => { floorMeshes = meshes; },
 }));
 applyProductUI();
 

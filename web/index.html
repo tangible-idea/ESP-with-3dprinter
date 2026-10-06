@@ -123,6 +123,7 @@
   body.prod-dimsum [data-product="dimsum"] { display: block; }
   body.prod-todo [data-product="todo"] { display: block; }
   body.prod-workout [data-product="workout"] { display: block; }
+  body.prod-plant [data-product="plant"] { display: block; }
   #product { font-weight: 600; }
 </style>
 </head>
@@ -310,6 +311,28 @@
       <div class="row"><label>LED X</label><input type="range" id="ledX" min="-18" max="18" step="0.5" value="0"><span class="val" id="ledXv"></span></div>
       <div class="row"><label>LED Y</label><input type="range" id="ledY" min="-18" max="18" step="0.5" value="-14.5"><span class="val" id="ledYv"></span></div>
       <div class="hint" data-i18n="hintLayout3">The MX switch fits into the holder pocket (14.3 square), and the floor has 1 central post hole + 4 copper-wire holes (funneled downward). The deeper the recess, the deeper the switch sits. Boss = raised support on top of the lid. Round LEDs (3/4/5mm) plug in from below (Layer 2 side) into the body+0.3 hole on the Layer 3 top plate — the flange stops against the underside so only the dome tip protrudes (1.2/2.6/4.5 by size); the legs connect to the ESP32 (right-click the blue LED+ wire to change GPIO; 150~220Ω resistor recommended). The 2×5 rect two-tone (3-pin, pitch 2.54) inserts until the body is flush with the floor and protrudes ~3.8 upward — the center pin is the common cathode (GND), the two sides are the red/green anodes (right-click the blue/cyan wires to change GPIO; 150~220Ω resistor each).</div>
+    </div>
+  </details>
+
+  <details open data-product="plant">
+    <summary data-i18n="secPlantCase">Lid &amp; 0.96" OLED</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblPlOledOn">Add 0.96" OLED</label><input type="checkbox" id="plOledOn" checked></div>
+      <div class="row"><label data-i18n="lblPlExt">Lid raise</label><input type="range" id="plExt" min="0" max="10" step="0.1" value="4"><span class="val" id="plExtv"></span></div>
+      <div class="row"><label data-i18n="lblPlOledX">OLED position (+ = probe side)</label><input type="range" id="plOledX" min="-3" max="3" step="0.1" value="0"><span class="val" id="plOledXv"></span></div>
+      <div class="row"><label data-i18n="lblPlOledClr">OLED pocket clearance</label><input type="range" id="plOledClr" min="0.1" max="1" step="0.05" value="0.4"><span class="val" id="plOledClrv"></span></div>
+      <div class="hint" data-i18n="hintPlantCase"></div>
+    </div>
+  </details>
+
+  <details open data-product="plant">
+    <summary data-i18n="secPlantExport">STL export</summary>
+    <div class="body">
+      <div class="btns">
+        <button id="plExTop" data-i18n="btnPlExTop">Top (lid + OLED).stl</button>
+        <button id="plExBot" data-i18n="btnPlExBot">Bottom (original).stl</button>
+      </div>
+      <div class="hint" data-i18n="hintPlantExport"></div>
     </div>
   </details>
 
@@ -536,6 +559,7 @@
         <option value="dimsum" data-i18n="optProdDimsum">Dim Sum Clicker</option>
         <option value="todo" data-i18n="optProdTodo">Todo Supporter (iMac)</option>
         <option value="workout" data-i18n="optProdWorkout">Workout Motion Sensor</option>
+        <option value="plant" data-i18n="optProdPlant">Plant Care (XIAO Soil Sensor)</option>
       </select>
     </div>
     <div class="hint" data-i18n="hintProduct" style="margin:-2px 0 8px">Choose which 3D design to configure. Each product has its own settings below.</div>
