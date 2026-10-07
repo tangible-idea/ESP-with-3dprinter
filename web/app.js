@@ -416,13 +416,13 @@ const STATIC_I18N = {
     lblWkEspCaseH: 'ESP section height',
     lblWkMpuPocket: 'MPU6050 pocket depth', lblWkMpuX: 'MPU6050 X (− = toward charger)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 peg diameter', lblWkMpuPegIn: 'MPU6050 peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
-    lblWkOledOn: 'Use 0.96" OLED',
+    lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
-    hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and an optional 0.96" OLED cradle on the lid. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
-    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl',
-    hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the display cradle faces up; use bridge-friendly settings or support under the ESP32-cage ceiling.',
+    hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and a lid with an optional 0.96" or 0.49" OLED set flush into its flat top under a bezel that shows only the display. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
+    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl', btnWkExBezel: 'OLED bezel.stl',
+    hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the OLED pocket faces up; use bridge-friendly settings for the ESP32-cage ceiling and the hollowed top skin. Print the OLED bezel separately (exported face-down), drop the OLED in, then press the bezel into its recess (a dot of glue if loose). Only the display window stays visible.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkXiaoHeightFit: '⚠ XIAO is too tall for the tray; increase tray clearance before printing',
     wkEspHeightFit: '⚠ SuperMini does not fit below the lid plate; increase ESP section height',
@@ -434,7 +434,7 @@ const STATIC_I18N = {
     wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
     wkMpuHeightFit: '⚠ MPU6050 is too thick for the electronics tray and ESP32 clearance',
     wkHallFit: (d, h) => `⚠ KY-035 upright pocket needs at least ${d}mm on the short side and ${h}mm base height`,
-    wkOledFit: (w, d) => `⚠ The 0.96" OLED cradle needs at least ${w}×${d}mm lid footprint`,
+    wkOledFit: (w, d, size) => `⚠ The ${size} OLED pocket needs at least ${w}×${d}mm lid footprint`,
     wtGrpWorkoutSw: 'Power switch (SPDT slide)',
     wtSwCom: 'Switch ② COM (centre)', wtSwOut: 'Switch ① side pin',
     wtSwNote: 'third pin unused — cuts OUT+ only, so it still charges when off',
@@ -571,13 +571,13 @@ const STATIC_I18N = {
     lblWkEspCaseH: 'ESP 수납부 높이',
     lblWkMpuPocket: 'MPU6050 자리 깊이', lblWkMpuX: 'MPU6050 X (− = 충전모듈 쪽)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 고정 핀 지름', lblWkMpuPegIn: 'MPU6050 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
-    lblWkOledOn: '0.96" OLED 사용',
+    lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
-    hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" OLED 받침이 있는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
-    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl',
-    hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 화면 받침이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장에 브리지 설정 또는 서포트를 사용하세요.',
+    hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" 또는 0.49" OLED가 평평한 윗면에 박히고 화면 창만 보이는 베젤로 덮는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
+    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl', btnWkExBezel: 'OLED 베젤.stl',
+    hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 윗면 OLED 포켓이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장과 속을 비운 윗면 스킨에 브리지 설정을 사용하세요. OLED 베젤은 따로 출력(보이는 면이 베드)하고, OLED를 넣은 뒤 베젤을 홈에 눌러 끼우세요(헐거우면 접착제 한 방울). 화면 창만 보이고 나머지는 가려집니다.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ' · 0.96" OLED' : ''}`,
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkXiaoHeightFit: '⚠ XIAO 높이가 트레이 여유 공간을 초과합니다. 출력 전 공간을 늘리세요',
     wkEspHeightFit: '⚠ SuperMini가 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
@@ -589,7 +589,7 @@ const STATIC_I18N = {
     wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
     wkMpuHeightFit: '⚠ MPU6050이 너무 두꺼워 전자부품 트레이와 ESP32 사이에 들어가지 않습니다',
     wkHallFit: (d, h) => `⚠ KY-035 세움 포켓에는 짧은 변 ${d}mm, 베이스 높이 ${h}mm 이상이 필요합니다`,
-    wkOledFit: (w, d) => `⚠ 0.96" OLED 받침에는 뚜껑 외형이 최소 ${w}×${d}mm 필요합니다`,
+    wkOledFit: (w, d, size) => `⚠ ${size} OLED 포켓에는 뚜껑 외형이 최소 ${w}×${d}mm 필요합니다`,
     wtGrpWorkoutSw: '전원 스위치 (SPDT 슬라이드)',
     wtSwCom: '스위치 ② 공통(가운데)', wtSwOut: '스위치 ① 바깥 다리',
     wtSwNote: '남는 다리 1개는 미사용 — OUT+만 끊으므로 꺼둔 채로도 충전됨',
@@ -870,7 +870,7 @@ const P = {
   wkChgX: -0.5,    // TP4056 포켓 X 오프셋 (음수 = USB 쪽으로, 칸막이도 같이 이동)
   wkUsbY: 0,       // USB 구멍 Y 오프셋
   wkUsbFit: 0.3,   // ESP32 USB-C 소켓 여유 (셸 폭 8.94에 더하는 값, 음수 = 조여서 물림)
-  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
+  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkOledType: '096', wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
   wkHallGap: 1, wkHallT: 3.25,
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 13,
@@ -1076,6 +1076,15 @@ document.getElementById('wkSwOn').addEventListener('change', e => {
 });
 document.getElementById('wkOledOn').addEventListener('change', e => {
   P.wkOledOn = e.target.checked;
+  document.getElementById('wkOledType').disabled = !P.wkOledOn;
+  document.getElementById('wkExBezel').disabled = !P.wkOledOn;
+  queueRebuild();
+});
+document.getElementById('wkOledType').value = P.wkOledType;
+document.getElementById('wkOledType').disabled = !P.wkOledOn;
+document.getElementById('wkExBezel').disabled = !P.wkOledOn;
+document.getElementById('wkOledType').addEventListener('change', e => {
+  P.wkOledType = e.target.value;
   queueRebuild();
 });
 document.getElementById('wkEspPinsUp').checked = P.wkEspPinsUp;
@@ -1374,6 +1383,8 @@ function syncControls() {
   document.getElementById('wkEspType').value = P.wkEspType;
   document.getElementById('wkModType').value = P.wkModType;
   document.getElementById('wkOledOn').checked = P.wkOledOn;
+  document.getElementById('wkOledType').value = P.wkOledType;
+  document.getElementById('wkOledType').disabled = !P.wkOledOn;
   document.getElementById('wkEspPinsUp').checked = P.wkEspPinsUp;
   document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   applyWorkoutOptionsUI();

@@ -40,10 +40,33 @@ export function initWorkout(env) {
     : chargerSpec();
   const HALL = { w: 19, h: 15 };       // KY-035 PCB: X=19, 세움 높이 Z=15
   const MAG = { w: 30, d: 10 };   // 두께는 실측값(P.wkMagH)
-  const OLED = { w: 25, d: 27.05, h: 3.5, winW: 23.2, winD: 12.4, winY: 0.975 };
-  const OLED_CLR = 0.4, OLED_RIM = 1.6, OLED_RIM_H = 4.2;
-  const OLED_CAV_W = OLED.w + OLED_CLR, OLED_CAV_D = OLED.d + OLED_CLR;
-  const OLED_OUT_W = OLED_CAV_W + 2 * OLED_RIM, OLED_OUT_D = OLED_CAV_D + 2 * OLED_RIM;
+  // 뚜껑 위 OLED 종류(wkOledType). pinY = 핀 열(배선 슬롯) 위치, winY = 화면 창 중심.
+  // 0.49"는 메인 디자인 실측(15×16, 두께 2.4, 창 13.5×8 — 아래 끝 기준 창 중심 8.9,
+  // 핀 열 11.5)을 그대로 쓴다. 0.49"는 SuperMini 핀 열(±8) 안쪽에 앉으므로 받침을
+  // 네 모서리 대신 X 양옆 막대로 둔다(feet: 'sides').
+  const OLED_SPECS = {
+    '096': { w: 25, d: 27.05, h: 3.5, winW: 23.2, winD: 12.4, winY: 0.975,
+             pinY: -27.05 / 2 + 1.5, feet: 'corners', label: '0.96"' },
+    '049': { w: 15, d: 16, h: 2.4, winW: 13.5, winD: 8, winY: 8.9 - 8,
+             pinY: 11.5 - 8, feet: 'sides', label: '0.49"' },
+  };
+  // OLED는 뚜껑 윗면 포켓에 넣고, 화면 창만 뚫린 베젤(별도 출력)을 위에 눌러 끼워
+  // 윗면과 평평하게 맞춘다. 베젤은 OLED 포켓 둘레의 턱(BZ_LIP)에 걸쳐 앉는다.
+  const OLED_CLR = 0.4, OLED_RIM = 1.6, BEZEL_T = 0.8, BZ_LIP = 1.2, LID_SKIN = 1.2;
+  const oledDims = () => {
+    const o = OLED_SPECS[P.wkOledType] || OLED_SPECS['096'];
+    const cavW = o.w + OLED_CLR, cavD = o.d + OLED_CLR;
+    return { ...o, cavW, cavD,
+             outW: cavW + 2 * (BZ_LIP + OLED_RIM), outD: cavD + 2 * (BZ_LIP + OLED_RIM),
+             rimH: 0.1 + o.h + BEZEL_T };   // 포켓 바닥 → 윗면 (보드는 바닥에서 0.1 뜸)
+  };
+  // 베젤 크기: 턱은 뚜껑 외벽이 1mm 이상 남는 만큼만 낸다(0.96"은 Y가 빠듯함).
+  const bezelDims = q => {
+    const o = oledDims();
+    const lipX = Math.max(0.4, Math.min(BZ_LIP, (q.W - o.cavW) / 2 - 1.0));
+    const lipY = Math.max(0.4, Math.min(BZ_LIP, (q.D - o.cavD) / 2 - 1.0));
+    return { o, w: o.cavW + 2 * lipX, d: o.cavD + 2 * lipY };
+  };
   // 결합부: 텅이 얇으면 베드에서 떨어져 나가거나 조립 중 부러진다. 벽 두께의 85%를
   // 그대로 쓰고(최대 1.6), 물림 깊이도 2.2로 늘려 옆으로 흔들리지 않게 한다.
   // 뚜껑 결합은 2.2 고정. 1층↔2층 결합 깊이는 2층 바닥 두께(wkTrayFloor)에서 정해진다.
@@ -96,7 +119,7 @@ export function initWorkout(env) {
   const oledLift = () => (P.wkOledOn && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
-  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null;
+  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
   const mpuMat = partMat(0x3c9b70);
   const hallMat = partMat(0x8f5aa8);
@@ -512,22 +535,66 @@ export function initWorkout(env) {
                                   sy * MINI_PIN_ROW_Y, q.lidCageH - 0.5, hd / 2));
     }
     if (P.wkOledOn) {
-      // OLED는 뚜껑 위에서 내려놓는 개방형 보호 림에 안착한다. 화면은 위로 보이고,
-      // 헤더 쪽 4가닥은 상판 슬롯을 통과해 바로 아래 ESP32로 내려간다. 핀 관통 모드면
-      // 네 모서리 받침 위로 띄워, 상판 위로 올라온 ESP 핀 끝이 OLED에 닿지 않게 한다.
-      const lidTop = q.lidCageH + LID_PLATE, lift = oledLift();
-      lid = add(lid, ring(OLED_OUT_W, OLED_OUT_D, OLED_CAV_W, OLED_CAV_D,
-                          OLED_RIM_H + lift, lidTop, 1.4));
-      if (lift > 0.05)
+      // 뚜껑 윗면 전체를 베젤 윗면 높이까지 평평하게 올리고, OLED 포켓과 그 위 베젤
+      // 자리를 판다. 베젤이 화면 창만 남기고 나머지를 가린다. 헤더 쪽 4가닥은 상판
+      // 슬롯을 통과해 바로 아래 ESP32로 내려간다. 핀 관통 모드면 포켓 바닥의 받침 위로
+      // 띄워, 상판 위로 올라온 ESP 핀 끝이 OLED에 닿지 않게 한다.
+      const lidTop = q.lidCageH + LID_PLATE, lift = oledLift(), o = oledDims();
+      const topZ = lidTop + lift + o.rimH, bz = bezelDims(q);
+      lid = add(lid, boxBrush(q.W, q.D, topZ - lidTop + 0.1, 0, 0, lidTop - 0.1, r));
+      // 다이어트: 윗면 스킨(LID_SKIN)과 외벽·결합 텅 띠만 남기고 속을 밑에서 비운다.
+      // OLED 포켓 둘레와 SuperMini 케이지(+USB 소켓) 위 상판은 그대로 둔다.
+      const hollowTop = topZ - LID_SKIN;
+      if (hollowTop > q.lidCageH + 0.4) {
+        let hollow = boxBrush(j.inW, j.inD, hollowTop - q.lidCageH + 0.2, 0, 0,
+                              q.lidCageH - 0.2, Math.max(0.6, r - q.wall - jointW()));
+        hollow = sub(hollow, boxBrush(bz.w + 2 * OLED_RIM, bz.d + 2 * OLED_RIM,
+                                      hollowTop + 1, 0, 0, -0.5, 1.0));
+        if (!xiaoOn()) {
+          const cw = ESP.w + CLR + 2.0, cd = ESP.d + CLR + 2.0;
+          const x0 = -cw / 2 - USB_C.over - 0.4 - 0.8, x1 = cw / 2 + 0.8;
+          hollow = sub(hollow, boxBrush(x1 - x0, cd + 1.6, hollowTop + 1,
+                                        (x0 + x1) / 2, 0, -0.5, 1.0));
+        }
+        lid = sub(lid, hollow);
+      }
+      lid = sub(lid, boxBrush(o.cavW, o.cavD, topZ - lidTop + 0.4, 0, 0, lidTop, 0.5));
+      lid = sub(lid, boxBrush(bz.w, bz.d, BEZEL_T + 0.4, 0, 0, topZ - BEZEL_T, 0.8));
+      if (lift > 0.05 && o.feet === 'corners')
         for (const sx of [-1, 1])
           for (const sy of [-1, 1])
             lid = add(lid, boxBrush(3.0, 3.0, lift + 0.1,
-                                    sx * (OLED_CAV_W / 2 - 1.4), sy * (OLED_CAV_D / 2 - 1.4),
+                                    sx * (o.cavW / 2 - 1.4), sy * (o.cavD / 2 - 1.4),
                                     lidTop - 0.1, 0.4));
-      lid = sub(lid, boxBrush(12, 3.2, LID_PLATE + 0.8,
-                              0, -OLED.d / 2 + 1.7, q.lidCageH - 0.4, 0.65));
+      else if (lift > 0.05)
+        // 핀 열(y=±8)을 피해 X 양옆 벽에 붙인 막대로 받친다.
+        for (const sx of [-1, 1])
+          lid = add(lid, boxBrush(1.6, Math.min(10, MINI_PIN_ROW_Y * 2 - 4), lift + 0.1,
+                                  sx * (o.cavW / 2 - 0.8), 0, lidTop - 0.1, 0.4));
+      // 0.49" 받침은 SuperMini 핀 열(±8) 바로 위에 벽이 걸린다. 핀 구멍을 OLED 밑면
+      // 높이까지 다시 뚫어 벽 밑동에 홈을 내 준다(0.96"은 벽이 핀 열 밖이라 영향 없음).
+      if (pinsUp()) {
+        const hd = P.wkPinHoleD;
+        for (const sy of [-1, 1])
+          for (let i = 0; i < 8; i++)
+            lid = sub(lid, boxBrush(hd, hd, LID_PLATE + lift + 0.5, miniPinX(i),
+                                    sy * MINI_PIN_ROW_Y, q.lidCageH - 0.5, hd / 2));
+      }
+      // 배선 슬롯은 핀 열 바로 밑. 0.49"는 핀 열이 ESP 핀 구멍과 겹치지 않는 안쪽에 온다.
+      const slotW = Math.min(12, o.cavW - 2);
+      lid = sub(lid, boxBrush(slotW, 3.2, LID_PLATE + 0.8,
+                              0, o.pinY + Math.sign(o.pinY) * -0.2, q.lidCageH - 0.4, 0.65));
     }
     return lid;
+  }
+
+  // OLED 베젤: 화면 창만 뚫린 얇은 판. 뚜껑 윗면 홈에 눌러 끼워(필요하면 접착) OLED를
+  // 위에서 눌러 잡는다. z=0이 OLED에 닿는 밑면.
+  function buildBezel(q) {
+    const bz = bezelDims(q), o = bz.o, f = Math.max(0.05, P.wkFit / 2);
+    let b = boxBrush(bz.w - 2 * f, bz.d - 2 * f, BEZEL_T, 0, 0, 0, Math.max(0.3, 0.8 - f));
+    b = sub(b, boxBrush(o.winW + 0.2, o.winD + 0.2, BEZEL_T + 1, 0, o.winY, -0.5, 0.3));
+    return b;
   }
 
   function ghostBox(group, dims, pos, mat) {
@@ -592,11 +659,11 @@ export function initWorkout(env) {
       }
     }
     if (P.wkOledOn) {
-      const lidTop = q.lidCageH + LID_PLATE + oledLift();
-      ghostBox(G[2], [OLED.w, OLED.d, OLED.h],
-               [0, 0, lidTop + 0.1 + OLED.h / 2], oledBoardMat);
-      ghostBox(G[2], [OLED.winW, OLED.winD, 0.45],
-               [0, OLED.winY, lidTop + OLED.h + 0.12], oledScreenMat);
+      const lidTop = q.lidCageH + LID_PLATE + oledLift(), o = oledDims();
+      ghostBox(G[2], [o.w, o.d, o.h],
+               [0, 0, lidTop + 0.1 + o.h / 2], oledBoardMat);
+      ghostBox(G[2], [o.winW, o.winD, 0.45],
+               [0, o.winY, lidTop + o.h + 0.12], oledScreenMat);
     }
   }
 
@@ -704,10 +771,11 @@ export function initWorkout(env) {
     wire(mpuSda, espSda, colors.sda, 'SDA', 'G' + P.sdaGpio, 'sda');
     wire(mpuScl, espScl, colors.scl, 'SCL', 'G' + P.sclGpio, 'scl');
 
-    // 0.96" OLED: MPU6050과 GPIO8/9 I2C 버스를 공유한다.
+    // OLED: MPU6050과 GPIO8/9 I2C 버스를 공유한다.
     if (P.wkOledOn) {
-      const oledZ = q.lidCageH + LID_PLATE + oledLift() + OLED.h + 0.15;
-      const oledPin = i => world(G[2], [-3.81 + i * 2.54, -OLED.d / 2 + 1.5, oledZ]);
+      const o = oledDims();
+      const oledZ = q.lidCageH + LID_PLATE + oledLift() + o.h + 0.15;
+      const oledPin = i => world(G[2], [-3.81 + i * 2.54, o.pinY, oledZ]);
       const oGnd = oledPin(0), oVcc = oledPin(1), oScl = oledPin(2), oSda = oledPin(3);
       wire(oVcc, esp3V3, colors.plus, 'VCC', '3V3');
       wire(oGnd, espGnd, colors.minus, 'GND', null);
@@ -760,8 +828,9 @@ export function initWorkout(env) {
     const hallNeedH = 0.75 + HALL.h + 0.4 - (q.trayTop - q.lidCageH);
     if (P.wkHallOn && (q.D < hallNeedD || 0.75 + HALL.h + 0.4 > hallCeil))
       warnings.push(t('wkHallFit', hallNeedD.toFixed(1), hallNeedH.toFixed(1)));
-    if (P.wkOledOn && (q.W < OLED_OUT_W || q.D < OLED_OUT_D))
-      warnings.push(t('wkOledFit', OLED_OUT_W.toFixed(1), OLED_OUT_D.toFixed(1)));
+    const od = oledDims();
+    if (P.wkOledOn && (q.W < od.outW || q.D < od.outD))
+      warnings.push(t('wkOledFit', od.outW.toFixed(1), od.outD.toFixed(1), od.label));
     return warnings;
   }
 
@@ -788,12 +857,21 @@ export function initWorkout(env) {
         const { xray } = getView();
         meshes = geos.map(g => new THREE.Mesh(g, xray ? matCaseX : matCase));
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
+        bezelGeo = null;
+        if (P.wkOledOn) {
+          const bm = buildBezel(layout());
+          bezelGeo = manToGeo(bm); bm.delete();
+          const q0 = layout();
+          const bzMesh = new THREE.Mesh(bezelGeo, xray ? matCaseX : matCase);
+          bzMesh.position.z = q0.lidCageH + LID_PLATE + oledLift() + oledDims().rimH - BEZEL_T;
+          G[2].add(bzMesh);
+        }
         setFloorMeshes(meshes); lastLayout = layout(); placeGhosts(lastLayout);
         applyWorkoutExplode(); setRulerExtras('workout', workoutRulerDims(lastLayout));
         const totalH = lastLayout.baseH + lastLayout.trayTop + LID_PLATE
-          + (P.wkOledOn ? OLED_RIM_H + oledLift() : 0);
-        const totalW = P.wkOledOn ? Math.max(lastLayout.W, OLED_OUT_W) : lastLayout.W;
-        const totalD = P.wkOledOn ? Math.max(lastLayout.D, OLED_OUT_D) : lastLayout.D;
+          + (P.wkOledOn ? oledDims().rimH + oledLift() : 0);
+        const totalW = P.wkOledOn ? Math.max(lastLayout.W, oledDims().outW) : lastLayout.W;
+        const totalD = P.wkOledOn ? Math.max(lastLayout.D, oledDims().outD) : lastLayout.D;
         document.getElementById('dims').textContent =
           t('workoutDims', totalW.toFixed(1), totalD.toFixed(1), totalH.toFixed(1),
             (performance.now() - t0).toFixed(0)) + '\n' + t('workoutReady', P.wkHallOn, P.wkOledOn);
@@ -820,14 +898,24 @@ export function initWorkout(env) {
   document.getElementById('wkExLid').addEventListener('click', () => {
     if (!geos[2]) return;
     const geo = geos[2].clone();
-    // 일반 뚜껑은 평평한 윗면을 베드로 뒤집는다. OLED 림이 있으면 화면 받침이 위로
+    // 일반 뚜껑은 평평한 윗면을 베드로 뒤집는다. OLED가 있으면 윗면 포켓이 위로
     // 향해야 하므로 모델 방향 그대로 내보내고 ESP32 케이지 쪽 브리지만 출력한다.
     if (!P.wkOledOn) geo.rotateX(Math.PI);
     geo.computeBoundingBox();
     geo.translate(0, 0, -geo.boundingBox.min.z);
     downloadSTL(geo, xiaoOn()
-      ? (P.wkOledOn ? 'workout_sensor_xiao_oled096_lid.stl' : 'workout_sensor_xiao_lid.stl')
-      : (P.wkOledOn ? 'workout_sensor_esp32_oled096_lid.stl' : 'workout_sensor_esp32_lid.stl'));
+      ? (P.wkOledOn ? `workout_sensor_xiao_oled${P.wkOledType}_lid.stl` : 'workout_sensor_xiao_lid.stl')
+      : (P.wkOledOn ? `workout_sensor_esp32_oled${P.wkOledType}_lid.stl` : 'workout_sensor_esp32_lid.stl'));
+  });
+
+  document.getElementById('wkExBezel').addEventListener('click', () => {
+    if (!bezelGeo) return;
+    // 보이는 윗면이 베드에 닿도록 뒤집는다.
+    const geo = bezelGeo.clone();
+    geo.rotateX(Math.PI);
+    geo.computeBoundingBox();
+    geo.translate(0, 0, -geo.boundingBox.min.z);
+    downloadSTL(geo, `workout_sensor_oled${P.wkOledType}_bezel.stl`);
   });
 
   return { rebuildWorkout, applyWorkoutExplode, drawWorkoutWires };
