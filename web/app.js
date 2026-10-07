@@ -67,7 +67,7 @@ const I18N = {
     wtEsp5v: 'ESP32 5V', wtEspGnd: 'ESP32 GND', wtEsp3v3: 'ESP32 3V3',
     wtTpPowerStage: 'Verified power input / regulator (not modeled)',
     wtGrpOled: 'OLED (I2C)', wtOledVcc: 'OLED VCC', wtOledGnd: 'OLED GND',
-    wtOledSda: 'OLED SDA', wtOledScl: 'OLED SCL', wtSckNote: 'module may label it SCK',
+    wtOledSda: 'OLED SDA', wtOledScl: 'OLED SCL', wtSckNote: 'module may label it SCK', wtPlugNote: 'plugged in, no wire', wtRibbonNote: '4-pin straight cable (GND·3V3·D10·D9)',
     wtGrpSwitch: 'Switch (MX)',
     wtSw1PinA: 'Switch 1 pin A', wtSw1PinB: 'Switch 1 pin B',
     wtSw2PinA: 'Switch 2 pin A', wtSw2PinB: 'Switch 2 pin B',
@@ -196,7 +196,7 @@ const I18N = {
     wtEsp5v: 'ESP32 5V', wtEspGnd: 'ESP32 GND', wtEsp3v3: 'ESP32 3V3',
     wtTpPowerStage: '확인된 전원 입력 / 승압 회로 (모델에 없음)',
     wtGrpOled: 'OLED (I2C)', wtOledVcc: 'OLED VCC', wtOledGnd: 'OLED GND',
-    wtOledSda: 'OLED SDA', wtOledScl: 'OLED SCL', wtSckNote: '모듈 표기는 SCK이기도',
+    wtOledSda: 'OLED SDA', wtOledScl: 'OLED SCL', wtSckNote: '모듈 표기는 SCK이기도', wtPlugNote: '핀 직결 (배선 없음)', wtRibbonNote: '4핀 일자 케이블 (GND·3V3·D10·D9)',
     wtGrpSwitch: '스위치 (MX)',
     wtSw1PinA: '스위치1 핀 A', wtSw1PinB: '스위치1 핀 B',
     wtSw2PinA: '스위치2 핀 A', wtSw2PinB: '스위치2 핀 B',
@@ -416,7 +416,7 @@ const STATIC_I18N = {
     lblWkEspCaseH: 'ESP section height',
     lblWkMpuPocket: 'MPU6050 pocket depth', lblWkMpuX: 'MPU6050 X (− = toward charger)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 peg diameter', lblWkMpuPegIn: 'MPU6050 peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
-    lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)',
+    lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" plugs into XIAO (no solder)', hintWkOledPlug: 'The 0.49" header order GND·VCC·SCL·SDA matches the XIAO row GND·3V3·D10·D9, so the OLED plugs straight in, lying face-up over the board. The lid presses it from above and only the display window shows. I2C becomes SDA=GPIO9, SCL=GPIO10 (wire the MPU6050 there too). Lower the ESP section height until the pins grip well.',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
     hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and a lid with an optional 0.96" or 0.49" OLED set flush into its flat top under a bezel that shows only the display. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl', btnWkExBezel: 'OLED bezel.stl',
@@ -424,6 +424,10 @@ const STATIC_I18N = {
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
     workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
+    wkPlugWall: d => `⚠ The plugged-in OLED hits the tray wall — make the short side Y at least ${d}mm`,
+    wkPlugLow: h => `⚠ The lid sits too low for the plugged-in OLED header — raise ESP section height to about ${h}mm`,
+    wkPlugGrip: (g, h) => `⚠ OLED pins only reach ${g}mm into the XIAO — lower ESP section height to about ${h}mm`,
+    wkPlugOk: (sp, g) => `✓ OLED plug-in: ${sp}mm from XIAO top to OLED back, pins grip ${g}mm (I2C SDA=GPIO9, SCL=GPIO10)`,
     wkXiaoHeightFit: '⚠ XIAO is too tall for the tray; increase tray clearance before printing',
     wkEspHeightFit: '⚠ SuperMini does not fit below the lid plate; increase ESP section height',
     wkHeaderFit: '⚠ The pin header body hits the lid plate; increase ESP section height',
@@ -571,7 +575,7 @@ const STATIC_I18N = {
     lblWkEspCaseH: 'ESP 수납부 높이',
     lblWkMpuPocket: 'MPU6050 자리 깊이', lblWkMpuX: 'MPU6050 X (− = 충전모듈 쪽)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 고정 핀 지름', lblWkMpuPegIn: 'MPU6050 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
-    lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)',
+    lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" XIAO 핀 직결 (납땜 없음)', hintWkOledPlug: '0.49" 헤더 순서 GND·VCC·SCL·SDA가 XIAO 핀 열 GND·3V3·D10·D9와 같아 OLED를 화면이 위로 오게 보드 위에 눕혀 그대로 꽂습니다. 뚜껑이 위에서 눌러 주고 화면 창만 보입니다. I2C는 SDA=GPIO9, SCL=GPIO10이 되며 MPU6050도 여기에 연결하세요. 핀이 충분히 물리도록 ESP 칸 높이를 낮추세요.',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
     hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" 또는 0.49" OLED가 평평한 윗면에 박히고 화면 창만 보이는 베젤로 덮는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl', btnWkExBezel: 'OLED 베젤.stl',
@@ -579,6 +583,10 @@ const STATIC_I18N = {
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
     workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini'} · MPU6050${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
+    wkPlugWall: d => `⚠ 직결 OLED가 트레이 벽에 닿습니다 — 짧은 변 Y를 최소 ${d}mm로 늘리세요`,
+    wkPlugLow: h => `⚠ 꽂은 OLED 헤더에 비해 뚜껑이 너무 낮습니다 — ESP 칸 높이를 약 ${h}mm로 올리세요`,
+    wkPlugGrip: (g, h) => `⚠ OLED 핀이 XIAO에 ${g}mm만 꽂힙니다 — ESP 칸 높이를 약 ${h}mm로 낮추세요`,
+    wkPlugOk: (sp, g) => `✓ OLED 직결: XIAO 윗면↔OLED 뒷면 ${sp}mm, 핀 물림 ${g}mm (I2C SDA=GPIO9, SCL=GPIO10)`,
     wkXiaoHeightFit: '⚠ XIAO 높이가 트레이 여유 공간을 초과합니다. 출력 전 공간을 늘리세요',
     wkEspHeightFit: '⚠ SuperMini가 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
     wkHeaderFit: '⚠ 핀헤더 플라스틱이 뚜껑 상판에 닿습니다. ESP 수납부 높이를 늘리세요',
@@ -870,7 +878,7 @@ const P = {
   wkChgX: -0.5,    // TP4056 포켓 X 오프셋 (음수 = USB 쪽으로, 칸막이도 같이 이동)
   wkUsbY: 0,       // USB 구멍 Y 오프셋
   wkUsbFit: 0.3,   // ESP32 USB-C 소켓 여유 (셸 폭 8.94에 더하는 값, 음수 = 조여서 물림)
-  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkOledType: '096', wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
+  wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkOledType: '096', wkOledPlug: false, wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
   wkHallGap: 1, wkHallT: 3.25,
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 13,
@@ -1040,6 +1048,8 @@ const applyWorkoutOptionsUI = () => {
     document.getElementById(id).disabled = P.wkEspType === 'xiao';
   for (const id of ['wkDivGrow', 'wkChgX', 'wkChgW', 'wkChgD', 'wkChgLedge', 'wkWireLen', 'wkWireW', 'wkWireX', 'wkWireY'])
     document.getElementById(id).disabled = P.wkEspType === 'xiao';
+  document.getElementById('wkOledPlug').disabled =
+    !(P.wkEspType === 'xiao' && P.wkOledOn && P.wkOledType === '049');
   for (const id of ['wkXiaoPocketX', 'wkXiaoPocketY', 'wkXiaoLedge', 'wkXiaoUsbGrip', 'wkXiaoRailH', 'wkXiaoRailLip', 'wkClipLip'])
     document.getElementById(id).disabled = P.wkEspType !== 'xiao';
 };
@@ -1078,6 +1088,7 @@ document.getElementById('wkOledOn').addEventListener('change', e => {
   P.wkOledOn = e.target.checked;
   document.getElementById('wkOledType').disabled = !P.wkOledOn;
   document.getElementById('wkExBezel').disabled = !P.wkOledOn;
+  applyWorkoutOptionsUI();
   queueRebuild();
 });
 document.getElementById('wkOledType').value = P.wkOledType;
@@ -1085,6 +1096,12 @@ document.getElementById('wkOledType').disabled = !P.wkOledOn;
 document.getElementById('wkExBezel').disabled = !P.wkOledOn;
 document.getElementById('wkOledType').addEventListener('change', e => {
   P.wkOledType = e.target.value;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+document.getElementById('wkOledPlug').checked = P.wkOledPlug;
+document.getElementById('wkOledPlug').addEventListener('change', e => {
+  P.wkOledPlug = e.target.checked;
   queueRebuild();
 });
 document.getElementById('wkEspPinsUp').checked = P.wkEspPinsUp;
@@ -1385,6 +1402,7 @@ function syncControls() {
   document.getElementById('wkOledOn').checked = P.wkOledOn;
   document.getElementById('wkOledType').value = P.wkOledType;
   document.getElementById('wkOledType').disabled = !P.wkOledOn;
+  document.getElementById('wkOledPlug').checked = P.wkOledPlug;
   document.getElementById('wkEspPinsUp').checked = P.wkEspPinsUp;
   document.getElementById('wkSwOn').checked = P.wkSwOn && P.wkEspType !== 'xiao';
   applyWorkoutOptionsUI();
@@ -3365,17 +3383,22 @@ function renderWireTable() {
       row(WIRE_COLORS.minus, t('wtHallGnd'), t('wtEspGnd'));
       row(WIRE_COLORS.gpio, t('wtHallSignal'), 'GPIO ' + P.wkHallGpio, t('wtHallNote'));
     }
+    // XIAO는 OLED 헤더 순서와 같은 GND·3V3·D10·D9 열을 쓰도록 I2C를 D9=SDA, D10=SCL로 고정.
+    const xiao = P.wkEspType === 'xiao';
+    const plug = xiao && P.wkOledOn && P.wkOledType === '049' && P.wkOledPlug;
+    const sda = xiao ? 9 : P.sdaGpio, scl = xiao ? 10 : P.sclGpio;
     grp(t('wtGrpWorkoutMpu'));
     row(WIRE_COLORS.plus, t('wtMpuVcc'), t('wtEsp3v3'));
     row(WIRE_COLORS.minus, t('wtMpuGnd'), t('wtEspGnd'));
-    row(WIRE_COLORS.sda, t('wtMpuSda'), 'GPIO ' + P.sdaGpio);
-    row(WIRE_COLORS.scl, t('wtMpuScl'), 'GPIO ' + P.sclGpio);
+    row(WIRE_COLORS.sda, t('wtMpuSda'), 'GPIO ' + sda);
+    row(WIRE_COLORS.scl, t('wtMpuScl'), 'GPIO ' + scl);
     if (P.wkOledOn) {
       grp(t('wtGrpOled'));
-      row(WIRE_COLORS.plus, t('wtOledVcc'), t('wtEsp3v3'));
-      row(WIRE_COLORS.minus, t('wtOledGnd'), t('wtEspGnd'));
-      row(WIRE_COLORS.sda, t('wtOledSda'), 'GPIO ' + P.sdaGpio);
-      row(WIRE_COLORS.scl, t('wtOledScl'), 'GPIO ' + P.sclGpio, t('wtSckNote'));
+      const pn = plug ? t('wtPlugNote') : xiao ? t('wtRibbonNote') : undefined;
+      row(WIRE_COLORS.plus, t('wtOledVcc'), t('wtEsp3v3'), pn);
+      row(WIRE_COLORS.minus, t('wtOledGnd'), t('wtEspGnd'), pn);
+      row(WIRE_COLORS.sda, t('wtOledSda'), 'GPIO ' + sda, pn);
+      row(WIRE_COLORS.scl, t('wtOledScl'), 'GPIO ' + scl, pn || t('wtSckNote'));
     }
     wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
     return;
@@ -3751,6 +3774,8 @@ document.getElementById('xrayBtn').addEventListener('click', () => {
   xray = !xray;
   syncToggleLabels();
   floorMeshes.forEach(m => { if (m) m.material = xray ? matCaseX : matCase; });
+  // 출력 파트가 아닌 케이스 부속(예: 운동 센서 OLED 베젤 미리보기)도 같이 바꾼다.
+  G.forEach(g => g.traverse(o => { if (o.userData.caseLike) o.material = xray ? matCaseX : matCase; }));
 });
 document.getElementById('rulerBtn').addEventListener('click', () => {
   rulersOn = !rulersOn;

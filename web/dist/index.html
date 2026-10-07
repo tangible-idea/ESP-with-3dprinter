@@ -126,7 +126,7 @@
   body.prod-plant [data-product="plant"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-D65zQgZH.js"></script>
+  <script type="module" crossorigin src="/assets/index-kyhniKfi.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -388,6 +388,8 @@
       <div class="hint" data-i18n="hintWkTrayFloor">Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.</div>
       <div class="row"><label data-i18n="lblWkOledOn">Use OLED</label><input type="checkbox" id="wkOledOn" checked></div>
       <div class="row"><label data-i18n="lblWkOledType">OLED size</label><select id="wkOledType"><option value="096" data-i18n="optWkOled096">0.96" (25×27)</option><option value="049" data-i18n="optWkOled049">0.49" (15×16)</option></select></div>
+      <div class="row"><label data-i18n="lblWkOledPlug">0.49" plugs into XIAO (no solder)</label><input type="checkbox" id="wkOledPlug"></div>
+      <div class="hint" data-i18n="hintWkOledPlug">The 0.49" header order GND·VCC·SCL·SDA matches the XIAO row GND·3V3·D10·D9, so the OLED plugs straight in.</div>
       <div class="row"><label data-i18n="lblWkEspPinsUp">SuperMini pins up through lid</label><input type="checkbox" id="wkEspPinsUp" checked></div>
       <div class="row"><label data-i18n="lblWkPinHoleD">Pin hole size</label><input type="range" id="wkPinHoleD" min="0.7" max="2" step="0.05" value="1.2"><span class="val" id="wkPinHoleDv"></span></div>
       <div class="row"><label data-i18n="lblWkOledLift">OLED lift above pins</label><input type="range" id="wkOledLift" min="0" max="8" step="0.1" value="3"><span class="val" id="wkOledLiftv"></span></div>
