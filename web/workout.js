@@ -81,6 +81,7 @@ export function initWorkout(env) {
   // ESP32-C3 SuperMini USB-C 셸: 폭 8.94 × 두께 3.26, 보드 끝에서 1.5 돌출.
   const USB_C = { w: 8.94, d: 3.26, over: 1.5 };
   const USB_SOCK_WALL = 1.2;
+  const XIAO_USB_OVER = 1.0;   // XIAO USB-C 셸이 PCB 끝 밖으로 나온 길이(보수적으로)
   const SW = { w: 8.4, d: 3.6, body: 4.0 };   // SPDT 슬라이드 스위치 (창 8.4 × 3.6)
   const ESP_PCB = 1.0;   // PCB 두께
   // SuperMini는 부품면(USB 셸)이 뚜껑 상판 쪽을 향하게 끼워 상판에 0.2 띄워 닿는다.
@@ -360,6 +361,55 @@ export function initWorkout(env) {
       const holeW = Math.max(4, board.w + CLR - 2 * P.wkXiaoLedge);
       tray = sub(tray, boxBrush(holeW, board.d + CLR, TRAY_FLOOR + 0.4,
                                 q.chargerX, q.boardY, -0.2, 0.6));
+
+      // USB 안쪽 소켓: 벽 안쪽면부터 보드 -X 끝 너머까지 칼라를 세워 USB-C 셸의
+      // 양옆과 위를 물고, 셸 밑(돌출부)은 받쳐 준다. 셸 옆 버튼(B/R)에 닿지 않도록
+      // PCB 위로는 wkXiaoUsbGrip 만큼만 들어가고, PCB 높이 아래는 돌출부까지만 채운다.
+      const boardX0 = q.chargerX - board.w / 2;
+      const wallIn = -q.W / 2 + q.wall;
+      const grip = Math.max(0, Number(P.wkXiaoUsbGrip) || 0);
+      const cavW = USB_C.w + P.wkUsbFit;
+      const shellZ0 = SEAT_Z + XIAO.usbZ - USB_C.d / 2 - 0.1;
+      const shellZ1 = shellZ0 + USB_C.d + 0.25;
+      const collarTop = Math.min(shellZ1 + 1.0, q.trayTop - JOINT_H - 0.3);
+      if (grip > 0.05 && collarTop > shellZ1 + 0.4) {
+        const sockW = cavW + 2 * USB_SOCK_WALL;
+        const lowX1 = boardX0 + Math.min(grip, XIAO_USB_OVER);
+        tray = add(tray, boxBrush(lowX1 - wallIn + 0.2, sockW, collarTop - SEAT_Z,
+                                  (wallIn - 0.2 + lowX1) / 2, q.boardY, SEAT_Z, 0.3));
+        const upX1 = boardX0 + grip, upZ0 = SEAT_Z + XIAO.pcb + 0.1;
+        if (upX1 > lowX1 + 0.05)
+          tray = add(tray, boxBrush(upX1 - wallIn + 0.2, sockW, collarTop - upZ0,
+                                    (wallIn - 0.2 + upX1) / 2, q.boardY, upZ0, 0.3));
+        tray = sub(tray, boxBrush(upX1 - wallIn + 1.2, cavW, shellZ1 - shellZ0,
+                                  (wallIn - 0.6 + upX1 + 0.6) / 2, q.boardY, shellZ0, 0.3));
+      }
+
+      // 옆 레일: 포켓 긴 변(±Y)을 따라 보드 옆면을 PCB 윗면 위까지 감싼다. 레일 윗끝에
+      // 안쪽으로 걸림 꼬다리(wkXiaoRailLip)를 내밀면 보드 가장자리를 눌러 잡는다.
+      // USB 옆 B/R 버튼을 누르지 않도록 USB 끝에서 4mm 뒤부터 시작한다.
+      const railUp = Math.max(0, Number(P.wkXiaoRailH) || 0);
+      const railLip = Math.max(0, Number(P.wkXiaoRailLip) || 0);
+      const railX0 = boardX0 + 4.0;
+      const railX1 = q.chargerX + (board.w + CLR) / 2;
+      const railT = 1.2, railNose = 0.3, railZ0 = SEAT_Z + XIAO.pcb + 0.1;
+      if (railUp > 0.05 && railX1 - railX0 > 2) {
+        const railTop = Math.max(SEAT_Z + XIAO.pcb + railUp,
+                                 railLip > 0.05 ? railZ0 + railNose + railLip : 0);
+        const railLen = railX1 - railX0, railCx = (railX0 + railX1) / 2;
+        for (const sy of [-1, 1]) {
+          const edgeY = q.boardY + sy * (board.d + CLR) / 2;
+          tray = add(tray, boxBrush(railLen, railT, railTop - TRAY_FLOOR_TOP + 0.1,
+                                    railCx, edgeY + sy * railT / 2,
+                                    TRAY_FLOOR_TOP - 0.1, 0.3));
+          if (railLip > 0.05) {
+            const g = clipGeo(railLip, railNose, railLen, 0, 0, railZ0);
+            g.rotateZ(sy > 0 ? Math.PI / 2 : -Math.PI / 2);
+            g.translate(railCx, edgeY, 0);
+            tray = add(tray, meshBrush(g));
+          }
+        }
+      }
     } else {
       // 구멍이 커져 더 못 움직일 만큼 자리가 좁아지면 그냥 가운데로 붙인다.
       const slotW = P.wkWireLen, slotD = P.wkWireW;
