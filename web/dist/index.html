@@ -126,7 +126,7 @@
   body.prod-plant [data-product="plant"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-kyhniKfi.js"></script>
+  <script type="module" crossorigin src="/assets/index-hbiAHckL.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -371,7 +371,7 @@
   <details open data-product="workout">
     <summary data-i18n="secWorkoutComp">Electronics layout</summary>
     <div class="body">
-      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option></select></div>
+      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="tft" data-i18n="optWkEspTft">ESP32-S3 1.14" TFT (50.8×22.9)</option></select></div>
       <div class="row"><label data-i18n="lblWkModType">Charge module</label><select id="wkModType"><option value="tp4056" data-i18n="optModTp4056">TP4056 USB-C (27×17.3×4.0)</option><option value="generic" data-i18n="optModGeneric">Existing module (19×14×4.5)</option></select></div>
       <div class="row"><label data-i18n="lblWkChgW">Charger long side X</label><input type="range" id="wkChgW" min="15" max="30" step="0.1" value="27"><span class="val" id="wkChgWv"></span></div>
       <div class="row"><label data-i18n="lblWkChgD">Charger short side Y</label><input type="range" id="wkChgD" min="10" max="20" step="0.1" value="17.3"><span class="val" id="wkChgDv"></span></div>
@@ -382,6 +382,13 @@
       <div class="row"><label data-i18n="lblWkXiaoUsbGrip">XIAO USB inner socket depth</label><input type="range" id="wkXiaoUsbGrip" min="0" max="3" step="0.1" value="1.0"><span class="val" id="wkXiaoUsbGripv"></span></div>
       <div class="row"><label data-i18n="lblWkXiaoRailH">XIAO side rail height</label><input type="range" id="wkXiaoRailH" min="0" max="3" step="0.1" value="0.8"><span class="val" id="wkXiaoRailHv"></span></div>
       <div class="row"><label data-i18n="lblWkXiaoRailLip">XIAO side rail hook</label><input type="range" id="wkXiaoRailLip" min="0" max="0.8" step="0.05" value="0.2"><span class="val" id="wkXiaoRailLipv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftCompH">TFT connector height (above PCB)</label><input type="range" id="wkTftCompH" min="3.3" max="6" step="0.1" value="3.6"><span class="val" id="wkTftCompHv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftEndGap">TFT USB end ↔ wall (PH2.0 plug room)</label><input type="range" id="wkTftEndGap" min="0" max="6" step="0.1" value="3"><span class="val" id="wkTftEndGapv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftLcdX">TFT LCD center X (from board center)</label><input type="range" id="wkTftLcdX" min="0" max="10" step="0.1" value="6.4"><span class="val" id="wkTftLcdXv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftWinW">TFT window long side</label><input type="range" id="wkTftWinW" min="15" max="30" step="0.1" value="24"><span class="val" id="wkTftWinWv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftWinD">TFT window short side</label><input type="range" id="wkTftWinD" min="8" max="17" step="0.1" value="13.6"><span class="val" id="wkTftWinDv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftWinX">TFT window X (from LCD center)</label><input type="range" id="wkTftWinX" min="-4" max="4" step="0.1" value="-1"><span class="val" id="wkTftWinXv"></span></div>
+      <div class="hint" data-i18n="hintWkTft">ESP32-S3 1.14" TFT lies screen-up in the tray.</div>
       <div class="row"><label data-i18n="lblWkEspCaseH">ESP section height</label><input type="range" id="wkEspCaseH" min="2.4" max="12" step="0.2" value="5.2"><span class="val" id="wkEspCaseHv"></span></div>
       <div class="hint" data-i18n="hintWkEspCaseH">Adjusts the case height around the selected ESP board and the overall model height.</div>
       <div class="row"><label data-i18n="lblWkTrayFloor">Tray floor thickness</label><input type="range" id="wkTrayFloor" min="0.4" max="4.4" step="0.1" value="3.4"><span class="val" id="wkTrayFloorv"></span></div>
