@@ -409,8 +409,17 @@ const STATIC_I18N = {
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutComp: 'Electronics layout',
     lblWkEspType: 'ESP32 board',
+    optWkEspX114: 'Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)',
+    lblWkX114CompD: 'XIAO 1.14" floor ↔ PCB (parts side down)', lblWkX114BtnH: 'XIAO 1.14" front button height', lblWkX114BtnD: 'XIAO 1.14" button cap diameter',
+    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, holes for front buttons A/B sized by the cap diameter (print the button caps), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has openings for side button C and the switch next to it. Front button height is estimated from the reference caps — adjust after a test print.',
+    wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
+    wkX114CompFit: d => `⚠ Parts under the board (PH2.0 5.6mm deep) hit the tray floor — raise floor↔PCB to ${d}mm or more`,
+    btnWkExCaps: 'Front button caps.stl',
+    wtGrpPowerX114: 'Power (battery → XIAO 1.14" PH2.0, onboard charging)',
+    wtX114HallNote: 'Grove SDA (D4) is shared with the IMU I2C — pick a free analog pin before wiring',
+    wtX114Btns: 'Buttons', wtX114BtnNote: 'A·B front caps, C on the side',
     optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
-    lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'TFT USB end ↔ wall gap',
+    lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'Display board USB end ↔ wall gap',
     lblWkTftLcdX: 'TFT LCD center X (from board center)', lblWkTftWinW: 'TFT window long side',
     lblWkTftWinD: 'TFT window short side', lblWkTftWinX: 'TFT window X (from LCD center)',
     hintWkTft: 'ESP32-S3 1.14" TFT (50.8×22.9, PCB 1.3, 3.0 with LCD, LCD 30.9×17.6) lies screen-up in the tray with USB-C toward the −X wall. Its onboard QMI8658C IMU and charger replace the MPU6050 and charge module, so those pockets and the power switch go away. The USB end sits against the −X wall so USB-C plugs in fully (a USB-C plug only reaches about 1.8mm into the jack per 3mm of gap). Plug the battery into the PH2.0 connector. The pocket floor is open between the X-end ledges for back-side parts and battery wires. The lid ceiling clears the tallest connector without touching the LCD, and the display window has a 45° chamfer. Connector height and window position are estimated from photos — measure and adjust.',
@@ -433,7 +442,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl', btnWkExBezel: 'OLED bezel.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the OLED pocket faces up; use bridge-friendly settings for the ESP32-cage ceiling and the hollowed top skin. Print the OLED bezel separately (exported face-down), drop the OLED in, then press the bezel into its recess (a dot of glue if loose). Only the display window stays visible.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkPlugWall: d => `⚠ The plugged-in OLED hits the tray wall — make the short side Y at least ${d}mm`,
     wkPlugLow: h => `⚠ The lid sits too low for the plugged-in OLED header — raise ESP section height to about ${h}mm`,
@@ -579,8 +588,17 @@ const STATIC_I18N = {
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutComp: '전자부품 배치',
     lblWkEspType: 'ESP32 보드',
+    optWkEspX114: 'Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)',
+    lblWkX114CompD: 'XIAO 1.14" 바닥↔PCB (부품면 아래)', lblWkX114BtnH: 'XIAO 1.14" 앞 버튼 높이', lblWkX114BtnD: 'XIAO 1.14" 버튼 캡 지름',
+    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B용 구멍(캡 지름 + 0.3, 버튼 캡 별도 출력), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C와 그 옆 스위치 창이 뚫립니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
+    wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
+    wkX114CompFit: d => `⚠ 보드 밑 부품(PH2.0 깊이 5.6)이 트레이 바닥에 닿습니다 — 바닥↔PCB를 ${d}mm 이상으로 올리세요`,
+    btnWkExCaps: '앞 버튼 캡.stl',
+    wtGrpPowerX114: '전원 (배터리 → XIAO 1.14" PH2.0, 보드 자체 충전)',
+    wtX114HallNote: 'Grove SDA(D4)는 IMU I2C와 공유 — 배선 전 빈 아날로그 핀을 정하세요',
+    wtX114Btns: '버튼', wtX114BtnNote: 'A·B 앞면 캡, C 옆면',
     optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
-    lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: 'TFT USB 끝↔벽 간격',
+    lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: '디스플레이 보드 USB 끝↔벽 간격',
     lblWkTftLcdX: 'TFT LCD 중심 X (보드 중심 기준)', lblWkTftWinW: 'TFT 화면 창 긴 변',
     lblWkTftWinD: 'TFT 화면 창 짧은 변', lblWkTftWinX: 'TFT 화면 창 X (LCD 중심 기준)',
     hintWkTft: 'ESP32-S3 1.14" TFT(50.8×22.9, PCB 1.3, LCD 포함 3.0, LCD 30.9×17.6)를 화면이 위로, USB-C가 −X 벽을 향하게 트레이에 눕힙니다. 보드의 QMI8658C IMU와 충전 회로가 MPU6050·충전모듈을 대신하므로 그 포켓과 전원 스위치는 빠집니다. USB 끝은 −X 벽에 붙여 USB-C 플러그가 끝까지 들어가게 합니다(벽에서 띄우면 플러그가 덜 꽂힙니다). 배터리는 PH2.0 커넥터에 꽂습니다. 포켓 바닥은 X 양 끝 받침턱 사이가 뚫려 있어 뒷면 부품과 배터리 배선이 지나갑니다. 뚜껑 천장은 가장 높은 커넥터를 피하고 LCD에는 닿지 않으며, 화면 창은 45° 모따기입니다. 커넥터 높이와 창 위치는 사진 기준 추정값이니 실측해서 맞추세요.',
@@ -603,7 +621,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl', btnWkExBezel: 'OLED 베젤.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 윗면 OLED 포켓이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장과 속을 비운 윗면 스킨에 브리지 설정을 사용하세요. OLED 베젤은 따로 출력(보이는 면이 베드)하고, OLED를 넣은 뒤 베젤을 홈에 눌러 끼우세요(헐거우면 접착제 한 방울). 화면 창만 보이고 나머지는 가려집니다.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkPlugWall: d => `⚠ 직결 OLED가 트레이 벽에 닿습니다 — 짧은 변 Y를 최소 ${d}mm로 늘리세요`,
     wkPlugLow: h => `⚠ 꽂은 OLED 헤더에 비해 뚜껑이 너무 낮습니다 — ESP 칸 높이를 약 ${h}mm로 올리세요`,
@@ -730,6 +748,7 @@ const ESP_TYPES = {
   c3mini: { l: 24, w: 18, h: 4.2, usbZ: 2.6 },     // usbZ = USB 셸 z중심 (실측 1.0~4.2)
   xiao:   { l: 22.7, w: 18, h: 4.6, usbZ: 3.0, pcbRise: 0.4 },
   tft:    { l: 50.8, w: 22.9, h: 3.0, usbZ: 1.3 + 3.26 / 2 },   // ESP32-S3 1.14" TFT (운동 센서 전용)
+  x114:   { l: 46.7, w: 25, h: 5.2, usbZ: 4.34 },                 // Seeed XIAO 1.14" IPS (운동 센서 전용)
 };
 const ESP = { ...ESP_TYPES.c3mini };
 // 기존 STL은 칩/제품명이 없는 19×14 범용 모듈. TP4056은 운동 센서 설계의 USB-C 실측값.
@@ -907,6 +926,7 @@ const P = {
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
+  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5,   // XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1024,7 +1044,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX',
+                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1076,7 +1096,8 @@ for (const el of document.querySelectorAll('input[type=range]')) {
   el.parentNode.insertBefore(mk('+', +1), val && val.classList.contains('val') ? val : el.nextSibling);
 }
 const applyWorkoutOptionsUI = () => {
-  const xiao = P.wkEspType === 'xiao', tft = P.wkEspType === 'tft', mini = !xiao && !tft;
+  const xiao = P.wkEspType === 'xiao', x114 = P.wkEspType === 'x114';
+  const tftOnly = P.wkEspType === 'tft', tft = tftOnly || x114, mini = !xiao && !tft;
   for (const id of ['wkHallGap', 'wkHallT'])
     document.getElementById(id).disabled = !P.wkHallOn;
   document.getElementById('wkSwOn').checked = P.wkSwOn && mini;
@@ -1095,8 +1116,10 @@ const applyWorkoutOptionsUI = () => {
                     'wkSolderW', 'wkDivH', 'wkDivBar', 'wkEspCaseH', 'wkOledOn'])
     document.getElementById(id).disabled = tft;
   document.getElementById('wkOledType').disabled = tft || !P.wkOledOn;
-  for (const id of ['wkTftCompH', 'wkTftEndGap', 'wkTftLcdX', 'wkTftWinW', 'wkTftWinD', 'wkTftWinX'])
-    document.getElementById(id).disabled = !tft;
+  for (const id of ['wkTftCompH', 'wkTftLcdX', 'wkTftWinW', 'wkTftWinD', 'wkTftWinX'])
+    document.getElementById(id).disabled = !tftOnly;
+  document.getElementById('wkTftEndGap').disabled = !tft;
+  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD']) document.getElementById(id).disabled = !x114;
 };
 document.getElementById('wkEspType').value = P.wkEspType;
 document.getElementById('wkModType').value = P.wkModType;
@@ -1113,14 +1136,19 @@ document.getElementById('wkModType').addEventListener('change', e => {
 document.getElementById('wkEspType').addEventListener('change', e => {
   P.wkEspType = e.target.value;
   fixWkHallGpio();
-  // TFT 보드(50.8)는 기본 케이스 폭에 안 들어가므로 필요한 만큼 넓혀 준다.
-  if (P.wkEspType === 'tft') {
-    const need = Math.ceil((2 * P.wkWall + P.wkTftEndGap + 50.8 + 0.4) * 2) / 2;
-    if (P.wkWidth < need) {
-      P.wkWidth = Math.min(60, need);
-      document.getElementById('wkWidth').value = P.wkWidth;
-      document.getElementById('wkWidthv').textContent = P.wkWidth.toFixed(1);
-    }
+  // 디스플레이 보드는 기본 케이스에 안 들어갈 수 있으므로 필요한 만큼 넓혀 준다.
+  // XIAO 1.14"는 PH2.0 플러그 배선이 긴 변으로 나오므로 Y에 3mm 여유를 더 둔다.
+  const grow = (k, need, max) => {
+    need = Math.min(max, Math.ceil(need * 2) / 2);
+    if (P[k] >= need) return;
+    P[k] = need;
+    document.getElementById(k).value = need;
+    document.getElementById(k + 'v').textContent = need.toFixed(1);
+  };
+  if (P.wkEspType === 'tft') grow('wkWidth', 2 * P.wkWall + P.wkTftEndGap + 50.8 + 0.4, 60);
+  if (P.wkEspType === 'x114') {
+    grow('wkWidth', 2 * P.wkWall + P.wkTftEndGap + 46.7 + 0.4, 60);
+    grow('wkLength', 2 * P.wkWall + 25 + 0.4 + 3, 45);
   }
   applyWorkoutOptionsUI();
   queueRebuild();
@@ -1145,7 +1173,7 @@ document.getElementById('wkOledOn').addEventListener('change', e => {
   queueRebuild();
 });
 document.getElementById('wkOledType').value = P.wkOledType;
-document.getElementById('wkOledType').disabled = !P.wkOledOn || P.wkEspType === 'tft';
+document.getElementById('wkOledType').disabled = !P.wkOledOn || P.wkEspType === 'tft' || P.wkEspType === 'x114';
 document.getElementById('wkExBezel').disabled = !P.wkOledOn;
 document.getElementById('wkOledType').addEventListener('change', e => {
   P.wkOledType = e.target.value;
@@ -3381,10 +3409,14 @@ const ESP_PINS_TFT = (() => {
     .forEach((n, i) => { m[n] = [px(i + 4), y]; });
   return m;
 })();
+// Seeed XIAO 1.14" IPS: XIAO 핀은 디스플레이 보드에 덮여 있어, 밖으로 나온 Grove(I2C)
+// 커넥터 4핀만 배선 대상으로 둔다. 보드 중심 기준(USB −x). D4=SDA, D5=SCL (IMU와 공유).
+const ESP_PINS_X114 = { 5: [17.8, -3], 4: [17.8, -1], '3V3': [17.8, 1], GND: [17.8, 3], '5V': [17.8, 1] };
 const fixWkHallGpio = () => {
   if (P.wkEspType === 'xiao' && !ESP_PINS_XIAO[P.wkHallGpio]) P.wkHallGpio = 2;
   // ADC1(GPIO1~10) 중 TFT·I2C와 겹치지 않는 D10을 기본으로 쓴다.
   if (P.wkEspType === 'tft' && !ESP_PINS_TFT[P.wkHallGpio]) P.wkHallGpio = 10;
+  if (P.wkEspType === 'x114' && !ESP_PINS_X114[P.wkHallGpio]) P.wkHallGpio = 4;
 };
 fixWkHallGpio();
 let ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
@@ -3399,7 +3431,8 @@ function applyEspType(type) {
   Object.assign(ESP, ESP_TYPES[key]);
   USB_C_OFF = ESP.l / 2 - LIFT_USB_SHELL_LEN / 2;
   if (ASSETS.espVariants && ASSETS.espVariants[key]) ASSETS.esp = ASSETS.espVariants[key];
-  const pins = key === 'xiao' ? ESP_PINS_XIAO : key === 'tft' ? ESP_PINS_TFT : ESP_PINS_C3MINI;
+  const pins = key === 'xiao' ? ESP_PINS_XIAO : key === 'tft' ? ESP_PINS_TFT
+    : key === 'x114' ? ESP_PINS_X114 : ESP_PINS_C3MINI;
   for (const k of Object.keys(ESP_PINS)) delete ESP_PINS[k];
   Object.assign(ESP_PINS, pins);
   ALL_GPIOS = Object.keys(pins).filter(k => /^\d+$/.test(k)).map(Number).sort((a, b) => a - b);
@@ -3428,6 +3461,25 @@ function renderWireTable() {
   const row = (color, from, to, note = '') => rows.push(
     `<tr><td><span class="sw" style="background:${hex(color)}"></span></td>` +
     `<td>${from}</td><td>${to}</td><td>${note}</td></tr>`);
+  if (P.product === 'workout' && P.wkEspType === 'x114') {
+    grp(t('wtGrpPowerX114'));
+    row(WIRE_COLORS.plus, t('wtBatPlus'), 'PH2.0 +', t('wtTftJstNote'));
+    row(WIRE_COLORS.minus, t('wtBatMinus'), 'PH2.0 −', t('wtTftJstNote'));
+    row(WIRE_COLORS.plus, t('wtUsbC'), t('wtEspDirect'), t('wtXiaoChgNote'));
+    if (P.wkHallOn) {
+      grp(t('wtGrpWorkoutHall'));
+      row(WIRE_COLORS.plus, t('wtHallVcc'), 'Grove 3V3');
+      row(WIRE_COLORS.minus, t('wtHallGnd'), 'Grove GND');
+      row(WIRE_COLORS.gpio, t('wtHallSignal'), 'D' + P.wkHallGpio, t('wtX114HallNote'));
+    }
+    grp(t('wtGrpTftOnboard'));
+    row(WIRE_COLORS.sda, 'IMU (LSM6DS3)', 'SDA D4 / SCL D5', t('wtTftImuNote'));
+    row(WIRE_COLORS.gpio, '1.14" IPS', 'CS D2 · DC D3 · SCK D8 · MOSI D10', t('wtTftLcdNote'));
+    row(WIRE_COLORS.gpio, t('wtX114Btns'), 'A D6 · B D7 · C D19', t('wtX114BtnNote'));
+    row(WIRE_COLORS.gpio, 'PDM mic', 'CLK D0 · DATA D1');
+    wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
+    return;
+  }
   if (P.product === 'workout' && P.wkEspType === 'tft') {
     grp(t('wtGrpPowerTft'));
     row(WIRE_COLORS.plus, t('wtBatPlus'), 'PH2.0 +', t('wtTftJstNote'));
@@ -4344,7 +4396,7 @@ productSel.addEventListener('change', e => {
 }));
 // 운동 모션 센서 연결: 본체/뚜껑 2피스와 제품 전용 분해 위치를 주입한다.
 ({ rebuildWorkout, applyWorkoutExplode, drawWorkoutWires } = initWorkout({
-  THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT,
+  THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
   matCase, matCaseX, boxBrush, add, sub,
   meshBrush, ASSETS,
   manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,

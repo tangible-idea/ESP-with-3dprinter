@@ -4,7 +4,7 @@
 
 export function initWorkout(env) {
   const {
-    THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT,
+    THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
     matCase, matCaseX, boxBrush, add, sub,
     meshBrush, ASSETS,
     manToGeo, downloadSTL, status, getView, clearFloors, setFloorMeshes,
@@ -43,8 +43,36 @@ export function initWorkout(env) {
                 usbY: 0, jstX: 3.4, jstY: 7.6 };
   const TFT_LEDGE = 1.5;   // 바닥을 뚫고 남기는 X 양 끝 받침턱 (뒷면 부품은 이 사이에)
   const tftOn = () => P.wkEspType === 'tft';
-  const miniOn = () => !xiaoOn() && !tftOn();   // SuperMini + 충전모듈 + MPU6050 구성
-  const oledOn = () => P.wkOledOn && !tftOn();
+  // Seeed XIAO 1.14" IPS Display (nRF52840 / ESP32-S3, 같은 PCB): 공식 STEP과 참고 인클로저
+  // (hardwares/enclosure-for-xiao-114-…)에서 잰 값. 보드 25 × 46.7 × 1.51. 한쪽 면에 LCD
+  // (17.6 × 31, 두께 3.69), 반대 면에 XIAO·USB-C·PH2.0·Grove·옆 버튼이 최대 5.6 깊이로 붙는다.
+  // 케이스에서는 LCD가 위, 부품면이 아래, USB-C 끝이 -X 벽. 좌표는 보드 중심 기준
+  // (u = 케이스 X, v = 케이스 Y, w = LCD 쪽 PCB 면에서 위로). STEP(xs, ys, zs)에서
+  // u = 23.35 − ys, v = −xs, w = −zs 로 옮겼다.
+  const X114 = {
+    l: 46.7, w: 25, pcb: 1.51, lcdH: 3.69, compD: 5.59,
+    lcd: { u: -7.2, l: 31, w: 17.6 },
+    win: { u: -8.55, l: 24.4, w: 14.7 },          // 참고 인클로저 화면 창 (VA 24.9 × 14.9)
+    usb: { v: 0, w: -4.34, over: 1.39 },           // XIAO 위 USB-C 셸 중심 (PCB 끝 밖 1.39)
+    btns: [[14.35, 6.95], [14.35, -6.95]],         // 앞면 버튼 A·B (참고 구멍 Ø7.7)
+    mic: [14.9, 0], micD: 2.3,   // 버튼 구멍은 wkX114BtnD(캡 기둥) + 0.3 (참고 인클로저는 Ø7.7)
+    // 옆면 부품 (+v 긴 변): 버튼 C(TS-1084)와 그 옆 스위치. [u0, u1, w0, w1]
+    side: [[12.82, 17.28, -4.92, -1.15], [3.99, 10.69, -3.09, -1.15]],
+    ph: { u: 7.45, v: -5.5 },                      // PH2.0 (플러그는 -v 긴 변으로 나옴)
+    grove: { u: 17.8, l: 10.5, w: 12, d: 5.28 },
+    xiao: { u0: -23.21, u1: -2.07, w: 17.78 },
+    // 부품면 밑 받침 리브가 설 수 있는 빈 구간 (긴 변 양쪽)
+    ribs: [[-22.45, 2.35], [17.85, 22.85]],
+  };
+  const x114On = () => P.wkEspType === 'x114';
+  // 앞 버튼 캡 기둥 지름(wkX114BtnD). 구멍은 0.3 크게, 걸림 턱은 1.7 크게(참고 캡 7.4 → 9.1 비율).
+  const x114Btn = () => {
+    const stem = Math.max(2.5, Math.min(7.4, Number(P.wkX114BtnD) || 4.5));
+    return { stem, hole: stem + 0.3, flange: stem + 1.7 };
+  };
+  const dispOn = () => tftOn() || x114On();      // 디스플레이 일체형 보드 (MPU·충전모듈·OLED 없음)
+  const miniOn = () => !xiaoOn() && !dispOn();   // SuperMini + 충전모듈 + MPU6050 구성
+  const oledOn = () => P.wkOledOn && !dispOn();
   // 포켓 절삭에서 CLR을 더하므로, 슬라이더의 완성 치수에서 미리 뺀다.
   const trayBoard = () => xiaoOn()
     ? { ...XIAO, w: P.wkXiaoPocketX - CLR, d: P.wkXiaoPocketY - CLR }
@@ -155,7 +183,7 @@ export function initWorkout(env) {
   const oledLift = () => (oledOn() && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
-  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null;
+  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
   const mpuMat = partMat(0x3c9b70);
   const hallMat = partMat(0x8f5aa8);
@@ -202,7 +230,7 @@ export function initWorkout(env) {
     // SuperMini는 케이지와 외벽을 같이 높인다. XIAO는 트레이 외벽을 높이고 뚜껑의
     // 결합부 깊이는 고정해 보드 위 공간을 확보한다. 기본값 4.6은 기존 형상과 동일.
     let trayTop = TRAY_TOP_DEFAULT + espCaseH - LID_CAGE_DEFAULT;
-    const lidCageH = xiaoOn() || tftOn() ? LID_CAGE_DEFAULT : espCaseH;
+    const lidCageH = xiaoOn() || dispOn() ? LID_CAGE_DEFAULT : espCaseH;
     const innerW = W - 2 * wall;
     const innerHalfD = D / 2 - wall;
     const board = trayBoard();
@@ -275,8 +303,22 @@ export function initWorkout(env) {
               pcbTop: SEAT_Z + TFT.pcb, lcdTop: SEAT_Z + TFT.h };
       trayTop = SEAT_Z + Math.max(TFT.h, TFT.pcb + compH) + 0.3;
     }
+    // XIAO 1.14": 부품면이 아래라 트레이 바닥 위 wkX114CompD 높이의 리브에 PCB를 얹는다.
+    // LCD 윗면 위 0.2가 뚜껑 밑면 → LCD는 눌리지 않는다.
+    let x114 = null;
+    if (x114On()) {
+      const L = X114.l + CLR, Wd = X114.w + CLR;
+      const x0 = -W / 2 + wall + Math.max(0, Number(P.wkTftEndGap) || 0);
+      const yLim = Math.max(0, innerHalfD - Wd / 2);
+      const y = Math.max(-yLim, Math.min(yLim, Number(P.wkUsbY) || 0));
+      const compD = Math.max(1, Number(P.wkX114CompD) || 5.9);
+      const pcbZ0 = TRAY_FLOOR + compD, faceZ = pcbZ0 + X114.pcb;
+      x114 = { x0, cx: x0 + L / 2, y, L, Wd, compD, pcbZ0, faceZ,
+               btnH: Math.max(0.5, Number(P.wkX114BtnH) || 1.8) };
+      trayTop = faceZ + X114.lcdH + 0.2;
+    }
     return {
-      tft,
+      tft, x114,
       W, D, baseH, wall, trayTop, lidCageH, innerW, innerHalfD,
       mpu, gap, chargerX, boardY, mpuX, mpuY, mpuDepth, mpuSeatZ,
       // 스위치 창 위로 벽이 1mm는 남아야 하고, 몸통이 뚜껑에 닿지 않게 높이를 묶는다.
@@ -326,10 +368,12 @@ export function initWorkout(env) {
   function usbCut(q) {
     const L = Math.max(3.0, q.wall + 1.6);
     // TFT는 USB-C 셸(두께 3.26)이 PCB 윗면에 얹혀 있다.
-    const slim = xiaoOn() || tftOn();
+    const slim = xiaoOn() || dispOn();
     const z = tftOn() ? q.tft.pcbTop + USB_C.d / 2
+      : x114On() ? q.x114.faceZ + X114.usb.w
       : SEAT_Z + (xiaoOn() ? XIAO.usbZ : chargerSpec().usbZ);
-    const y = tftOn() ? q.tft.y + TFT.usbY : xiaoOn() ? q.boardY : P.wkUsbY;
+    const y = tftOn() ? q.tft.y + TFT.usbY : x114On() ? q.x114.y + X114.usb.v
+      : xiaoOn() ? q.boardY : P.wkUsbY;
     // 원래 나팔형 USB 구멍에서 XIAO 쪽만 폭 약 0.4mm, 높이 약 0.36mm 축소.
     const usbYScale = slim ? 0.96 : 1;
     const usbZScale = (slim ? 3.2 : 3.5) / 3.8;
@@ -386,6 +430,66 @@ export function initWorkout(env) {
     return tray;
   }
 
+  // XIAO 1.14" 트레이: 부품면이 아래이므로 바닥 위로 긴 변 리브를 세워 PCB 가장자리를 받친다
+  // (부품이 없는 구간만). 보드 밑 바닥은 1층까지 뚫어 배터리 배선(PH2.0)과 깊은 부품이
+  // 지나가게 하고, +Y 벽에는 옆 버튼 C·스위치를 누를 수 있는 창을 낸다.
+  function buildTrayX114(q, r, j) {
+    const b = q.x114;
+    let tray = boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, 0, r);
+    if (BASE_JOINT_H > 0)
+      tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, BASE_JOINT_H + 0.2,
+                            -0.2, Math.max(0.8, r - q.wall)));
+    tray = add(tray, ring(q.W, q.D, q.W - 2 * q.wall, q.D - 2 * q.wall,
+                          q.trayTop - TRAY_FLOOR, TRAY_FLOOR, r));
+    const limX = BASE_JOINT_H > 0 ? j.inW / 2 - 0.5 : q.W / 2 - q.wall;
+    const limY = BASE_JOINT_H > 0 ? j.inD / 2 - 0.5 : q.D / 2 - q.wall;
+    {
+      const x0 = Math.max(b.x0 + 1.5, -limX), x1 = Math.min(b.x0 + b.L - 1.5, limX);
+      const y0 = Math.max(b.y - X114.w / 2 + 1.4, -limY), y1 = Math.min(b.y + X114.w / 2 - 1.4, limY);
+      if (x1 - x0 > 1 && y1 - y0 > 1)
+        tray = sub(tray, boxBrush(x1 - x0, y1 - y0, TRAY_FLOOR + 0.4, (x0 + x1) / 2,
+                                  (y0 + y1) / 2, -0.2, 0.6));
+    }
+    // 리브: 긴 변에서 0.6 안쪽, 폭 1.2. 바닥 윗면에서 PCB 밑면까지.
+    for (const [u0, u1] of X114.ribs)
+      for (const sv of [-1, 1])
+        tray = add(tray, boxBrush(u1 - u0, 1.2, b.pcbZ0 - TRAY_FLOOR + 0.1,
+                                  b.cx + (u0 + u1) / 2, b.y + sv * (X114.w / 2 - 0.6),
+                                  TRAY_FLOOR - 0.1, 0.3));
+    // KY-035 슬롯은 PCB 밑면까지 올려, 바닥 위로 솟은 KY-035가 리브에 걸리지 않게 한다.
+    if (P.wkHallOn)
+      tray = sub(tray, boxBrush(HALL.w + CLR + 0.6, q.hallT + CLR + 0.6,
+                                b.pcbZ0, 0, q.hallY, -0.1, 0.45));
+    tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
+                          q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
+    // 옆 버튼 창: 부품 외형 + 0.5 여유로 +Y 벽을 관통
+    for (const [u0, u1, w0, w1] of X114.side)
+      tray = sub(tray, boxBrush(u1 - u0 + 1.0, q.wall + 2, w1 - w0 + 1.0,
+                                b.cx + (u0 + u1) / 2, q.D / 2 - q.wall / 2,
+                                b.faceZ + w0 - 0.5, 0.4));
+    tray = sub(tray, usbCut(q));
+    return tray;
+  }
+
+  // XIAO 1.14" 앞면 버튼 캡: 걸림 턱(Ø9.1)이 상판 밑에 걸리고 기둥(Ø7.4)이 Ø7.7 구멍으로
+  // 1.5 올라온다. 바닥은 버튼 윗면(LCD 쪽 PCB 면 + wkX114BtnH)에 닿는다. z=0이 바닥.
+  function x114CapDims(q) {
+    const b = q.x114, under = q.trayTop;
+    const flange = Math.max(0.8, under - 0.15 - (b.faceZ + b.btnH));
+    const d = x114Btn();
+    return { flange, stem: 0.15 + LID_PLATE + 1.5, flangeD: d.flange, stemD: d.stem };
+  }
+  function x114CapGeo(q) {
+    const c = x114CapDims(q), seg = 48;
+    const parts = [];
+    const f = new THREE.CylinderGeometry(c.flangeD / 2, c.flangeD / 2, c.flange, seg);
+    f.rotateX(Math.PI / 2); f.translate(0, 0, c.flange / 2);
+    const st = new THREE.CylinderGeometry(c.stemD / 2, c.stemD / 2, c.stem + 0.1, seg);
+    st.rotateX(Math.PI / 2); st.translate(0, 0, c.flange - 0.1 + (c.stem + 0.1) / 2);
+    for (const g of [f, st]) { g.deleteAttribute('uv'); g.deleteAttribute('normal'); parts.push(g); }
+    return parts;
+  }
+
   // TFT USB 벽 연장(트레이 좌표). 폭은 케이스 둥근 모서리 전 직선 구간 안에서 잡는다.
   function usbTab(q, r) {
     const w = Math.max(10, Math.min(14, q.D - 2 * r - 1));
@@ -411,6 +515,7 @@ export function initWorkout(env) {
     const q = layout(), r = caseR(q);
     const j = jointDims(q), fit = P.wkFit;
     if (tftOn()) return buildTrayTft(q, r, j);
+    if (x114On()) return buildTrayX114(q, r, j);
     // 바닥판은 베드에 평평하게 놓인다. 결합 홈만 밑면에서 위로 파고들어오므로
     // 서포트가 필요한 곳은 폭 1mm 남짓의 홈 천장(브리지)뿐이다.
     let tray = boxBrush(q.W, q.D, TRAY_FLOOR, 0, 0, 0, r);
@@ -674,6 +779,27 @@ export function initWorkout(env) {
       lid = sub(lid, meshBrush(frustumGeo(b.winW, b.winD, b.winW + 2 * ch, b.winD + 2 * ch,
                                           q.lidCageH, q.lidCageH + ch, b.winX, b.y)));
     }
+    if (x114On()) {
+      const b = q.x114, toLid = q.trayTop - q.lidCageH;
+      // 화면 창 + 윗면 45° 모따기
+      const wx = b.cx + X114.win.u, wl = X114.win.l, ww = X114.win.w;
+      lid = sub(lid, boxBrush(wl, ww, LID_PLATE + 1, wx, b.y, q.lidCageH - 0.5, 0.4));
+      const ch = LID_PLATE + 0.5;
+      lid = sub(lid, meshBrush(frustumGeo(wl, ww, wl + 2 * ch, ww + 2 * ch,
+                                          q.lidCageH, q.lidCageH + ch, wx, b.y)));
+      // 앞면 버튼 A·B 구멍과 마이크 구멍
+      for (const [u, v] of X114.btns)
+        lid = sub(lid, boxBrush(x114Btn().hole, x114Btn().hole, LID_PLATE + 1, b.cx + u, b.y + v,
+                                q.lidCageH - 0.5, x114Btn().hole / 2));
+      lid = sub(lid, boxBrush(X114.micD, X114.micD, LID_PLATE + 1, b.cx + X114.mic[0],
+                              b.y + X114.mic[1], q.lidCageH - 0.5, X114.micD / 2));
+      // LCD 양옆 PCB 가장자리를 눌러 보드를 잡는 리브 (LCD는 건드리지 않음)
+      const ribZ0 = b.faceZ + 0.1 - toLid;
+      if (q.lidCageH - ribZ0 > 0.1)
+        for (const sv of [-1, 1])
+          lid = add(lid, boxBrush(22, 1.2, q.lidCageH - ribZ0 + 0.1, b.cx - 8.5,
+                                  b.y + sv * (X114.w / 2 - 0.9), ribZ0, 0.3));
+    }
     if (pinsUp()) {
       // 납땜된 핀헤더 16핀이 상판을 지나 위로 나오는 구멍. 0.64 각핀은 대각이 0.9라
       // Ø1.0은 출력 후 줄어든 구멍에 안 들어갔다 — 기본 Ø1.2 원형.
@@ -790,6 +916,27 @@ export function initWorkout(env) {
       const jstH = Math.min(b.compH, 4.5);
       ghostBox(G[1], [4.5, 6.0, jstH],
                [edge + TFT.jstX, b.y + TFT.jstY, b.pcbTop + jstH / 2], jstMat);
+    } else if (x114On()) {
+      // 부품면이 아래: PCB · LCD · 화면 · XIAO · USB-C · PH2.0 · Grove · 옆 버튼 · 앞 버튼 캡
+      const b = q.x114, Z = w => b.faceZ + w, X = u => b.cx + u, Y = v => b.y + v;
+      ghostBox(G[1], [X114.l, X114.w, X114.pcb], [b.cx, b.y, Z(-X114.pcb / 2)], tftPcbMat);
+      ghostBox(G[1], [X114.lcd.l, X114.lcd.w, X114.lcdH], [X(X114.lcd.u), b.y, Z(X114.lcdH / 2)], oledBoardMat);
+      ghostBox(G[1], [X114.win.l, X114.win.w, 0.1], [X(X114.win.u), b.y, Z(X114.lcdH + 0.05)], oledScreenMat);
+      ghostBox(G[1], [X114.xiao.u1 - X114.xiao.u0, X114.xiao.w, 1.12],
+               [X((X114.xiao.u0 + X114.xiao.u1) / 2), b.y, Z(-X114.pcb - 0.04 - 0.56)], MATS.esp);
+      ghostBox(G[1], [7.75, 8.94, USB_C.d], [X(-X114.l / 2 - X114.usb.over + 3.875), Y(X114.usb.v), Z(X114.usb.w)], MATS.esp);
+      ghostBox(G[1], [7.9, 8.6, 5.6], [X(X114.ph.u), Y(X114.ph.v), Z(-X114.pcb - 2.8)], jstMat);
+      ghostBox(G[1], [X114.grove.l, X114.grove.w, X114.grove.d],
+               [X(X114.grove.u), b.y, Z(-X114.pcb - X114.grove.d / 2)], jstMat);
+      for (const [u0, u1, w0, w1] of X114.side)
+        ghostBox(G[1], [u1 - u0, 3.5, w1 - w0], [X((u0 + u1) / 2), Y(X114.w / 2 - 1.2), Z((w0 + w1) / 2)], switchMat);
+      const cd = x114CapDims(q), lz = q.trayTop - q.lidCageH;
+      const cyl = (d, h) => new THREE.CylinderGeometry(d / 2, d / 2, h, 32).rotateX(Math.PI / 2);
+      for (const [u, v] of X114.btns) {
+        const z0 = b.faceZ + b.btnH - lz;
+        ghostGeo(G[2], cyl(cd.flangeD, cd.flange), [X(u), Y(v), z0 + cd.flange / 2], hallMat);
+        ghostGeo(G[2], cyl(cd.stemD, cd.stem), [X(u), Y(v), z0 + cd.flange + cd.stem / 2], hallMat);
+      }
     } else if (xiaoOn()) {
       const board = trayBoard();
       ghostBox(G[1], [board.w, board.d, XIAO.pcb],
@@ -809,7 +956,7 @@ export function initWorkout(env) {
                [q.chargerX - CHARGER.w / 2 + 4.5, 0,
                 SEAT_Z + CHARGER.usbZ], MATS.mod);
     }
-    if (!tftOn())
+    if (!dispOn())
       ghostBox(G[1], [q.mpu.w, q.mpu.d, q.mpu.h],
                [q.mpuX, q.mpuY, q.mpuSeatZ + q.mpu.h / 2], mpuMat);
     if (P.wkSwOn && miniOn())
@@ -914,6 +1061,25 @@ export function initWorkout(env) {
         wire(hallVcc, pin('3V3'), colors.plus, 'KY +', '3V3');
         wire(hallGnd, pin('GND'), colors.minus, 'KY −', 'GND');
         wire(hallAo, pin(P.wkHallGpio), colors.gpio, 'S/AO', 'G' + P.wkHallGpio, 'hall');
+      }
+      flush();
+      return;
+    }
+
+    if (x114On()) {
+      // 배터리는 PH2.0 플러그(-Y 긴 변)로. KY-035는 Grove 커넥터 쪽 핀으로 그린다 —
+      // Grove SDA/SCL(D4/D5)은 IMU I2C와 공유이므로 아날로그 핀은 실물에서 정해야 한다.
+      const b = q.x114, at = (u, v, w) => world(G[1], [b.cx + u, b.y + v, b.faceZ + w]);
+      wire(batPlus, at(X114.ph.u - 1, -X114.w / 2, -4), colors.plus, t('wtBatPlus'), 'PH2.0 +');
+      wire(batMinus, at(X114.ph.u + 1, -X114.w / 2, -4), colors.minus, t('wtBatMinus'), 'PH2.0 −');
+      if (P.wkHallOn) {
+        const gp = n => {
+          const p = ESP_PINS_X114[n] || ESP_PINS_X114[4];
+          return at(p[0], p[1], -X114.pcb - X114.grove.d + 0.5);
+        };
+        wire(hallVcc, gp('3V3'), colors.plus, 'KY +', '3V3');
+        wire(hallGnd, gp('GND'), colors.minus, 'KY −', 'GND');
+        wire(hallAo, gp(P.wkHallGpio), colors.gpio, 'S/AO', 'D' + P.wkHallGpio, 'hall');
       }
       flush();
       return;
@@ -1034,6 +1200,14 @@ export function initWorkout(env) {
       const winOver = Math.abs(b.winX - b.lcdX) + b.winW / 2 > TFT.lcdL / 2 - 0.5
         || b.winD / 2 > TFT.lcdW / 2 - 0.5;
       if (winOver) warnings.push(t('wkTftWinFit'));
+    } else if (x114On()) {
+      const b = q.x114;
+      const needW = 2 * q.wall + Math.max(0, Number(P.wkTftEndGap) || 0) + b.L;
+      const needD = 2 * q.wall + b.Wd;
+      if (q.W + 0.01 < needW || q.D + 0.01 < needD)
+        warnings.push(t('wkX114Fit', needW.toFixed(1), needD.toFixed(1)));
+      if (b.compD < X114.compD + 0.2)
+        warnings.push(t('wkX114CompFit', (X114.compD + 0.3).toFixed(1)));
     } else {
       const pairNeedW = trayBoard().w + q.mpu.w + 2 * CLR + 1.0 + 2 * q.wall;
       if (q.W + 0.01 < pairNeedW) warnings.push(t('wkRowOverlap'));
@@ -1042,7 +1216,7 @@ export function initWorkout(env) {
     }
     const batteryTop = q.batteryZ + P.wkBatH;
     if (batteryTop > q.baseH - 0.4) warnings.push(t('wkBatteryHeight', (batteryTop + 0.4).toFixed(1)));
-    if (!tftOn() && q.mpu.h > q.trayTop - q.mpuSeatZ - q.lidCageH - 0.8 && !oledPlug())
+    if (!dispOn() && q.mpu.h > q.trayTop - q.mpuSeatZ - q.lidCageH - 0.8 && !oledPlug())
       warnings.push(t('wkMpuHeightFit'));
     if (xiaoOn() && SEAT_Z + XIAO.h > q.trayTop - q.lidCageH - 0.2 && !oledPlug())
       warnings.push(t('wkXiaoHeightFit'));
@@ -1081,7 +1255,9 @@ export function initWorkout(env) {
     // 밑면(SEAT_Z)이 천장이 된다.
     const hallUnderTft = tftOn()
       && q.hallY + (q.hallT + CLR) / 2 > q.tft.y - q.tft.Wd / 2;
-    const hallRoom = !tftOn() ? q.trayTop - q.lidCageH
+    // XIAO 1.14"는 부품면이 아래라 가장 깊은 부품(PH2.0) 밑이 천장이다.
+    const hallRoom = x114On() ? q.x114.pcbZ0 - X114.compD - 0.2
+      : !tftOn() ? q.trayTop - q.lidCageH
       : hallUnderTft ? SEAT_Z - 0.2 : q.trayTop - 0.2;
     const hallCeil = q.baseH + hallRoom;
     const hallNeedH = 0.75 + HALL.h + 0.4 - hallRoom;
@@ -1116,8 +1292,17 @@ export function initWorkout(env) {
         const { xray } = getView();
         meshes = geos.map(g => new THREE.Mesh(g, xray ? matCaseX : matCase));
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
-        bezelGeo = null;
+        bezelGeo = null; capGeo = null;
         document.getElementById('wkExBezel').disabled = !oledOn() || oledPlug();
+        document.getElementById('wkExCaps').disabled = !x114On();
+        if (x114On()) {
+          // 앞면 버튼 캡 2개 (걸림 턱이 베드에 닿는 출력 방향)
+          const q0 = layout();
+          const mergeCaps = [];
+          X114.btns.forEach(([u, v], i) => x114CapGeo(q0).forEach(g => {
+            g.translate(i * 12 - 6, 0, 0); mergeCaps.push(g); }));
+          capGeo = mergeCaps;
+        }
         if (oledOn() && !oledPlug()) {
           const bm = buildBezel(layout());
           bezelGeo = manToGeo(bm); bm.delete();
@@ -1152,8 +1337,9 @@ export function initWorkout(env) {
       : 'workout_sensor_tw802040_base.stl');
   });
   document.getElementById('wkExTray').addEventListener('click', () => {
-    if (geos[1]) downloadSTL(geos[1].clone(), tftOn()
-      ? 'workout_sensor_tft114_tray.stl'
+    if (geos[1]) downloadSTL(geos[1].clone(), x114On()
+      ? 'workout_sensor_xiao114_tray.stl'
+      : tftOn() ? 'workout_sensor_tft114_tray.stl'
       : xiaoOn() ? 'workout_sensor_xiao_electronics_tray.stl'
       : 'workout_sensor_electronics_tray.stl');
   });
@@ -1165,7 +1351,7 @@ export function initWorkout(env) {
     if (!oledOn()) geo.rotateX(Math.PI);
     geo.computeBoundingBox();
     geo.translate(0, 0, -geo.boundingBox.min.z);
-    downloadSTL(geo, tftOn() ? 'workout_sensor_tft114_lid.stl' : xiaoOn()
+    downloadSTL(geo, x114On() ? 'workout_sensor_xiao114_lid.stl' : tftOn() ? 'workout_sensor_tft114_lid.stl' : xiaoOn()
       ? (oledOn() ? `workout_sensor_xiao_oled${P.wkOledType}_lid.stl` : 'workout_sensor_xiao_lid.stl')
       : (oledOn() ? `workout_sensor_esp32_oled${P.wkOledType}_lid.stl` : 'workout_sensor_esp32_lid.stl'));
   });
@@ -1178,6 +1364,15 @@ export function initWorkout(env) {
     geo.computeBoundingBox();
     geo.translate(0, 0, -geo.boundingBox.min.z);
     downloadSTL(geo, `workout_sensor_oled${P.wkOledType}_bezel.stl`);
+  });
+
+  document.getElementById('wkExCaps').addEventListener('click', () => {
+    if (!capGeo) return;
+    // 원기둥 두 개씩을 하나의 매니폴드로 합쳐 내보낸다.
+    let m = null;
+    for (const g of capGeo) { const b = meshBrush(g); m = m ? add(m, b) : b; }
+    const geo = manToGeo(m); m.delete();
+    downloadSTL(geo, 'workout_sensor_xiao114_button_caps.stl');
   });
 
   return { rebuildWorkout, applyWorkoutExplode, drawWorkoutWires };
