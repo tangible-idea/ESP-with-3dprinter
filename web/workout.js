@@ -371,13 +371,27 @@ export function initWorkout(env) {
     cutThrough(b.x0 + TFT_LEDGE, b.x0 + b.L - TFT_LEDGE, b.y - b.Wd / 2, b.y + b.Wd / 2);
     const jy = b.y + TFT.jstY;
     cutThrough(-q.W / 2, b.x0 - 0.4, jy - 4, jy + 4);
-    tray = sub(tray, usbCut(q));
     if (P.wkHallOn)
       tray = sub(tray, boxBrush(HALL.w + CLR + 0.6, q.hallT + CLR + 0.6,
                                 TRAY_FLOOR_TOP + 0.4, 0, q.hallY, -0.1, 0.45));
     tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
                           q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
+    // USB 구멍 위 벽이 얇으므로(뚜껑 결합 홈까지 파여 1mm 남짓) 구멍 둘레 벽을 뚜껑 윗면
+    // 높이까지 세운다. 뚜껑은 같은 자리를 따내 이 벽을 받는다. 결합 홈을 판 뒤에 붙여야
+    // 홈에 깎이지 않고, USB 구멍은 그 뒤에 뚫는다.
+    const tab = usbTab(q, r);
+    tray = add(tray, boxBrush(q.wall, tab.w, tab.z1 - tab.z0, -q.W / 2 + q.wall / 2,
+                              tab.y, tab.z0));
+    tray = sub(tray, usbCut(q));
     return tray;
+  }
+
+  // TFT USB 벽 연장(트레이 좌표). 폭은 케이스 둥근 모서리 전 직선 구간 안에서 잡는다.
+  function usbTab(q, r) {
+    const w = Math.max(10, Math.min(14, q.D - 2 * r - 1));
+    return { w, y: Math.max(-(q.D / 2 - r - w / 2), Math.min(q.D / 2 - r - w / 2,
+                                                            q.tft.y + TFT.usbY)),
+             z0: q.trayTop - JOINT_H - 0.3, z1: q.trayTop + LID_PLATE };
   }
 
   // 뚜껑 윗면 화면 창에 45° 모따기를 내는 사각뿔대(밑면 w0×d0 → 윗면 w1×d1).
@@ -649,6 +663,10 @@ export function initWorkout(env) {
       const nx1 = -j.inW / 2 + 0.6;
       lid = sub(lid, boxBrush(nx1 + q.W / 2 + 1, q.D + 2, JOINT_H + 0.2,
                               (nx1 - q.W / 2 - 1) / 2, 0, q.lidCageH - JOINT_H - 0.2));
+      // 트레이에서 올라온 USB 벽 연장을 받는 자리 (결합 유격만큼 넓게)
+      const tab = usbTab(q, r), tw = q.wall + fit + 0.2;
+      lid = sub(lid, boxBrush(tw + 1, tab.w + 2 * fit, LID_PLATE + JOINT_H + 2,
+                              -q.W / 2 + (tw - 1) / 2, tab.y, q.lidCageH - JOINT_H - 1));
       // 상판 밑면은 커넥터 높이에 맞춰져 LCD 위로 떠 있다. LCD를 누르는 받침은 액정을
       // 눌러서 뺐다. 화면 창은 상판만 관통하고 윗면 쪽에 45° 모따기를 낸다.
       lid = sub(lid, boxBrush(b.winW, b.winD, LID_PLATE + 1, b.winX, b.y, q.lidCageH - 0.5, 0.4));
