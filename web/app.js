@@ -399,7 +399,7 @@ const STATIC_I18N = {
     hintProduct: 'Choose which 3D design to configure. Each product has its own settings below.',
     // 운동 모션 센서
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
-    lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkFit: 'Joint clearance',
+    lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance',
     lblWkMagSkin: 'Magnet skin', lblWkMagH: 'Magnet thickness', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
     lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
@@ -410,10 +410,10 @@ const STATIC_I18N = {
     secWorkoutComp: 'Electronics layout',
     lblWkEspType: 'ESP32 board',
     optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
-    lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'TFT USB end ↔ wall (PH2.0 plug room)',
+    lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'TFT USB end ↔ wall gap',
     lblWkTftLcdX: 'TFT LCD center X (from board center)', lblWkTftWinW: 'TFT window long side',
     lblWkTftWinD: 'TFT window short side', lblWkTftWinX: 'TFT window X (from LCD center)',
-    hintWkTft: 'ESP32-S3 1.14" TFT (50.8×22.9, PCB 1.3, 3.0 with LCD, LCD 30.9×17.6) lies screen-up in the tray with USB-C toward the −X wall. Its onboard QMI8658C IMU and charger replace the MPU6050 and charge module, so those pockets and the power switch go away. Plug the battery into the PH2.0 connector; leave enough room between the board end and the wall for the plug. The pocket floor is open between the X-end ledges for back-side parts and battery wires. The lid ceiling clears the tallest connector, and a boss presses the LCD glass border with a 45° chamfered window. Connector height and window position are estimated from photos — measure and adjust.',
+    hintWkTft: 'ESP32-S3 1.14" TFT (50.8×22.9, PCB 1.3, 3.0 with LCD, LCD 30.9×17.6) lies screen-up in the tray with USB-C toward the −X wall. Its onboard QMI8658C IMU and charger replace the MPU6050 and charge module, so those pockets and the power switch go away. The USB end sits against the −X wall so USB-C plugs in fully (a USB-C plug only reaches about 1.8mm into the jack per 3mm of gap). Plug the battery into the PH2.0 connector. The pocket floor is open between the X-end ledges for back-side parts and battery wires. The lid ceiling clears the tallest connector without touching the LCD, and the display window has a 45° chamfer. Connector height and window position are estimated from photos — measure and adjust.',
     wkTftFit: (w, d) => `⚠ The 1.14" TFT board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
     wkTftWinFit: '⚠ The display window reaches past the LCD glass — reduce window size or offset',
     wtGrpPowerTft: 'Power (battery → TFT board PH2.0, onboard charging)',
@@ -569,7 +569,7 @@ const STATIC_I18N = {
     hintProduct: '설계할 3D 디자인을 선택하세요. 제품마다 아래에 별도 설정이 있습니다.',
     // 운동 모션 센서
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
-    lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkFit: '결합 유격',
+    lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격',
     lblWkMagSkin: '자석 앞 스킨', lblWkMagH: '자석 두께', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
     lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
@@ -580,10 +580,10 @@ const STATIC_I18N = {
     secWorkoutComp: '전자부품 배치',
     lblWkEspType: 'ESP32 보드',
     optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
-    lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: 'TFT USB 끝↔벽 (PH2.0 플러그 자리)',
+    lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: 'TFT USB 끝↔벽 간격',
     lblWkTftLcdX: 'TFT LCD 중심 X (보드 중심 기준)', lblWkTftWinW: 'TFT 화면 창 긴 변',
     lblWkTftWinD: 'TFT 화면 창 짧은 변', lblWkTftWinX: 'TFT 화면 창 X (LCD 중심 기준)',
-    hintWkTft: 'ESP32-S3 1.14" TFT(50.8×22.9, PCB 1.3, LCD 포함 3.0, LCD 30.9×17.6)를 화면이 위로, USB-C가 −X 벽을 향하게 트레이에 눕힙니다. 보드의 QMI8658C IMU와 충전 회로가 MPU6050·충전모듈을 대신하므로 그 포켓과 전원 스위치는 빠집니다. 배터리는 PH2.0 커넥터에 꽂고, 보드 끝과 벽 사이에 플러그 자리를 둡니다. 포켓 바닥은 X 양 끝 받침턱 사이가 뚫려 있어 뒷면 부품과 배터리 배선이 지나갑니다. 뚜껑 천장은 가장 높은 커넥터를 피하고, 받침이 LCD 유리 테두리를 눌러 주며 화면 창은 45° 모따기입니다. 커넥터 높이와 창 위치는 사진 기준 추정값이니 실측해서 맞추세요.',
+    hintWkTft: 'ESP32-S3 1.14" TFT(50.8×22.9, PCB 1.3, LCD 포함 3.0, LCD 30.9×17.6)를 화면이 위로, USB-C가 −X 벽을 향하게 트레이에 눕힙니다. 보드의 QMI8658C IMU와 충전 회로가 MPU6050·충전모듈을 대신하므로 그 포켓과 전원 스위치는 빠집니다. USB 끝은 −X 벽에 붙여 USB-C 플러그가 끝까지 들어가게 합니다(벽에서 띄우면 플러그가 덜 꽂힙니다). 배터리는 PH2.0 커넥터에 꽂습니다. 포켓 바닥은 X 양 끝 받침턱 사이가 뚫려 있어 뒷면 부품과 배터리 배선이 지나갑니다. 뚜껑 천장은 가장 높은 커넥터를 피하고 LCD에는 닿지 않으며, 화면 창은 45° 모따기입니다. 커넥터 높이와 창 위치는 사진 기준 추정값이니 실측해서 맞추세요.',
     wkTftFit: (w, d) => `⚠ 1.14" TFT 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
     wkTftWinFit: '⚠ 화면 창이 LCD 유리 밖으로 나갑니다 — 창 크기나 위치를 줄이세요',
     wtGrpPowerTft: '전원 (배터리 → TFT 보드 PH2.0, 보드 자체 충전)',
@@ -904,9 +904,10 @@ const P = {
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkOledType: '096', wkOledPlug: false, wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
   wkHallGap: 1, wkHallT: 3.25,
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
-  wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 13,
-  // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 플러그 자리, LCD 중심 X(보드 중심 기준), 화면 창
-  wkTftCompH: 3.6, wkTftEndGap: 3.0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
+  wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
+  // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
+  wkRound: 5.5,   // 케이스 외곽 모서리 반경
+  wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
   f1On: true, f1H: 7.5, f2H: 16, f3H: 10, bossOn: true, bossH: 2.5, standSink: 2.5, cornerOut: 0.4,
@@ -984,6 +985,16 @@ try {
     if (saved.wkPinHoleD === undefined || saved.wkPinHoleD === 1.5 || saved.wkPinHoleD === 1) P.wkPinHoleD = 1.2;
     P.wkRev = 13;
   }
+  // TFT USB 끝을 벽에서 3mm 띄웠던 첫 버전은 USB-C 플러그가 끝까지 들어가지 않았다 → 벽에 붙인다.
+  if (!saved.wkRev || saved.wkRev < 14) {
+    if (saved.wkTftEndGap === 3) P.wkTftEndGap = 0;
+    P.wkRev = 14;
+  }
+  // rev 15에서 잘못 잰 값(5.2)으로 바꿨던 TFT LCD 중심을 원래 6.4로 되돌린다.
+  if (!saved.wkRev || saved.wkRev < 16) {
+    if (saved.wkTftLcdX === 5.2) P.wkTftLcdX = 6.4;
+    P.wkRev = 16;
+  }
   // 충전모듈 크기 슬라이더가 없던 저장본은 선택된 모듈의 기본 치수로 채운다.
   if (!('wkChgW' in saved) && P.wkModType === 'generic') { P.wkChgW = 19; P.wkChgD = 14; }
   // 구버전 호환: batPose 분리 전에는 batType '650' = 세워서 2층이었음
@@ -1012,7 +1023,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];

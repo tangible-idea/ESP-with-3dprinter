@@ -37,9 +37,10 @@ export function initWorkout(env) {
   // ESP32-S3 1.14" TFT (Feather 규격): 50.8 × 22.9, PCB 1.3, LCD까지 총 3.0, LCD 모듈 30.9 × 17.6.
   // IMU(QMI8658C)·충전 회로·PH2.0 배터리 커넥터가 보드에 있어 MPU6050·충전모듈·전원 스위치를 뺀다.
   // 케이스에서는 USB-C 끝을 -X 벽으로 돌려 놓는다 → LCD는 +X 쪽, 커넥터·버튼은 -X 끝.
-  // usbY/jst*는 제품 사진에서 잰 대략 위치(보드 중심 기준). PH2.0 입구도 -X 끝을 향한다.
+  // USB-C는 짧은 변 한가운데(usbY = 0, 실측). PH2.0(jst*)은 사진에서 잰 대략 위치로,
+  // USB 셸(폭 8.94) 옆에 겹치지 않게 둔다. 입구는 -X 끝을 향한다고 가정.
   const TFT = { l: 50.8, w: 22.9, pcb: 1.3, h: 3.0, lcdL: 30.9, lcdW: 17.6,
-                usbY: -4.2, jstX: 3.4, jstY: 6.0 };
+                usbY: 0, jstX: 3.4, jstY: 7.6 };
   const TFT_LEDGE = 1.5;   // 바닥을 뚫고 남기는 X 양 끝 받침턱 (뒷면 부품은 이 사이에)
   const tftOn = () => P.wkEspType === 'tft';
   const miniOn = () => !xiaoOn() && !tftOn();   // SuperMini + 충전모듈 + MPU6050 구성
@@ -257,7 +258,8 @@ export function initWorkout(env) {
     const hallInnerY = hallY + P.wkHallT / 2;
     const batteryY = P.wkHallOn ? hallInnerY + 0.8 + (BAT.d + CLR) / 2 : 0;
     const magnetY = P.wkHallOn ? hallInnerY + P.wkHallGap + MAG.d / 2 : 0;
-    // TFT 보드: 포켓 -X(USB) 끝을 벽에서 wkTftEndGap 띄워 PH2.0 플러그 자리를 둔다.
+    // TFT 보드: 포켓 -X(USB) 끝을 벽 안쪽면에 붙여 USB-C 셸이 벽 구멍에 바로 닿게 한다.
+    // wkTftEndGap으로 띄울 수 있지만, 띄운 만큼 플러그가 덜 꽂힌다.
     // Y는 wkUsbY로 옮긴다. 트레이 높이는 LCD·커넥터 중 높은 쪽 + 0.3 → 뚜껑 밑면.
     let tft = null;
     if (tftOn()) {
@@ -285,6 +287,9 @@ export function initWorkout(env) {
     };
   }
 
+  // 케이스 외곽 모서리 반경 (wkRound, 기본 5.5). 짧은 변 절반을 넘지 않게 자른다.
+  const caseR = q => Math.max(0.05, Math.min(Number(P.wkRound ?? 5.5), q.W / 2 - 1, q.D / 2 - 1));
+
   function jointDims(q) {
     const outW = q.W - 2 * q.wall + 0.2, outD = q.D - 2 * q.wall + 0.2;
     const jw = jointW();
@@ -292,7 +297,7 @@ export function initWorkout(env) {
   }
 
   function buildBase() {
-    const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
+    const q = layout(), r = caseR(q);
     let body = boxBrush(q.W, q.D, q.baseH, 0, 0, 0, r);
     body = sub(body, boxBrush(MAG.w + CLR, MAG.d + CLR, P.wkMagH + 0.25,
                               0, q.magnetY, q.magnetZ, 0.8));
@@ -389,7 +394,7 @@ export function initWorkout(env) {
   }
 
   function buildTray() {
-    const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
+    const q = layout(), r = caseR(q);
     const j = jointDims(q), fit = P.wkFit;
     if (tftOn()) return buildTrayTft(q, r, j);
     // 바닥판은 베드에 평평하게 놓인다. 결합 홈만 밑면에서 위로 파고들어오므로
@@ -602,7 +607,7 @@ export function initWorkout(env) {
   }
 
   function buildLid() {
-    const q = layout(), r = Math.min(5.5, q.W / 2 - 1, q.D / 2 - 1);
+    const q = layout(), r = caseR(q);
     const j = jointDims(q), fit = P.wkFit;
     let lid = boxBrush(q.W, q.D, LID_PLATE, 0, 0, q.lidCageH, r);
     lid = add(lid, ring(j.outW - 2 * fit, j.outD - 2 * fit,
@@ -639,19 +644,14 @@ export function initWorkout(env) {
                             (cavX0 + cavX1) / 2, 0, cavZ0, 0.3));
     }
     if (tftOn()) {
-      const b = q.tft, toLid = q.trayTop - q.lidCageH;
+      const b = q.tft;
       // USB 플러그와 PH2.0 플러그가 -X 벽 안쪽을 지나가므로 그 짧은 변의 결합 텅은 비운다.
       const nx1 = -j.inW / 2 + 0.6;
       lid = sub(lid, boxBrush(nx1 + q.W / 2 + 1, q.D + 2, JOINT_H + 0.2,
                               (nx1 - q.W / 2 - 1) / 2, 0, q.lidCageH - JOINT_H - 0.2));
-      // 상판 밑면은 커넥터 높이에 맞춰져 LCD보다 높다. LCD 유리 테두리를 눌러 주는 받침을
-      // 내려 보드를 고정하고, 화면 창은 받침과 상판을 관통한 뒤 윗면 쪽에 45° 모따기를 낸다.
-      const bossZ0 = b.lcdTop + 0.1 - toLid;
-      if (q.lidCageH - bossZ0 > 0.1)
-        lid = add(lid, boxBrush(TFT.lcdL - 1.0, TFT.lcdW - 1.0, q.lidCageH - bossZ0 + 0.1,
-                                b.lcdX, b.y, bossZ0, 0.6));
-      const top = q.lidCageH + LID_PLATE;
-      lid = sub(lid, boxBrush(b.winW, b.winD, top - bossZ0 + 1, b.winX, b.y, bossZ0 - 0.5, 0.4));
+      // 상판 밑면은 커넥터 높이에 맞춰져 LCD 위로 떠 있다. LCD를 누르는 받침은 액정을
+      // 눌러서 뺐다. 화면 창은 상판만 관통하고 윗면 쪽에 45° 모따기를 낸다.
+      lid = sub(lid, boxBrush(b.winW, b.winD, LID_PLATE + 1, b.winX, b.y, q.lidCageH - 0.5, 0.4));
       const ch = LID_PLATE + 0.5;
       lid = sub(lid, meshBrush(frustumGeo(b.winW, b.winD, b.winW + 2 * ch, b.winD + 2 * ch,
                                           q.lidCageH, q.lidCageH + ch, b.winX, b.y)));
