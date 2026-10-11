@@ -477,15 +477,26 @@ export function initWorkout(env) {
     const b = q.x114, under = q.trayTop;
     const flange = Math.max(0.8, under - 0.15 - (b.faceZ + b.btnH));
     const d = x114Btn();
-    return { flange, stem: 0.15 + LID_PLATE + 1.5, flangeD: d.flange, stemD: d.stem };
+    const catchR = P.wkX114BtnCatch > 0 ? d.hole / 2 + Math.min(0.4, Number(P.wkX114BtnCatch)) : 0;
+    return { flange, stem: 0.15 + LID_PLATE + 1.5, flangeD: d.flange, stemD: d.stem, catchR };
   }
   function x114CapGeo(q) {
     const c = x114CapDims(q), seg = 48;
     const parts = [];
     const f = new THREE.CylinderGeometry(c.flangeD / 2, c.flangeD / 2, c.flange, seg);
     f.rotateX(Math.PI / 2); f.translate(0, 0, c.flange / 2);
-    const st = new THREE.CylinderGeometry(c.stemD / 2, c.stemD / 2, c.stem + 0.1, seg);
-    st.rotateX(Math.PI / 2); st.translate(0, 0, c.flange - 0.1 + (c.stem + 0.1) / 2);
+    // 기둥: 상판 윗면에서 0.5(버튼 눌림 여유) 위에 걸림 턱 링을 둘러, 뚜껑을 들거나 뒤집어도
+    // 캡이 안쪽으로 빠지지 않게 한다. 턱은 구멍보다 wkX114BtnCatch(반지름)만큼 커서 조립할 때
+    // 안쪽에서 구멍으로 밀어 넣으면 '딸깍' 넘어간다. 아래는 45°, 위는 완만한 경사라 서포트 없이 출력된다.
+    const r = c.stemD / 2, z0 = c.flange - 0.1, zTop = c.flange + c.stem;
+    const pts = [[0, z0], [r, z0]];
+    if (c.catchR > 0) {
+      const zb = c.flange + 0.15 + LID_PLATE + 0.5, k = c.catchR - r;
+      pts.push([r, zb], [r + k, zb + k], [r + k, zb + k + 0.2], [r, Math.min(zTop - 0.1, zb + 2 * k + 0.2 + 0.25)]);
+    }
+    pts.push([r, zTop], [0, zTop]);
+    const st = new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), seg);
+    st.rotateX(Math.PI / 2);
     for (const g of [f, st]) { g.deleteAttribute('uv'); g.deleteAttribute('normal'); parts.push(g); }
     return parts;
   }
@@ -940,13 +951,9 @@ export function initWorkout(env) {
                [X(X114.grove.u), b.y, Z(-X114.pcb - X114.grove.d / 2)], jstMat);
       for (const [u0, u1, w0, w1] of X114.side)
         ghostBox(G[1], [u1 - u0, 3.5, w1 - w0], [X((u0 + u1) / 2), Y(X114.w / 2 - 1.2), Z((w0 + w1) / 2)], switchMat);
-      const cd = x114CapDims(q), lz = q.trayTop - q.lidCageH;
-      const cyl = (d, h) => new THREE.CylinderGeometry(d / 2, d / 2, h, 32).rotateX(Math.PI / 2);
-      for (const [u, v] of X114.btns) {
-        const z0 = b.faceZ + b.btnH - lz;
-        ghostGeo(G[2], cyl(cd.flangeD, cd.flange), [X(u), Y(v), z0 + cd.flange / 2], hallMat);
-        ghostGeo(G[2], cyl(cd.stemD, cd.stem), [X(u), Y(v), z0 + cd.flange + cd.stem / 2], hallMat);
-      }
+      const lz = q.trayTop - q.lidCageH;
+      for (const [u, v] of X114.btns)
+        for (const g of x114CapGeo(q)) ghostGeo(G[2], g, [X(u), Y(v), b.faceZ + b.btnH - lz], hallMat);
     } else if (xiaoOn()) {
       const board = trayBoard();
       ghostBox(G[1], [board.w, board.d, XIAO.pcb],
