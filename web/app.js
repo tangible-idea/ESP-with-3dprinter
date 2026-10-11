@@ -424,6 +424,7 @@ const STATIC_I18N = {
     lblWkEspType: 'ESP32 board',
     optWkEspX114: 'Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)',
     lblWkX114CompD: 'XIAO 1.14" floor ↔ PCB (parts side down)', lblWkX114BtnH: 'XIAO 1.14" front button height', lblWkX114BtnD: 'XIAO 1.14" button cap diameter',
+    lblWkX114LcdRecess: 'XIAO 1.14" lid recess over LCD',
     hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, holes for front buttons A/B sized by the cap diameter (print the button caps), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has openings for side button C and the switch next to it. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
     wkX114CompFit: d => `⚠ Parts under the board (PH2.0 5.6mm deep) hit the tray floor — raise floor↔PCB to ${d}mm or more`,
@@ -613,6 +614,7 @@ const STATIC_I18N = {
     lblWkEspType: 'ESP32 보드',
     optWkEspX114: 'Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)',
     lblWkX114CompD: 'XIAO 1.14" 바닥↔PCB (부품면 아래)', lblWkX114BtnH: 'XIAO 1.14" 앞 버튼 높이', lblWkX114BtnD: 'XIAO 1.14" 버튼 캡 지름',
+    lblWkX114LcdRecess: 'XIAO 1.14" LCD 닿는 면 파냄',
     hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B용 구멍(캡 지름 + 0.3, 버튼 캡 별도 출력), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C와 그 옆 스위치 창이 뚫립니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
     wkX114CompFit: d => `⚠ 보드 밑 부품(PH2.0 깊이 5.6)이 트레이 바닥에 닿습니다 — 바닥↔PCB를 ${d}mm 이상으로 올리세요`,
@@ -950,7 +952,7 @@ const P = {
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
-  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5,   // XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
+  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1071,7 +1073,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD',
+                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1146,7 +1148,7 @@ const applyWorkoutOptionsUI = () => {
   for (const id of ['wkTftCompH', 'wkTftLcdX', 'wkTftWinW', 'wkTftWinD', 'wkTftWinX'])
     document.getElementById(id).disabled = !tftOnly;
   document.getElementById('wkTftEndGap').disabled = !tft;
-  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD']) document.getElementById(id).disabled = !x114;
+  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess']) document.getElementById(id).disabled = !x114;
 };
 document.getElementById('wkEspType').value = P.wkEspType;
 document.getElementById('wkModType').value = P.wkModType;

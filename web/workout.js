@@ -785,6 +785,12 @@ export function initWorkout(env) {
     }
     if (x114On()) {
       const b = q.x114, toLid = q.trayTop - q.lidCageH;
+      // LCD가 닿는 상판 밑면을 LCD 외형(+0.3 여유)만큼 wkX114LcdRecess 깊이로 파 올려
+      // 뚜껑이 LCD를 누르지 않게 한다. 스킨은 최소 0.6 남긴다.
+      const rec = Math.max(0, Math.min(LID_PLATE - 0.6, Number(P.wkX114LcdRecess ?? 0.5)));
+      if (rec > 0)
+        lid = sub(lid, boxBrush(X114.lcd.l + 0.6, X114.lcd.w + 0.6, rec + 0.5, b.cx + X114.lcd.u, b.y,
+                                q.lidCageH - 0.5, 0.4));
       // 화면 창 + 윗면 45° 모따기
       const wx = b.cx + X114.win.u, wl = X114.win.l, ww = X114.win.w;
       lid = sub(lid, boxBrush(wl, ww, LID_PLATE + 1, wx, b.y, q.lidCageH - 0.5, 0.4));
@@ -797,9 +803,8 @@ export function initWorkout(env) {
                                 q.lidCageH - 0.5, x114Btn().hole / 2));
       lid = sub(lid, boxBrush(X114.micD, X114.micD, LID_PLATE + 1, b.cx + X114.mic[0],
                               b.y + X114.mic[1], q.lidCageH - 0.5, X114.micD / 2));
-      // LCD 양옆 PCB 가장자리 위로 내려오는 리브 — 보드가 들뜨는 것만 막는다.
-      // 면에 붙여(0.1) 누르면 LCD까지 눌려서, PCB 면에서 0.6 띄워 짧게 끝낸다.
-      const ribZ0 = b.faceZ + 0.6 - toLid;
+      // LCD 양옆 PCB 가장자리를 눌러 보드를 잡는 리브 (LCD는 건드리지 않음)
+      const ribZ0 = b.faceZ + 0.1 - toLid;
       if (q.lidCageH - ribZ0 > 0.1)
         for (const sv of [-1, 1])
           lid = add(lid, boxBrush(22, 1.2, q.lidCageH - ribZ0 + 0.1, b.cx - 8.5,
