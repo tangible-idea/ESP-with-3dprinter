@@ -8,6 +8,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import ManifoldModule from './vendor/manifold.js';
 import manifoldWasmUrl from './vendor/manifold.wasm?url';
+import * as cloud from './cloud.js';
 import usbHoleUrl from '../stl_files/usb_c_hole.stl?url';
 import switchMxUrl from '../stl_files/switch_mx.stl?url';
 import batteryUrl from '../stl_files/520Mah_battery.stl?url';
@@ -50,6 +51,7 @@ const I18N = {
     initError: (e) => `⚠ Initialization failed: ${e}\nCheck that you ran it with \`npm run dev\`.`,
     presetLoaded: (n) => `✓ Preset loaded (${n} items applied)`,
     presetError: '⚠ Cannot read preset file (JSON format error)',
+    cloudError: msg => `⚠ Google Drive error: ${msg}`,
     // GPIO 역할 이름 (우클릭 메뉴)
     roleSwitch: 'Switch', roleSwitch2: 'Switch 2', roleOledSda: 'OLED SDA',
     roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED green', roleBuzzer: 'Buzzer',
@@ -181,6 +183,7 @@ const I18N = {
     initError: (e) => `⚠ 초기화 실패: ${e}\n\`npm run dev\` 로 실행했는지 확인하세요.`,
     presetLoaded: (n) => `✓ 프리셋 불러옴 (${n}개 항목 적용)`,
     presetError: '⚠ 프리셋 파일을 읽을 수 없습니다 (JSON 형식 오류)',
+    cloudError: msg => `⚠ 구글 드라이브 오류: ${msg}`,
     roleSwitch: '스위치', roleSwitch2: '스위치 2', roleOledSda: 'OLED SDA',
     roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED 초록', roleBuzzer: '부저',
     roleWorkoutHall: 'KY-035 아날로그',
@@ -382,6 +385,16 @@ const STATIC_I18N = {
     hintExport: 'Layer 3 has its top plate on top, so it must be printed flipped to avoid supports. OLED test.stl crops the OLED area from the assembled Layer 1 and 2 geometry, joining a tower split across the layer boundary into one test part.',
     secPreset: 'Presets (save/load settings)',
     btnPresetExport: '⬇ Export (.json)', btnPresetImport: '⬆ Import',
+    syncLogin: '☁ Sign in with Google', syncReconnect: '☁ Reconnect Google', syncLogout: 'Sign out',
+    syncCommit: '💾 Set as saved version', syncRevertAllBtn: '↺ Revert all',
+    syncLocalOnly: 'Saved in this browser only (Google sign-in not configured)',
+    syncSignedOut: 'Saved in this browser only — sign in to auto-save to Google Drive',
+    syncExpired: 'Google session ended — press Reconnect to resume auto-save',
+    syncBusy: '☁ Syncing…',
+    syncOk: (mail, time) => `☁ Auto-saved to Drive${mail ? ' · ' + mail : ''} · ${time}`,
+    syncDiffN: n => `${n} option${n > 1 ? 's differ' : ' differs'} from the saved version`,
+    syncDiffNone: time => `Same as saved version${time ? ' (' + time + ')' : ''}`,
+    syncRevertOne: v => `Revert to saved value: ${v}`,
     hintPreset: 'Save all current settings to a .json file, or load a saved file to restore them exactly. You can manage multiple designs as files.',
     woHead: 'Wiring table',
     woHint: 'Auto-updates with current settings · right-click a wire/label to change GPIO',
@@ -561,6 +574,16 @@ const STATIC_I18N = {
     hintExport: '3층은 상판이 위에 있어서 뒤집어 출력해야 서포트가 없습니다. OLED 테스트.stl은 조립된 1·2층 형상에서 OLED 주변을 잘라내며, 층 경계에서 나뉜 타워도 하나의 테스트 파트로 합쳐 저장합니다.',
     secPreset: '프리셋 (설정 저장/불러오기)',
     btnPresetExport: '⬇ 내보내기 (.json)', btnPresetImport: '⬆ 불러오기',
+    syncLogin: '☁ 구글 로그인', syncReconnect: '☁ 구글 다시 연결', syncLogout: '로그아웃',
+    syncCommit: '💾 저장본으로 확정', syncRevertAllBtn: '↺ 모두 되돌리기',
+    syncLocalOnly: '이 브라우저에만 저장됨 (구글 로그인 미설정)',
+    syncSignedOut: '이 브라우저에만 저장됨 — 로그인하면 구글 드라이브에 자동 저장',
+    syncExpired: '구글 연결이 끊김 — 다시 연결을 누르면 자동 저장 재개',
+    syncBusy: '☁ 동기화 중…',
+    syncOk: (mail, time) => `☁ 드라이브에 자동 저장됨${mail ? ' · ' + mail : ''} · ${time}`,
+    syncDiffN: n => `저장본과 다른 항목 ${n}개`,
+    syncDiffNone: time => `저장본과 같음${time ? ' (' + time + ' 확정)' : ''}`,
+    syncRevertOne: v => `저장본 값으로 되돌리기: ${v}`,
     hintPreset: '현재 모든 설정을 .json 파일로 저장하거나, 저장해둔 파일을 불러와 그대로 복원합니다. 여러 디자인을 파일로 관리할 수 있습니다.',
     woHead: '배선표',
     woHint: '현재 설정에 맞춰 자동 갱신 · 전선/라벨 우클릭으로 GPIO 변경',
@@ -696,6 +719,7 @@ function setLang(l) {
   applyStaticI18n();
   applyProductUI();
   syncToggleLabels();
+  syncUI?.();
   renderWireTable();
   updateWires();
   rebuild();
@@ -1030,8 +1054,11 @@ try {
     P.pinRev = 2;
   }
 } catch (e) { /* 무시 */ }
+// 디자인 동기화 블록이 채운다 — 값이 바뀔 때마다 저장본 비교·드라이브 업로드
+let paramsHook = null, syncUI = null;
 const saveParams = () => {
   try { localStorage.setItem('dimsum-params', JSON.stringify(P)); } catch (e) { /* 무시 */ }
+  paramsHook?.();
 };
 function espBarClearance() {
   const value = Number(P.espBarGap);
@@ -1505,6 +1532,17 @@ document.getElementById('presetExport').addEventListener('click', () => {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 });
+// 저장본(JSON 객체)을 P에 덮어쓰고 화면/모델을 갱신한다. 적용된 항목 수를 돌려준다.
+function applyPreset(obj) {
+  let n = 0;
+  for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
+  migrateBuzzerFit(obj);
+  syncControls();
+  applyProductUI();
+  saveParams();
+  rebuild();
+  return n;
+}
 const presetFile = document.getElementById('presetFile');
 document.getElementById('presetImport').addEventListener('click', () => presetFile.click());
 presetFile.addEventListener('change', e => {
@@ -1513,14 +1551,7 @@ presetFile.addEventListener('change', e => {
   const r = new FileReader();
   r.onload = () => {
     try {
-      const obj = JSON.parse(r.result);
-      let n = 0;
-      for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
-      migrateBuzzerFit(obj);
-      syncControls();
-      applyProductUI();
-      saveParams();
-      rebuild();
+      const n = applyPreset(JSON.parse(r.result));
       document.getElementById('warnings').textContent = t('presetLoaded', n);
     } catch (err) {
       document.getElementById('warnings').textContent = t('presetError');
@@ -1530,6 +1561,183 @@ presetFile.addEventListener('change', e => {
   presetFile.value = '';   // 같은 파일 다시 선택 가능하도록
 });
 
+// 디자인별 저장본 + 구글 드라이브 자동 동기화
+// 디자인(제품)마다 작업값(P의 해당 키)과 '저장본'을 따로 둔다. 저장본과 다른 컨트롤은 강조하고
+// 행마다 ↺로 저장본 값으로 되돌린다. 로그인하면 작업값·저장본이 계정 드라이브(designs.json)에 자동 저장된다.
+{
+  const DESIGNS = ['dimsum', 'todo', 'workout', 'plant'];
+  const designMap = {};
+  for (const k in P) {
+    if (k === 'product') continue;
+    const box = document.getElementById(k)?.closest('[data-product]');
+    designMap[k] = box ? box.dataset.product
+      : /^wk/.test(k) ? 'workout' : /^pl/.test(k) ? 'plant' : /^t[A-Z]/.test(k) ? 'todo' : 'dimsum';
+  }
+  const keysOf = d => Object.keys(designMap).filter(k => designMap[k] === d);
+  const pick = d => Object.fromEntries(keysOf(d).map(k => [k, P[k]]));
+  const same = (a, b) => (typeof a === 'number' || typeof b === 'number')
+    ? Math.abs(Number(a) - Number(b)) < 1e-9 : a === b;
+
+  // meta: 디자인별 저장본(saved)과 시각(savedAt), 작업값 마지막 수정 시각(updatedAt)
+  const META_KEY = 'dimsum-designs';
+  let meta = { saved: {}, savedAt: {}, updatedAt: {} };
+  try { Object.assign(meta, JSON.parse(localStorage.getItem(META_KEY) || '{}')); } catch (e) { /* 무시 */ }
+  for (const d of DESIGNS) {
+    meta.saved[d] ||= {};
+    // 저장본에 없는 키(처음 쓰거나 새로 생긴 옵션)는 현재 값을 기준으로 삼는다
+    for (const k of keysOf(d)) if (!(k in meta.saved[d])) meta.saved[d][k] = P[k];
+  }
+  const persistMeta = () => { try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch (e) { /* 무시 */ } };
+  persistMeta();
+
+  // 저장본과 비교할 컨트롤: P 키와 id가 같은 슬라이더/체크박스/셀렉트 중 .row 안에 있는 것
+  const tracked = [];
+  for (const k in designMap) {
+    const el = document.getElementById(k);
+    const row = el?.closest('.row');
+    if (!row || !/^(range|checkbox|select-one)$/.test(el.type)) continue;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rb';
+    btn.textContent = '↺';
+    btn.addEventListener('click', () => revert([k]));
+    row.appendChild(btn);
+    tracked.push({ k, el, row, btn });
+  }
+  const changedKeys = d => keysOf(d).filter(k => !same(P[k], meta.saved[d][k]));
+  const fmtVal = v => typeof v === 'boolean' ? (v ? 'ON' : 'OFF') : String(v);
+
+  function revert(keys) {
+    const d = P.product;
+    for (const k of keys) P[k] = meta.saved[d][k];
+    syncControls();
+    applyProductUI();
+    saveParams();
+    rebuild();
+  }
+
+  const $ = id => document.getElementById(id);
+  let status = { kind: 'local' }, email = '';
+  const fmtTime = ts => new Date(ts).toLocaleTimeString(LANG === 'ko' ? 'ko-KR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+  function render() {
+    const d = P.product;
+    const changed = new Set(changedKeys(d));
+    for (const { k, row, btn } of tracked) {
+      const on = designMap[k] === d && changed.has(k);
+      row.classList.toggle('changed', on);
+      if (on) btn.title = t('syncRevertOne', fmtVal(meta.saved[d][k]));
+    }
+    document.querySelectorAll('#panel details').forEach(det => {
+      det.classList.toggle('has-changed', !!det.querySelector('.row.changed'));
+    });
+    $('syncDiff').textContent = changed.size ? t('syncDiffN', changed.size)
+      : t('syncDiffNone', meta.savedAt[d] ? fmtTime(meta.savedAt[d]) : '');
+    $('syncCommit').disabled = !changed.size;
+    $('syncRevertAll').disabled = !changed.size;
+    const signed = cloud.isSignedIn();
+    $('syncLogin').hidden = !cloud.CLIENT_ID || signed;
+    $('syncLogin').textContent = t(cloud.wasSignedIn() ? 'syncReconnect' : 'syncLogin');
+    $('syncOut').hidden = !signed;
+    $('syncStatus').textContent = !cloud.CLIENT_ID ? t('syncLocalOnly')
+      : status.kind === 'busy' ? t('syncBusy')
+      : status.kind === 'ok' ? t('syncOk', email, fmtTime(status.at))
+      : status.kind === 'error' ? t('cloudError', status.msg)
+      : cloud.wasSignedIn() ? t('syncExpired') : t('syncSignedOut');
+    $('syncStatus').classList.toggle('err', status.kind === 'error');
+  }
+
+  const buildDoc = () => ({
+    v: 1, product: P.product,
+    designs: Object.fromEntries(DESIGNS.map(d => [d, {
+      params: pick(d), saved: meta.saved[d], savedAt: meta.savedAt[d] || 0, updatedAt: meta.updatedAt[d] || 0,
+    }])),
+  });
+  let uploadTimer = null, uploading = null;
+  async function upload() {
+    if (!cloud.isSignedIn()) { status = { kind: 'local' }; render(); return; }
+    status = { kind: 'busy' }; render();
+    try {
+      await (uploading = cloud.saveToDrive(buildDoc()));
+      status = { kind: 'ok', at: Date.now() };
+    } catch (err) {
+      status = { kind: 'error', msg: err.message };
+    } finally { uploading = null; }
+    render();
+  }
+  const scheduleUpload = () => { clearTimeout(uploadTimer); uploadTimer = setTimeout(upload, 1500); };
+
+  // saveParams()마다 호출 — 실제로 바뀐 디자인만 수정 시각을 올리고 업로드를 예약한다
+  const lastJson = Object.fromEntries(DESIGNS.map(d => [d, JSON.stringify(pick(d))]));
+  let quiet = false;
+  paramsHook = () => {
+    let dirty = false;
+    for (const d of DESIGNS) {
+      const j = JSON.stringify(pick(d));
+      if (j === lastJson[d]) continue;
+      lastJson[d] = j;
+      if (!quiet) meta.updatedAt[d] = Date.now();
+      dirty = true;
+    }
+    if (dirty) { persistMeta(); if (!quiet) scheduleUpload(); }
+    render();
+  };
+  syncUI = render;
+
+  // 로그인: 드라이브 저장본과 합친다 — 디자인마다 더 최근에 수정된 쪽의 작업값·저장본을 쓴다
+  $('syncLogin').addEventListener('click', async () => {
+    if (!cloud.CLIENT_ID) return;
+    $('syncLogin').disabled = true;
+    status = { kind: 'busy' }; render();
+    try {
+      await cloud.signIn();
+      email = await cloud.getEmail();
+      const remote = (await cloud.loadFromDrive())?.data?.designs || {};
+      let pulled = false;
+      for (const d of DESIGNS) {
+        const r = remote[d];
+        if (!r) continue;
+        if ((r.updatedAt || 0) > (meta.updatedAt[d] || 0)) {
+          for (const k in r.params) if (designMap[k] === d) P[k] = r.params[k];
+          meta.updatedAt[d] = r.updatedAt;
+          pulled = true;
+        }
+        if ((r.savedAt || 0) > (meta.savedAt[d] || 0)) {
+          Object.assign(meta.saved[d], r.saved);
+          meta.savedAt[d] = r.savedAt;
+        }
+      }
+      persistMeta();
+      if (pulled) {
+        quiet = true;
+        migrateBuzzerFit(P);
+        syncControls();
+        applyProductUI();
+        saveParams();
+        quiet = false;
+        rebuild();
+      }
+      await upload();
+    } catch (err) {
+      status = { kind: 'error', msg: err.message };
+    } finally {
+      $('syncLogin').disabled = false;
+      render();
+    }
+  });
+  $('syncOut').addEventListener('click', () => { cloud.signOut(); email = ''; status = { kind: 'local' }; render(); });
+  $('syncCommit').addEventListener('click', () => {
+    const d = P.product;
+    meta.saved[d] = pick(d);
+    meta.savedAt[d] = Date.now();
+    persistMeta();
+    scheduleUpload();
+    render();
+  });
+  $('syncRevertAll').addEventListener('click', () => revert(changedKeys(P.product)));
+  // 창을 닫기 직전 대기 중인 업로드를 바로 보낸다
+  window.addEventListener('pagehide', () => { if (uploadTimer && cloud.isSignedIn()) { clearTimeout(uploadTimer); upload(); } });
+  render();
+}
 // ------------------------------------------------------------------
 // three.js 씬
 // ------------------------------------------------------------------

@@ -44,6 +44,21 @@
   button.ghost { background: #f1ead7; color: #6b5d43; }
   /* 측면 텍스처: 선택된 버튼만 강조 */
   #texBtns button.on { background: #e9b95f; color: #4d3a14; box-shadow: inset 0 0 0 2px #b98a2e; }
+  /* 디자인 저장본 / 드라이브 동기화 */
+  #syncBar { margin: -4px 0 12px; padding: 8px 10px; border: 1px solid #eee4cf; border-radius: 10px; background: #fffaf0; }
+  .sync-row { display: flex; align-items: center; gap: 6px; }
+  .sync-row + .sync-row { margin-top: 6px; }
+  .sync-row > span { flex: 1; min-width: 0; font-size: 11px; color: #8b7f60; line-height: 1.35; }
+  #syncStatus.err { color: #b3492c; }
+  button.sm { padding: 4px 8px; font-size: 11px; white-space: nowrap; }
+  button.sm:disabled { opacity: .45; cursor: default; }
+  .row .rb { display: none; flex: 0 0 auto; padding: 0 5px; font-size: 12px; line-height: 18px;
+             background: #f6c66a; color: #5a3f0c; border-radius: 5px; }
+  .row.changed { background: #fff1d2; border-radius: 6px; box-shadow: 0 0 0 4px #fff1d2; }
+  .row.changed label { color: #a8651a; font-weight: 600; }
+  .row.changed .val { color: #a8651a; }
+  .row.changed .rb { display: inline-block; }
+  details.has-changed > summary::after { content: " ●"; color: #e3972c; }
   #warnings { margin-top: 10px; font-size: 11px; color: #b3492c; line-height: 1.5; white-space: pre-line; }
   #dims { margin-top: 8px; font-size: 11px; color: #74a06c; line-height: 1.5; white-space: pre-line; }
   /* 3D 뷰 좌상단 보기 토글 아이콘 (부품·배선·반투명·치수) */
@@ -135,6 +150,19 @@
       <div class="sub" data-i18n="sub">Move the sliders to redesign the STL in real time</div>
     </div>
     <button id="settingsBtn" class="gear" data-i18n-title="secSettings" title="Settings" aria-label="Settings">⚙</button>
+  </div>
+
+  <div id="syncBar">
+    <div class="sync-row">
+      <span id="syncStatus"></span>
+      <button class="ghost sm" id="syncLogin" hidden data-i18n="syncLogin">☁ Sign in with Google</button>
+      <button class="ghost sm" id="syncOut" hidden data-i18n="syncLogout">Sign out</button>
+    </div>
+    <div class="sync-row">
+      <span id="syncDiff"></span>
+      <button class="ghost sm" id="syncRevertAll" data-i18n="syncRevertAllBtn">↺ Revert all</button>
+      <button class="sm" id="syncCommit" data-i18n="syncCommit">💾 Set as saved version</button>
+    </div>
   </div>
 
   <details open data-product="dimsum">

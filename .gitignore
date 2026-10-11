@@ -16,3 +16,5 @@ Icon
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
+# Vite 로컬 환경변수
+.env.local
