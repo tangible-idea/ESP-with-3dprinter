@@ -797,8 +797,9 @@ export function initWorkout(env) {
                                 q.lidCageH - 0.5, x114Btn().hole / 2));
       lid = sub(lid, boxBrush(X114.micD, X114.micD, LID_PLATE + 1, b.cx + X114.mic[0],
                               b.y + X114.mic[1], q.lidCageH - 0.5, X114.micD / 2));
-      // LCD 양옆 PCB 가장자리를 눌러 보드를 잡는 리브 (LCD는 건드리지 않음)
-      const ribZ0 = b.faceZ + 0.1 - toLid;
+      // LCD 양옆 PCB 가장자리 위로 내려오는 리브 — 보드가 들뜨는 것만 막는다.
+      // 면에 붙여(0.1) 누르면 LCD까지 눌려서, PCB 면에서 0.6 띄워 짧게 끝낸다.
+      const ribZ0 = b.faceZ + 0.6 - toLid;
       if (q.lidCageH - ribZ0 > 0.1)
         for (const sv of [-1, 1])
           lid = add(lid, boxBrush(22, 1.2, q.lidCageH - ribZ0 + 0.1, b.cx - 8.5,
