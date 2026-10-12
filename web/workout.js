@@ -359,7 +359,37 @@ export function initWorkout(env) {
       body = add(body, ring(j.outW - 2 * fit, j.outD - 2 * fit,
                             j.inW + 2 * fit, j.inD + 2 * fit,
                             BASE_JOINT_H - 0.2, q.baseH, Math.max(0.6, r - q.wall - fit)));
+    if (P.wkLoopOn) body = add(body, meshBrush(loopTabGeo(q)));
     return body;
+  }
+
+  // 키링 고리 탭: 1층 +X 끝(USB 반대쪽, KY-035에서도 먼 쪽)에 바닥과 같은 면으로 붙여
+  // 자석면이 평평하게 남고 서포트 없이 출력된다. 끝이 반원인 판에 고리 구멍을 뚫는다.
+  // 몸통 쪽은 1mm 파묻어 확실히 합친다(배터리 포켓까지는 닿지 않음). Y는 +X 끝의
+  // 평평한 구간 안으로 묶어 라운드 모서리와 탭 사이에 틈이 생기지 않게 한다.
+  function loopDims(q) {
+    const holeR = Math.max(1, Number(P.wkLoopD) || 4) / 2;
+    const outR = holeR + Math.max(1.2, Number(P.wkLoopRim) || 2.2);
+    const yLim = Math.max(0, q.D / 2 - caseR(q) - outR + 0.5);
+    const y = Math.max(-yLim, Math.min(yLim, Number(P.wkLoopY) || 0));
+    const h = Math.max(1.2, Math.min(q.baseH, Number(P.wkLoopT) || 3));
+    return { holeR, outR, y, h, cx: q.W / 2 + 1.0 + holeR, x0: q.W / 2 - 1.0 };
+  }
+
+  function loopTabGeo(q) {
+    const l = loopDims(q);
+    const s = new THREE.Shape();
+    s.moveTo(l.x0, l.y - l.outR);
+    s.lineTo(l.cx, l.y - l.outR);
+    s.absarc(l.cx, l.y, l.outR, -Math.PI / 2, Math.PI / 2, false);
+    s.lineTo(l.x0, l.y + l.outR);
+    s.closePath();
+    const hole = new THREE.Path();
+    hole.absarc(l.cx, l.y, l.holeR, 0, Math.PI * 2, true);
+    s.holes.push(hole);
+    const g = new THREE.ExtrudeGeometry(s, { depth: l.h, bevelEnabled: false, curveSegments: 32 });
+    g.deleteAttribute('uv');
+    return g;
   }
 
   // TP4056 충전 포트: 딤섬 클리커와 같은 나팔형 USB-C 툴로 뚫어 플러그가 비스듬히
@@ -1333,7 +1363,11 @@ export function initWorkout(env) {
         applyWorkoutExplode(); setRulerExtras('workout', workoutRulerDims(lastLayout));
         const totalH = lastLayout.baseH + lastLayout.trayTop + LID_PLATE
           + (oledOn() ? oledDims().rimH + oledLift() : 0);
-        const totalW = oledOn() ? Math.max(lastLayout.W, oledDims().outW) : lastLayout.W;
+        let totalW = oledOn() ? Math.max(lastLayout.W, oledDims().outW) : lastLayout.W;
+        if (P.wkLoopOn) {   // 고리 탭은 +X로만 튀어나온다
+          const l = loopDims(lastLayout);
+          totalW = Math.max(totalW, lastLayout.W / 2 + l.cx + l.outR);
+        }
         const totalD = oledOn() ? Math.max(lastLayout.D, oledDims().outD) : lastLayout.D;
         document.getElementById('dims').textContent =
           t('workoutDims', totalW.toFixed(1), totalD.toFixed(1), totalH.toFixed(1),

@@ -413,6 +413,8 @@ const STATIC_I18N = {
     // 운동 모션 센서
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
     lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance',
+    lblWkLoopOn: 'Keyring loop', lblWkLoopD: 'Loop hole Ø', lblWkLoopRim: 'Loop rim', lblWkLoopT: 'Loop thickness', lblWkLoopY: 'Loop Y position',
+    hintWkLoop: 'A tab with a keyring hole on the +X end of the base (opposite USB, away from the KY-035). It sits flush with the magnet face, so it prints without supports and the case still lies flat on steel. Ø4 fits a typical 1mm jump ring or lobster clasp for a kettlebell charm.',
     lblWkMagSkin: 'Magnet skin', lblWkMagH: 'Magnet thickness', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
     lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
@@ -604,6 +606,8 @@ const STATIC_I18N = {
     // 운동 모션 센서
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
     lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격',
+    lblWkLoopOn: '키링 고리', lblWkLoopD: '고리 구멍 지름', lblWkLoopRim: '구멍 둘레 살', lblWkLoopT: '고리 두께', lblWkLoopY: '고리 Y 위치',
+    hintWkLoop: '1층 +X 끝(USB 반대쪽, KY-035에서 먼 쪽)에 키링 구멍이 있는 탭을 붙입니다. 자석면과 같은 바닥에 붙어 서포트 없이 출력되고, 쇠판에 붙일 때도 평평하게 닿습니다. Ø4면 케틀벨 참 장식의 1mm 오링이나 랍스터 고리가 들어갑니다.',
     lblWkMagSkin: '자석 앞 스킨', lblWkMagH: '자석 두께', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
     lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
@@ -954,6 +958,7 @@ const P = {
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
+  wkLoopOn: true, wkLoopD: 4.0, wkLoopRim: 2.2, wkLoopT: 3.0, wkLoopY: 0,   // 1층 +X 끝 키링 고리 탭 (구멍 지름, 구멍 둘레 살, 두께, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
@@ -1074,7 +1079,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopRim','wkLoopT','wkLoopY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1131,6 +1136,8 @@ const applyWorkoutOptionsUI = () => {
   const tftOnly = P.wkEspType === 'tft', tft = tftOnly || x114, mini = !xiao && !tft;
   for (const id of ['wkHallGap', 'wkHallT'])
     document.getElementById(id).disabled = !P.wkHallOn;
+  for (const id of ['wkLoopD', 'wkLoopRim', 'wkLoopT', 'wkLoopY'])
+    document.getElementById(id).disabled = !P.wkLoopOn;
   document.getElementById('wkSwOn').checked = P.wkSwOn && mini;
   document.getElementById('wkSwOn').disabled = !mini;
   document.getElementById('wkModType').disabled = !mini;
@@ -1187,6 +1194,12 @@ document.getElementById('wkEspType').addEventListener('change', e => {
 document.getElementById('wkHallOn').checked = P.wkHallOn;
 document.getElementById('wkOledOn').checked = P.wkOledOn;
 applyWorkoutOptionsUI();
+document.getElementById('wkLoopOn').checked = P.wkLoopOn;
+document.getElementById('wkLoopOn').addEventListener('change', e => {
+  P.wkLoopOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
 document.getElementById('wkHallOn').addEventListener('change', e => {
   P.wkHallOn = e.target.checked;
   applyWorkoutOptionsUI();
