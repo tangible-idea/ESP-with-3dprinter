@@ -144,7 +144,7 @@
   body.prod-plant [data-product="plant"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-Chf_7IoR.js"></script>
+  <script type="module" crossorigin src="/assets/index-D54p4wv2.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -389,6 +389,12 @@
       <div class="row"><label data-i18n="lblWkBodyH">Body height</label><input type="range" id="wkBodyH" min="7" max="22" step="0.5" value="11.5"><span class="val" id="wkBodyHv"></span></div>
       <div class="row"><label data-i18n="lblWkWall">Wall thickness</label><input type="range" id="wkWall" min="1.2" max="3" step="0.1" value="1.6"><span class="val" id="wkWallv"></span></div>
       <div class="row"><label data-i18n="lblWkRound">Corner rounding</label><input type="range" id="wkRound" min="0" max="8" step="0.5" value="5.5"><span class="val" id="wkRoundv"></span></div>
+      <div class="row"><label data-i18n="lblWkLoopOn">Keyring loop</label><input type="checkbox" id="wkLoopOn" checked></div>
+      <div class="row"><label data-i18n="lblWkLoopD">Loop hole Ø</label><input type="range" id="wkLoopD" min="2" max="7" step="0.1" value="4"><span class="val" id="wkLoopDv"></span></div>
+      <div class="row"><label data-i18n="lblWkLoopRim">Loop rim</label><input type="range" id="wkLoopRim" min="1.2" max="5" step="0.1" value="2.2"><span class="val" id="wkLoopRimv"></span></div>
+      <div class="row"><label data-i18n="lblWkLoopT">Loop thickness</label><input type="range" id="wkLoopT" min="1.2" max="8" step="0.1" value="3"><span class="val" id="wkLoopTv"></span></div>
+      <div class="row"><label data-i18n="lblWkLoopY">Loop Y position</label><input type="range" id="wkLoopY" min="-10" max="10" step="0.5" value="0"><span class="val" id="wkLoopYv"></span></div>
+      <div class="hint" data-i18n="hintWkLoop">A tab with a keyring hole on the +X end of the base.</div>
       <div class="row"><label data-i18n="lblWkFit">Lid clearance</label><input type="range" id="wkFit" min="0.05" max="0.5" step="0.05" value="0.15"><span class="val" id="wkFitv"></span></div>
       <div class="row"><label data-i18n="lblWkBatH">Battery thickness</label><input type="range" id="wkBatH" min="3" max="9" step="0.1" value="4"><span class="val" id="wkBatHv"></span></div>
       <div class="row"><label data-i18n="lblWkMagH">Magnet thickness</label><input type="range" id="wkMagH" min="0.5" max="4" step="0.1" value="2"><span class="val" id="wkMagHv"></span></div>
@@ -427,6 +433,12 @@
       <div class="row"><label data-i18n="lblWkX114BtnCatch">XIAO 1.14" button cap catch</label><input type="range" id="wkX114BtnCatch" min="0" max="0.4" step="0.05" value="0.15"><span class="val" id="wkX114BtnCatchv"></span></div>
       <div class="row"><label data-i18n="lblWkX114LcdRecess">XIAO 1.14" lid recess over LCD</label><input type="range" id="wkX114LcdRecess" min="0" max="1.2" step="0.1" value="0.5"><span class="val" id="wkX114LcdRecessv"></span></div>
       <div class="hint" data-i18n="hintWkX114">Seeed XIAO 1.14" IPS lies display-up in the tray.</div>
+      <div class="row"><label data-i18n="lblWkX114SwCapOn">XIAO 1.14" side switch slider cap</label><input type="checkbox" id="wkX114SwCapOn" checked></div>
+      <div class="row"><label data-i18n="lblWkX114SwFork">Switch cap fork opening</label><input type="range" id="wkX114SwFork" min="1.6" max="3" step="0.1" value="2.1"><span class="val" id="wkX114SwForkv"></span></div>
+      <div class="row"><label data-i18n="lblWkX114SwTravel">Switch travel</label><input type="range" id="wkX114SwTravel" min="0.8" max="2.5" step="0.1" value="1.5"><span class="val" id="wkX114SwTravelv"></span></div>
+      <div class="row"><label data-i18n="lblWkX114SwFit">Slider clearance per side</label><input type="range" id="wkX114SwFit" min="0.15" max="0.4" step="0.05" value="0.25"><span class="val" id="wkX114SwFitv"></span></div>
+      <div class="row"><label data-i18n="lblWkX114SwPos">Slider preview position (0 / 1)</label><input type="range" id="wkX114SwPos" min="0" max="1" step="1" value="0"><span class="val" id="wkX114SwPosv"></span></div>
+      <div class="hint" data-i18n="hintWkX114SwCap">Fit the slider into the wall guide from above before the board; close the lid to retain it. Test print the photo/STEP-based fit.</div>
       <div class="row"><label data-i18n="lblWkEspCaseH">ESP section height</label><input type="range" id="wkEspCaseH" min="2.4" max="12" step="0.2" value="5.2"><span class="val" id="wkEspCaseHv"></span></div>
       <div class="hint" data-i18n="hintWkEspCaseH">Adjusts the case height around the selected ESP board and the overall model height.</div>
       <div class="row"><label data-i18n="lblWkTrayFloor">Tray floor thickness</label><input type="range" id="wkTrayFloor" min="0.4" max="4.4" step="0.1" value="3.4"><span class="val" id="wkTrayFloorv"></span></div>
@@ -475,6 +487,7 @@
         <button id="wkExLid" data-i18n="btnWkExLid">Workout lid.stl</button>
         <button id="wkExBezel" data-i18n="btnWkExBezel">OLED bezel.stl</button>
         <button id="wkExCaps" data-i18n="btnWkExCaps" disabled>Front button caps.stl</button>
+        <button id="wkExSwitchCap" data-i18n="btnWkExSwitchCap" disabled>Side switch slider.stl</button>
       </div>
       <div class="hint" data-i18n="hintWorkoutExport">Print the base and tray as shown. The lid export is automatically flipped so its flat top rests on the bed; no supports are required.</div>
     </div>

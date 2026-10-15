@@ -2,6 +2,8 @@
 // 1) KY-035+자석+배터리 베이스, 2) 충전모듈 또는 XIAO+MPU6050 트레이, 3) SuperMini 또는 OLED 뚜껑.
 // 좌표: X=배터리 40mm 방향, Y=20mm/운동 상하 방향, Z=자석면→뚜껑.
 
+import { xiaoSwitchSliderDims, buildXiaoSwitchSlider, cutXiaoSwitchGuide, addXiaoSwitchStop } from './xiao-switch-slider.js';
+
 export function initWorkout(env) {
   const {
     THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
@@ -56,8 +58,9 @@ export function initWorkout(env) {
     usb: { v: 0, w: -4.34, over: 1.39 },           // XIAO 위 USB-C 셸 중심 (PCB 끝 밖 1.39)
     btns: [[14.35, 6.95], [14.35, -6.95]],         // 앞면 버튼 A·B (참고 구멍 Ø7.7)
     mic: [14.9, 0], micD: 2.3,   // 버튼 구멍은 wkX114BtnD(캡 기둥) + 0.3 (참고 인클로저는 Ø7.7)
-    // 옆면 부품 (+v 긴 변): 버튼 C(TS-1084)와 그 옆 스위치. [u0, u1, w0, w1]
-    side: [[12.82, 17.28, -4.92, -1.15], [3.99, 10.69, -3.09, -1.15]],
+    // 옆면 부품 (+v 긴 변): 버튼 C와 스위치의 높이를 작은 스위치 기준 1.94mm로 통일.
+    // [u0, u1, w0, w1] — 같은 Z 범위를 써서 미리보기와 케이스 구멍 높이를 함께 맞춘다.
+    side: [[12.82, 17.28, -3.09, -1.15], [3.99, 10.69, -3.09, -1.15]],
     ph: { u: 7.45, v: -5.5 },                      // PH2.0 (플러그는 -v 긴 변으로 나옴)
     grove: { u: 17.8, l: 10.5, w: 12, d: 5.28 },
     xiao: { u0: -23.21, u1: -2.07, w: 17.78 },
@@ -65,6 +68,8 @@ export function initWorkout(env) {
     ribs: [[-22.45, 2.35], [17.85, 22.85]],
   };
   const x114On = () => P.wkEspType === 'x114';
+  const switchCapOn = () => x114On() && P.wkX114SwCapOn;
+  const sliderCSG = { boxBrush, add, sub };
   // 앞 버튼 캡 기둥 지름(wkX114BtnD). 구멍은 0.3 크게, 걸림 턱은 1.7 크게(참고 캡 7.4 → 9.1 비율).
   const x114Btn = () => {
     const stem = Math.max(2.5, Math.min(7.4, Number(P.wkX114BtnD) || 4.5));
@@ -183,11 +188,12 @@ export function initWorkout(env) {
   const oledLift = () => (oledOn() && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
-  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null;
+  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null, switchCapGeo = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
   const mpuMat = partMat(0x3c9b70);
   const hallMat = partMat(0x8f5aa8);
   const switchMat = partMat(0xb0752f);
+  const switchLeverMat = partMat(0x252525);
   const oledBoardMat = partMat(0x235c48);
   const tftPcbMat = partMat(0x1d1f24);
   const jstMat = partMat(0xe8e4d8);
@@ -493,10 +499,12 @@ export function initWorkout(env) {
     tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
                           q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
     // 옆 버튼 창: 부품 외형 + 0.5 여유로 +Y 벽을 관통
-    for (const [u0, u1, w0, w1] of X114.side)
+    for (const [u0, u1, w0, w1] of (switchCapOn() ? X114.side.slice(0, 1) : X114.side))
       tray = sub(tray, boxBrush(u1 - u0 + 1.0, q.wall + 2, w1 - w0 + 1.0,
                                 b.cx + (u0 + u1) / 2, q.D / 2 - q.wall / 2,
                                 b.faceZ + w0 - 0.5, 0.4));
+    if (switchCapOn())
+      tray = cutXiaoSwitchGuide(tray, q, xiaoSwitchSliderDims(q, P), sliderCSG);
     tray = sub(tray, usbCut(q));
     return tray;
   }
@@ -850,6 +858,8 @@ export function initWorkout(env) {
         for (const sv of [-1, 1])
           lid = add(lid, boxBrush(22, 1.2, q.lidCageH - ribZ0 + 0.1, b.cx - 8.5,
                                   b.y + sv * (X114.w / 2 - 0.9), ribZ0, 0.3));
+      if (switchCapOn())
+        lid = addXiaoSwitchStop(lid, q, xiaoSwitchSliderDims(q, P), toLid, sliderCSG);
     }
     if (pinsUp()) {
       // 납땜된 핀헤더 16핀이 상판을 지나 위로 나오는 구멍. 0.64 각핀은 대각이 0.9라
@@ -979,8 +989,12 @@ export function initWorkout(env) {
       ghostBox(G[1], [7.9, 8.6, 5.6], [X(X114.ph.u), Y(X114.ph.v), Z(-X114.pcb - 2.8)], jstMat);
       ghostBox(G[1], [X114.grove.l, X114.grove.w, X114.grove.d],
                [X(X114.grove.u), b.y, Z(-X114.pcb - X114.grove.d / 2)], jstMat);
-      for (const [u0, u1, w0, w1] of X114.side)
+      for (const [u0, u1, w0, w1] of X114.side.slice(0, 1))
         ghostBox(G[1], [u1 - u0, 3.5, w1 - w0], [X((u0 + u1) / 2), Y(X114.w / 2 - 1.2), Z((w0 + w1) / 2)], switchMat);
+      // 스위치 몸체와 돌기를 분리해 포크가 몸체 대신 움직이는 돌기에 걸리는지 보인다.
+      const sc = xiaoSwitchSliderDims(q, P);
+      ghostBox(G[1], [6.7, 2.8, 1.4], [X(7.35), Y(10.75), Z(-2.395)], switchMat);
+      ghostBox(G[1], [1.6, 1.5, 1.0], [sc.x, Y(12.9), sc.z], switchLeverMat);
       const lz = q.trayTop - q.lidCageH;
       for (const [u, v] of X114.btns)
         for (const g of x114CapGeo(q)) ghostGeo(G[2], g, [X(u), Y(v), b.faceZ + b.btnH - lz], hallMat);
@@ -1255,6 +1269,14 @@ export function initWorkout(env) {
         warnings.push(t('wkX114Fit', needW.toFixed(1), needD.toFixed(1)));
       if (b.compD < X114.compD + 0.2)
         warnings.push(t('wkX114CompFit', (X114.compD + 0.3).toFixed(1)));
+      if (switchCapOn()) {
+        const c = xiaoSwitchSliderDims(q, P);
+        if (c.inner - (b.y + 13.65) < c.fit + 0.3
+            || c.inner - c.fit - c.flangeT < b.y + X114.w / 2 + 0.1)
+          warnings.push(t('wkX114SwRoom'));
+        if (c.slotBottom < TRAY_FLOOR + 0.8)
+          warnings.push(t('wkX114SwFloor'));
+      }
     } else {
       const pairNeedW = trayBoard().w + q.mpu.w + 2 * CLR + 1.0 + 2 * q.wall;
       if (q.W + 0.01 < pairNeedW) warnings.push(t('wkRowOverlap'));
@@ -1339,9 +1361,10 @@ export function initWorkout(env) {
         const { xray } = getView();
         meshes = geos.map(g => new THREE.Mesh(g, xray ? matCaseX : matCase));
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
-        bezelGeo = null; capGeo = null;
+        bezelGeo = null; capGeo = null; switchCapGeo = null;
         document.getElementById('wkExBezel').disabled = !oledOn() || oledPlug();
         document.getElementById('wkExCaps').disabled = !x114On();
+        document.getElementById('wkExSwitchCap').disabled = !switchCapOn();
         if (x114On()) {
           // 앞면 버튼 캡 2개 (걸림 턱이 베드에 닿는 출력 방향)
           const q0 = layout();
@@ -1349,6 +1372,16 @@ export function initWorkout(env) {
           X114.btns.forEach(([u, v], i) => x114CapGeo(q0).forEach(g => {
             g.translate(i * 12 - 6, 0, 0); mergeCaps.push(g); }));
           capGeo = mergeCaps;
+        }
+        if (switchCapOn()) {
+          const q0 = layout(), c = xiaoSwitchSliderDims(q0, P);
+          const cap = buildXiaoSwitchSlider(c, sliderCSG);
+          switchCapGeo = manToGeo(cap); cap.delete();
+          const capMesh = new THREE.Mesh(switchCapGeo, xray ? matCaseX : matCase);
+          capMesh.name = 'xiao114_switch_slider';
+          capMesh.userData.caseLike = true;
+          capMesh.position.set(c.x, c.outer, c.z);
+          G[1].add(capMesh);
         }
         if (oledOn() && !oledPlug()) {
           const bm = buildBezel(layout());
@@ -1368,7 +1401,11 @@ export function initWorkout(env) {
           const l = loopDims(lastLayout);
           totalW = Math.max(totalW, lastLayout.W / 2 + l.cx + l.outR);
         }
-        const totalD = oledOn() ? Math.max(lastLayout.D, oledDims().outD) : lastLayout.D;
+        let totalD = oledOn() ? Math.max(lastLayout.D, oledDims().outD) : lastLayout.D;
+        if (switchCapOn()) {
+          const c = xiaoSwitchSliderDims(lastLayout, P);
+          totalD += c.fit + c.gripD;
+        }
         document.getElementById('dims').textContent =
           t('workoutDims', totalW.toFixed(1), totalD.toFixed(1), totalH.toFixed(1),
             (performance.now() - t0).toFixed(0)) + '\n' + t('workoutReady', P.wkHallOn, oledOn());
@@ -1424,6 +1461,17 @@ export function initWorkout(env) {
     for (const g of capGeo) { const b = meshBrush(g); m = m ? add(m, b) : b; }
     const geo = manToGeo(m); m.delete();
     downloadSTL(geo, 'workout_sensor_xiao114_button_caps.stl');
+  });
+
+  document.getElementById('wkExSwitchCap').addEventListener('click', () => {
+    if (!switchCapOn() || !switchCapGeo) return;
+    const geo = switchCapGeo.clone();
+    // 바깥 손잡이 면을 베드에 놓는다. 안쪽 걸림 턱 아래에는 소량의 서포트가 필요하다.
+    geo.rotateX(-Math.PI / 2);
+    geo.computeBoundingBox();
+    geo.translate(0, 0, -geo.boundingBox.min.z);
+    downloadSTL(geo, 'workout_sensor_xiao114_switch_slider.stl');
+    geo.dispose();
   });
 
   return { rebuildWorkout, applyWorkoutExplode, drawWorkoutWires };
