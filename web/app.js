@@ -428,6 +428,10 @@ const STATIC_I18N = {
     lblWkX114CompD: 'XIAO 1.14" floor ↔ PCB (parts side down)', lblWkX114BtnH: 'XIAO 1.14" front button height', lblWkX114BtnD: 'XIAO 1.14" button cap diameter',
     lblWkX114LcdRecess: 'XIAO 1.14" lid recess over LCD',
     lblWkX114BtnCatch: 'XIAO 1.14" button cap catch',
+    lblWkX114BtnFlex: 'XIAO 1.14" front buttons printed in the lid (flexure)', lblWkX114FlexT: 'Flexure arm thickness', lblWkX114BtnGap: 'Plunger ↔ button gap',
+    lblWkX114PinsOn: 'XIAO 1.14" pins through PCB mounting holes', lblWkX114PinFit: 'Lid pin socket clearance per side',
+    hintWkX114Pins: 'Posts rise from the tray through the four Ø2.5 PCB holes. The two near the buttons continue into sockets under the lid, so the lid locks to the tray directly. The middle two stop flush with the PCB because the LCD edge covers them. Lower the clearance for a tighter lid.',
+    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click.',
     lblWkX114SwCapOn: 'XIAO 1.14" side switch slider cap',
     lblWkX114SwFork: 'Switch cap fork opening', lblWkX114SwTravel: 'Switch travel',
     lblWkX114SwFit: 'Slider clearance per side', lblWkX114SwPos: 'Slider preview position (0 / 1)',
@@ -435,7 +439,7 @@ const STATIC_I18N = {
     wkX114SwRoom: '⚠ Switch slider needs more room between the board and +Y wall — increase case depth or move the board toward −Y',
     wkX114SwFloor: '⚠ Switch guide is too close to the tray floor — raise floor↔PCB',
     btnWkExSwitchCap: 'Side switch slider.stl',
-    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, holes for front buttons A/B sized by the cap diameter (print the button caps), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has openings for side button C and the switch next to it. Front button height is estimated from the reference caps — adjust after a test print.',
+    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, front buttons A/B as flush flexure pads in the lid (or holes for separate caps when that option is off), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has openings for side button C and the switch next to it. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
     wkX114CompFit: d => `⚠ Parts under the board (PH2.0 5.6mm deep) hit the tray floor — raise floor↔PCB to ${d}mm or more`,
     btnWkExCaps: 'Front button caps.stl',
@@ -628,6 +632,10 @@ const STATIC_I18N = {
     lblWkX114CompD: 'XIAO 1.14" 바닥↔PCB (부품면 아래)', lblWkX114BtnH: 'XIAO 1.14" 앞 버튼 높이', lblWkX114BtnD: 'XIAO 1.14" 버튼 캡 지름',
     lblWkX114LcdRecess: 'XIAO 1.14" LCD 닿는 면 파냄',
     lblWkX114BtnCatch: 'XIAO 1.14" 버튼 캡 걸림 턱',
+    lblWkX114BtnFlex: 'XIAO 1.14" 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkX114FlexT: '휨 팔 두께', lblWkX114BtnGap: '누름 기둥 ↔ 버튼 틈',
+    lblWkX114PinsOn: 'XIAO 1.14" PCB 고정 구멍 핀', lblWkX114PinFit: '뚜껑 핀 소켓 한쪽 유격',
+    hintWkX114Pins: '트레이에서 올라온 기둥이 PCB의 Ø2.5 구멍 4개를 지나 보드를 잡습니다. 버튼 쪽 두 개는 뚜껑 밑 소켓까지 올라가 뚜껑이 트레이에 직접 맞물리고, 가운데 두 개는 LCD 가장자리가 위를 덮어 PCB 면에서 멈춥니다. 뚜껑을 더 꽉 끼우려면 유격을 줄이세요.',
+    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요.',
     lblWkX114SwCapOn: 'XIAO 1.14" 옆 스위치 슬라이더 캡',
     lblWkX114SwFork: '스위치 캡 끼움 폭', lblWkX114SwTravel: '스위치 이동거리',
     lblWkX114SwFit: '슬라이더 한쪽 유격', lblWkX114SwPos: '슬라이더 미리보기 위치 (0 / 1)',
@@ -635,7 +643,7 @@ const STATIC_I18N = {
     wkX114SwRoom: '⚠ 스위치 슬라이더와 보드 사이가 좁습니다 — 케이스 세로를 늘리거나 보드를 −Y로 옮기세요',
     wkX114SwFloor: '⚠ 스위치 가이드가 트레이 바닥과 너무 가깝습니다 — 바닥↔PCB 높이를 올리세요',
     btnWkExSwitchCap: '옆 스위치 슬라이더.stl',
-    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B용 구멍(캡 지름 + 0.3, 버튼 캡 별도 출력), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C와 그 옆 스위치 창이 뚫립니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
+    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B(기본은 뚜껑 일체형 휨 버튼, 끄면 별도 캡용 구멍), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C와 그 옆 스위치 창이 뚫립니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
     wkX114CompFit: d => `⚠ 보드 밑 부품(PH2.0 깊이 5.6)이 트레이 바닥에 닿습니다 — 바닥↔PCB를 ${d}mm 이상으로 올리세요`,
     btnWkExCaps: '앞 버튼 캡.stl',
@@ -973,7 +981,8 @@ const P = {
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
   wkLoopOn: true, wkLoopD: 4.0, wkLoopRim: 2.2, wkLoopT: 3.0, wkLoopY: 0,   // 1층 +X 끝 키링 고리 탭 (구멍 지름, 구멍 둘레 살, 두께, Y 위치)
-  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
+  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15,
+  wkX114BtnFlex: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkX114SwCapOn: true, wkX114SwFork: 2.1, wkX114SwTravel: 1.5, wkX114SwFit: 0.25, wkX114SwPos: 0,
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
@@ -1095,7 +1104,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopRim','wkLoopT','wkLoopY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch',
+                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114FlexT','wkX114BtnGap','wkX114PinFit',
                  'wkX114SwFork','wkX114SwTravel','wkX114SwFit','wkX114SwPos',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1173,13 +1182,31 @@ const applyWorkoutOptionsUI = () => {
   for (const id of ['wkTftCompH', 'wkTftLcdX', 'wkTftWinW', 'wkTftWinD', 'wkTftWinX'])
     document.getElementById(id).disabled = !tftOnly;
   document.getElementById('wkTftEndGap').disabled = !tft;
-  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess', 'wkX114BtnCatch']) document.getElementById(id).disabled = !x114;
+  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess']) document.getElementById(id).disabled = !x114;
+  document.getElementById('wkX114BtnFlex').checked = P.wkX114BtnFlex;
+  document.getElementById('wkX114BtnFlex').disabled = !x114;
+  document.getElementById('wkX114BtnCatch').disabled = !x114 || P.wkX114BtnFlex;
+  for (const id of ['wkX114FlexT', 'wkX114BtnGap'])
+    document.getElementById(id).disabled = !x114 || !P.wkX114BtnFlex;
+  document.getElementById('wkX114PinsOn').checked = P.wkX114PinsOn;
+  document.getElementById('wkX114PinsOn').disabled = !x114;
+  document.getElementById('wkX114PinFit').disabled = !x114 || !P.wkX114PinsOn;
   document.getElementById('wkX114SwCapOn').checked = P.wkX114SwCapOn;
   document.getElementById('wkX114SwCapOn').disabled = !x114;
   for (const id of ['wkX114SwFork', 'wkX114SwTravel', 'wkX114SwFit', 'wkX114SwPos'])
     document.getElementById(id).disabled = !x114 || !P.wkX114SwCapOn;
 };
 document.getElementById('wkEspType').value = P.wkEspType;
+document.getElementById('wkX114PinsOn').addEventListener('change', e => {
+  P.wkX114PinsOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+document.getElementById('wkX114BtnFlex').addEventListener('change', e => {
+  P.wkX114BtnFlex = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
 document.getElementById('wkX114SwCapOn').addEventListener('change', e => {
   P.wkX114SwCapOn = e.target.checked;
   applyWorkoutOptionsUI();

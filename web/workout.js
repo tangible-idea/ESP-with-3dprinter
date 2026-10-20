@@ -66,6 +66,9 @@ export function initWorkout(env) {
     xiao: { u0: -23.21, u1: -2.07, w: 17.78 },
     // 부품면 밑 받침 리브가 설 수 있는 빈 구간 (긴 변 양쪽)
     ribs: [[-22.45, 2.35], [17.85, 22.85]],
+    // PCB 고정 구멍 Ø2.5 (STEP PCB y=2.5·23, x=±10 → u = 23.35 − y). 버튼 쪽 한 쌍(lid)은
+    // 위가 비어 핀이 뚜껑까지 올라가고, 가운데 한 쌍은 LCD 가장자리가 구멍 위를 덮어 PCB 면에서 멈춘다.
+    holes: [[20.85, 10, true], [20.85, -10, true], [0.35, 10, false], [0.35, -10, false]], holeD: 2.5,
   };
   const x114On = () => P.wkEspType === 'x114';
   const switchCapOn = () => x114On() && P.wkX114SwCapOn;
@@ -75,6 +78,45 @@ export function initWorkout(env) {
     const stem = Math.max(2.5, Math.min(7.4, Number(P.wkX114BtnD) || 4.5));
     return { stem, hole: stem + 0.3, flange: stem + 1.7 };
   };
+  // 앞 버튼을 뚜껑과 한 번에 출력하는 휨 버튼: 상판에 U자 틈을 내 패드를 +X 쪽 경첩에 매단다.
+  // 윗면은 상판과 같은 면이라 뒤집어 출력해도 튀어나오지 않고, 누름 기둥은 패드 밑에 붙는다.
+  const btnFlexOn = () => x114On() && P.wkX114BtnFlex !== false;
+  const FLEX_SLOT = 0.5, FLEX_ARM = 6.5;
+  // PCB 고정 구멍 핀: 트레이 바닥에서 올라온 기둥(어깨가 PCB 밑면을 받침)이 구멍을 지나고,
+  // 버튼 쪽 두 핀은 뚜껑 밑 소켓에 꽂혀 뚜껑을 트레이에 직접 맞춘다. wkX114PinFit = 소켓 한쪽 유격.
+  const pinsOn = () => x114On() && P.wkX114PinsOn !== false;
+  function x114PinDims(q) {
+    const b = q.x114, pinD = X114.holeD - 0.3;
+    const fit = Math.max(0, Math.min(0.3, Number(P.wkX114PinFit ?? 0.1)));
+    const sockD = pinD + 2 * fit, toLid = q.trayTop - q.lidCageH;
+    return { pinD, shoulderD: 3.2, sockD, bossD: sockD + 1.6,
+             tipZ: b.faceZ + Math.min(3.0, q.trayTop - b.faceZ - 0.6), bossZ0: b.faceZ + 0.3, toLid,
+             pins: X114.holes.map(([u, v, up]) => ({ x: b.cx + u, y: b.y + v, up })) };
+  }
+  // 끝을 0.4 모따기한 원기둥 핀 (z0 → z1)
+  function pinGeo(r, z0, z1, x, y) {
+    const c = Math.min(0.4, r * 0.4, (z1 - z0) / 2);
+    const g = new THREE.LatheGeometry([[0, z0], [r, z0], [r, z1 - c], [r - c, z1], [0, z1]]
+      .map(([a, z]) => new THREE.Vector2(a, z)), 40);
+    g.rotateX(Math.PI / 2); g.translate(x, y, 0);
+    g.deleteAttribute('uv'); g.deleteAttribute('normal');
+    return g;
+  }
+  function x114FlexDims(q) {
+    const b = q.x114, pad = x114Btn().stem;
+    const armT = Math.max(0.6, Math.min(LID_PLATE, Number(P.wkX114FlexT) || 0.8));
+    const gap = Math.max(0, Math.min(0.8, Number(P.wkX114BtnGap ?? 0.2)));
+    // 경첩은 뚜껑 결합 텅 안쪽에서 끝낸다(텅은 상판 밑이라 겹쳐도 되지만 상판이 너무 얇아지지 않게).
+    const hingeMax = q.W / 2 - q.wall - jointW() - 0.5;
+    const plungerD = Math.min(2.6, pad - 1.0);
+    const toLid = q.trayTop - q.lidCageH;
+    return { pad, armT, gap, plungerD, armW: Math.min(3.2, pad - 0.8),
+             plungerZ0: b.faceZ + b.btnH + gap - toLid,
+             pads: X114.btns.map(([u, v]) => {
+               const x = b.cx + u, y = b.y + v;
+               return { x, y, hinge: Math.max(x + pad / 2 + 1.5, Math.min(hingeMax, x + FLEX_ARM)) };
+             }) };
+  }
   const dispOn = () => tftOn() || x114On();      // 디스플레이 일체형 보드 (MPU·충전모듈·OLED 없음)
   const miniOn = () => !xiaoOn() && !dispOn();   // SuperMini + 충전모듈 + MPU6050 구성
   const oledOn = () => P.wkOledOn && !dispOn();
@@ -492,6 +534,14 @@ export function initWorkout(env) {
         tray = add(tray, boxBrush(u1 - u0, 1.2, b.pcbZ0 - TRAY_FLOOR + 0.1,
                                   b.cx + (u0 + u1) / 2, b.y + sv * (X114.w / 2 - 0.6),
                                   TRAY_FLOOR - 0.1, 0.3));
+    // 고정 구멍 기둥: 바닥이 뚫린 자리라 베드에서 세우고, 어깨는 옆 리브·바닥 띠와 붙는다.
+    if (pinsOn()) {
+      const pd = x114PinDims(q);
+      for (const p of pd.pins) {
+        tray = add(tray, boxBrush(pd.shoulderD, pd.shoulderD, b.pcbZ0, p.x, p.y, 0, pd.shoulderD / 2));
+        tray = add(tray, meshBrush(pinGeo(pd.pinD / 2, b.pcbZ0 - 0.1, p.up ? pd.tipZ : b.faceZ, p.x, p.y)));
+      }
+    }
     // KY-035 슬롯은 PCB 밑면까지 올려, 바닥 위로 솟은 KY-035가 리브에 걸리지 않게 한다.
     if (P.wkHallOn)
       tray = sub(tray, boxBrush(HALL.w + CLR + 0.6, q.hallT + CLR + 0.6,
@@ -846,10 +896,30 @@ export function initWorkout(env) {
       const ch = LID_PLATE + 0.5;
       lid = sub(lid, meshBrush(frustumGeo(wl, ww, wl + 2 * ch, ww + 2 * ch,
                                           q.lidCageH, q.lidCageH + ch, wx, b.y)));
-      // 앞면 버튼 A·B 구멍과 마이크 구멍
-      for (const [u, v] of X114.btns)
-        lid = sub(lid, boxBrush(x114Btn().hole, x114Btn().hole, LID_PLATE + 1, b.cx + u, b.y + v,
-                                q.lidCageH - 0.5, x114Btn().hole / 2));
+      // 보드가 −X 벽에 붙어 LCD 끝(보드 끝에서 0.65)이 결합 텅 띠 밑으로 들어온다. LCD 윗면이
+      // 텅 아래끝보다 높아 뚜껑이 LCD 모서리에 얹혀 끝까지 안 닫히므로 그 자리 텅만 비운다.
+      lid = sub(lid, boxBrush(X114.lcd.l + 1.0, X114.lcd.w + 1.0, JOINT_H + 0.2, b.cx + X114.lcd.u, b.y,
+                              q.lidCageH - JOINT_H - 0.2, 0.4));
+      if (btnFlexOn()) {
+        const f = x114FlexDims(q), lidTop = q.lidCageH + LID_PLATE;
+        for (const p of f.pads) {
+          const x0 = p.x - f.pad / 2 - FLEX_SLOT, hw = f.pad / 2 + FLEX_SLOT;
+          lid = sub(lid, boxBrush(p.hinge - x0, 2 * hw, LID_PLATE + 1, (x0 + p.hinge) / 2, p.y,
+                                  q.lidCageH - 0.5, 0.4));
+          // 팔은 윗면 쪽(출력 시 베드 쪽)에 armT만 남겨 휘게 하고, 패드는 상판 두께 그대로 둔다.
+          lid = add(lid, boxBrush(p.hinge + 0.2 - p.x, f.armW, f.armT, (p.x + p.hinge + 0.2) / 2, p.y,
+                                  lidTop - f.armT, 0.2));
+          lid = add(lid, boxBrush(f.pad, f.pad, LID_PLATE, p.x, p.y, q.lidCageH, f.pad / 2));
+          if (q.lidCageH - f.plungerZ0 > 0.1)
+            lid = add(lid, boxBrush(f.plungerD, f.plungerD, q.lidCageH - f.plungerZ0 + 0.1, p.x, p.y,
+                                    f.plungerZ0, f.plungerD / 2));
+        }
+      } else {
+        // 앞면 버튼 A·B 구멍 (별도 출력 캡)
+        for (const [u, v] of X114.btns)
+          lid = sub(lid, boxBrush(x114Btn().hole, x114Btn().hole, LID_PLATE + 1, b.cx + u, b.y + v,
+                                  q.lidCageH - 0.5, x114Btn().hole / 2));
+      }
       lid = sub(lid, boxBrush(X114.micD, X114.micD, LID_PLATE + 1, b.cx + X114.mic[0],
                               b.y + X114.mic[1], q.lidCageH - 0.5, X114.micD / 2));
       // LCD 양옆 PCB 가장자리를 눌러 보드를 잡는 리브 (LCD는 건드리지 않음)
@@ -860,6 +930,15 @@ export function initWorkout(env) {
                                   b.y + sv * (X114.w / 2 - 0.9), ribZ0, 0.3));
       if (switchCapOn())
         lid = addXiaoSwitchStop(lid, q, xiaoSwitchSliderDims(q, P), toLid, sliderCSG);
+      if (pinsOn()) {
+        const pd = x114PinDims(q);
+        for (const p of pd.pins.filter(p => p.up)) {
+          const z0 = pd.bossZ0 - toLid;
+          lid = add(lid, boxBrush(pd.bossD, pd.bossD, q.lidCageH - z0 + 0.1, p.x, p.y, z0, pd.bossD / 2));
+          lid = sub(lid, boxBrush(pd.sockD, pd.sockD, pd.tipZ + 0.3 - pd.bossZ0 + 0.1, p.x, p.y,
+                                  z0 - 0.1, pd.sockD / 2));
+        }
+      }
     }
     if (pinsUp()) {
       // 납땜된 핀헤더 16핀이 상판을 지나 위로 나오는 구멍. 0.64 각핀은 대각이 0.9라
@@ -996,7 +1075,7 @@ export function initWorkout(env) {
       ghostBox(G[1], [6.7, 2.8, 1.4], [X(7.35), Y(10.75), Z(-2.395)], switchMat);
       ghostBox(G[1], [1.6, 1.5, 1.0], [sc.x, Y(12.9), sc.z], switchLeverMat);
       const lz = q.trayTop - q.lidCageH;
-      for (const [u, v] of X114.btns)
+      if (!btnFlexOn()) for (const [u, v] of X114.btns)
         for (const g of x114CapGeo(q)) ghostGeo(G[2], g, [X(u), Y(v), b.faceZ + b.btnH - lz], hallMat);
     } else if (xiaoOn()) {
       const board = trayBoard();
@@ -1363,9 +1442,9 @@ export function initWorkout(env) {
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
         bezelGeo = null; capGeo = null; switchCapGeo = null;
         document.getElementById('wkExBezel').disabled = !oledOn() || oledPlug();
-        document.getElementById('wkExCaps').disabled = !x114On();
+        document.getElementById('wkExCaps').disabled = !x114On() || btnFlexOn();
         document.getElementById('wkExSwitchCap').disabled = !switchCapOn();
-        if (x114On()) {
+        if (x114On() && !btnFlexOn()) {
           // 앞면 버튼 캡 2개 (걸림 턱이 베드에 닿는 출력 방향)
           const q0 = layout();
           const mergeCaps = [];
