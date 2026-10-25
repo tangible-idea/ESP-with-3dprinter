@@ -2,11 +2,13 @@
 // 1) KY-035+자석+배터리 베이스, 2) 충전모듈 또는 XIAO+MPU6050 트레이, 3) SuperMini 또는 OLED 뚜껑.
 // 좌표: X=배터리 40mm 방향, Y=20mm/운동 상하 방향, Z=자석면→뚜껑.
 
+import { UDO_MARK, UDO_ICON, UDO_TEXT, UDO_TEXT_W } from './udo-logo.js';
+
 export function initWorkout(env) {
   const {
     THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
     matCase, matCaseX, boxBrush, add, sub,
-    meshBrush, ASSETS,
+    meshBrush, polyBrush, ASSETS,
     manToGeo, downloadSTL, status, getView, clearFloors, setFloorMeshes,
     markRulers, setRulerExtras, refreshWires = () => {},
   } = env;
@@ -184,7 +186,7 @@ export function initWorkout(env) {
   const oledLift = () => (oledOn() && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
-  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null;
+  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null, logoGeo = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
   const mpuMat = partMat(0x3c9b70);
   const hallMat = partMat(0x8f5aa8);
@@ -198,6 +200,7 @@ export function initWorkout(env) {
     roughness: 0.22, transparent: true, opacity: 0.96,
   });
   const magnetMat = new THREE.MeshStandardMaterial({ color: 0x7b818a, roughness: 0.32, metalness: 0.75 });
+  const logoMat = new THREE.MeshStandardMaterial({ color: UDO_MARK.color, roughness: 0.5 });
   const mpuSpec = () => ({ w: P.wkMpuW, d: P.wkMpuL, h: P.wkMpuH });
 
   function ring(outW, outD, inW, inD, h, z0, r) {
@@ -361,36 +364,98 @@ export function initWorkout(env) {
       body = add(body, ring(j.outW - 2 * fit, j.outD - 2 * fit,
                             j.inW + 2 * fit, j.inD + 2 * fit,
                             BASE_JOINT_H - 0.2, q.baseH, Math.max(0.6, r - q.wall - fit)));
-    if (P.wkLoopOn) body = add(body, meshBrush(loopTabGeo(q)));
+    if (P.wkLoopOn) body = sub(body, meshBrush(loopTunnelGeo(q)));
+    if (P.wkLogoOn) body = sub(body, logoInlay(q, -0.1, logoDims(q).depth + 0.1));
     return body;
   }
 
-  // 키링 고리 탭: 1층 +X 끝(USB 반대쪽, KY-035에서도 먼 쪽)에 바닥과 같은 면으로 붙여
-  // 자석면이 평평하게 남고 서포트 없이 출력된다. 끝이 반원인 판에 고리 구멍을 뚫는다.
-  // 몸통 쪽은 1mm 파묻어 확실히 합친다(배터리 포켓까지는 닿지 않음). Y는 +X 끝의
-  // 평평한 구간 안으로 묶어 라운드 모서리와 탭 사이에 틈이 생기지 않게 한다.
-  function loopDims(q) {
-    const holeR = Math.max(1, Number(P.wkLoopD) || 4) / 2;
-    const outR = holeR + Math.max(1.2, Number(P.wkLoopRim) || 2.2);
-    const yLim = Math.max(0, q.D / 2 - caseR(q) - outR + 0.5);
-    const y = Math.max(-yLim, Math.min(yLim, Number(P.wkLoopY) || 0));
-    const h = Math.max(1.2, Math.min(q.baseH, Number(P.wkLoopT) || 3));
-    return { holeR, outR, y, h, cx: q.W / 2 + 1.0 + holeR, x0: q.W / 2 - 1.0 };
+  // UDO 로고 인레이: 1층 바깥 바닥(자석면)에 앱 헤더 마크(라임 둥근 네모 + 덤벨 자리 비움)와
+  // "UDO" 글자를 파고, 같은 모양의 별도 바디를 만든다. 두 STL을 슬라이서에서 한 오브젝트의
+  // 파트로 합쳐 로고 파트에만 색을 주면 첫 레이어부터 2색으로 나오고 바닥은 평평하게 남는다.
+  // 비율은 앱 헤더(마크 38, 간격 10, 글자 27px)를 따른다. 밑에서 읽히도록 X를 뒤집는다.
+  const LOGO_GAP = 10 / 38, LOGO_CAP = 27 * (1456 / 2048) / 38;
+  // 32mm 폭에서 덤벨 손잡이 빈 자리가 0.4mm라 노즐 폭에 걸린다 — 덤벨을 둘레로 키워 비운다.
+  const LOGO_ICON_GROW = 0.15;
+  function logoDims(q) {
+    const maxW = q.W - 2 * caseR(q) + 4;
+    const w = Math.max(10, Math.min(maxW, Number(P.wkLogoW) || 32));
+    const box = w / (1 + LOGO_GAP + LOGO_CAP * UDO_TEXT_W);
+    // 자석 포켓 밑 피부를 0.2 이상 검정으로 남긴다.
+    const depth = Math.max(0.2, Math.min(Number(P.wkLogoDepth) || 0.4, P.wkMagSkin - 0.2));
+    return { w, box, depth, x0: -w / 2, y: Number(P.wkLogoY) || 0 };
   }
 
-  function loopTabGeo(q) {
-    const l = loopDims(q);
-    const s = new THREE.Shape();
-    s.moveTo(l.x0, l.y - l.outR);
-    s.lineTo(l.cx, l.y - l.outR);
-    s.absarc(l.cx, l.y, l.outR, -Math.PI / 2, Math.PI / 2, false);
-    s.lineTo(l.x0, l.y + l.outR);
-    s.closePath();
-    const hole = new THREE.Path();
-    hole.absarc(l.cx, l.y, l.holeR, 0, Math.PI * 2, true);
-    s.holes.push(hole);
-    const g = new THREE.ExtrudeGeometry(s, { depth: l.h, bevelEnabled: false, curveSegments: 32 });
-    g.deleteAttribute('uv');
+  function logoInlay(q, z0, h) {
+    const l = logoDims(q), s = l.box, cap = LOGO_CAP * s;
+    const pt = (x, y) => [-(l.x0 + x), l.y + y];
+    const sq = [], r = UDO_MARK.corner * s, n = 8;
+    for (const [cx, cy, a0] of [[s - r, r - s / 2, -90], [s - r, s / 2 - r, 0],
+                                [r, s / 2 - r, 90], [r, r - s / 2, 180]])
+      for (let i = 0; i <= n; i++) {
+        const a = (a0 + 90 * i / n) * Math.PI / 180;
+        sq.push(pt(cx + r * Math.cos(a), cy + r * Math.sin(a)));
+      }
+    const gs = UDO_MARK.glyph * s;
+    const icon = UDO_ICON.map(c => c.map(([x, y]) => pt(s / 2 + x * gs, y * gs)));
+    const tx = s * (1 + LOGO_GAP);
+    const text = UDO_TEXT.map(c => c.map(([x, y]) => pt(tx + x * cap, (y - 0.5) * cap)));
+    const mark = sub(polyBrush([sq], h, z0), polyBrush(icon, h + 0.4, z0 - 0.2, LOGO_ICON_GROW));
+    return add(mark, polyBrush(text, h, z0));
+  }
+
+  // 키링 고리: 1층 +X 끝면(USB 반대쪽, KY-035에서도 먼 쪽) 안으로 반원 링 터널을 판다.
+  // 끝면에 Y로 나란한 구멍 두 개가 나고 안에서 U자로 이어져, 키링을 가로로 꿰어 건다.
+  // 튀어나온 부분이 없다. 링 축은 Z, 중심은 끝면 위 → 링의 절반이 몸통 안에 묻힌다.
+  // 배터리 포켓까지 0.8은 남기도록, 자리가 모자라면 중심을 바깥으로 밀어 덜 묻는다.
+  // 단면은 위가 45°로 뾰족한 물방울이라 터널 천장도 서포트 없이 출력된다.
+  function loopDims(q) {
+    const tubeR = Math.max(0.75, Math.min(2.2, (Number(P.wkLoopD) || 2.6) / 2));
+    const ringR = Math.max(tubeR + 1.0, Math.min(6, Number(P.wkLoopR) || 3.2));
+    const yLim = Math.max(0, q.D / 2 - caseR(q) - ringR - tubeR - 0.3);
+    const y = Math.max(-yLim, Math.min(yLim, Number(P.wkLoopY) || 0));
+    const tip = tubeR * Math.SQRT2;
+    const z = Math.max(tubeR + 0.8, Math.min(q.baseH - tip - 0.8, Number(P.wkLoopZ) || q.baseH / 2));
+    const room = q.W / 2 - (BAT.w + CLR) / 2 - 0.8;
+    const cx = q.W / 2 + Math.max(0, ringR + tubeR - room);
+    return { tubeR, ringR, y, z, cx };
+  }
+
+  function loopTunnelGeo(q) {
+    const l = loopDims(q), M = 32, seg = 36, ext = l.cx + 2;
+    // 단면 (a = 링 바깥 방향, b = Z): 아래는 원, 위 90°는 꼭짓점으로 모은 물방울.
+    const sec = [[0, l.tubeR * Math.SQRT2]];
+    for (let i = 0; i <= M; i++) {
+      const p = (135 + 270 * i / M) * Math.PI / 180;
+      sec.push([l.tubeR * Math.cos(p), l.tubeR * Math.sin(p)]);
+    }
+    // 경로: 끝면 밖(-R 쪽) → 반원(θ 270° → 90°, 가장 깊은 곳이 θ = 180°) → 끝면 밖(+R 쪽)
+    const path = [[ext, l.y - l.ringR, 0, -1]];
+    for (let k = 0; k <= seg; k++) {
+      const th = (270 - 180 * k / seg) * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
+      path.push([l.cx + l.ringR * c, l.y + l.ringR * s, c, s]);
+    }
+    path.push([ext, l.y + l.ringR, 0, 1]);
+    const v = [], idx = [], n = sec.length;
+    for (const [px, py, ux, uy] of path)
+      for (const [a, b] of sec) v.push(px + a * ux, py + a * uy, l.z + b);
+    for (let k = 0; k < path.length - 1; k++)
+      for (let i = 0; i < n; i++) {
+        const a = k * n + i, b = k * n + (i + 1) % n, c = a + n, d = b + n;
+        idx.push(a, b, c, b, d, c);
+      }
+    const last = (path.length - 1) * n;
+    for (let i = 1; i < n - 1; i++) idx.push(0, i + 1, i, last, last + i, last + i + 1);
+    // 감김 방향은 부호 있는 부피로 확인해 바깥을 향하게 맞춘다.
+    let vol = 0;
+    for (let t = 0; t < idx.length; t += 3) {
+      const [a, b, c] = [idx[t], idx[t + 1], idx[t + 2]].map(i => v.slice(3 * i, 3 * i + 3));
+      vol += a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0])
+           + a[2] * (b[0] * c[1] - b[1] * c[0]);
+    }
+    if (vol < 0) for (let t = 0; t < idx.length; t += 3) [idx[t + 1], idx[t + 2]] = [idx[t + 2], idx[t + 1]];
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    g.setIndex(idx);
     return g;
   }
 
@@ -1399,7 +1464,15 @@ export function initWorkout(env) {
         const { xray } = getView();
         meshes = geos.map(g => new THREE.Mesh(g, xray ? matCaseX : matCase));
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
-        bezelGeo = null; capGeo = null;
+        bezelGeo = null; capGeo = null; logoGeo = null;
+        document.getElementById('wkExLogo').disabled = !P.wkLogoOn;
+        if (P.wkLogoOn) {
+          const q0 = layout(), lm = logoInlay(q0, 0, logoDims(q0).depth);
+          logoGeo = manToGeo(lm); lm.delete();
+          const logoMesh = new THREE.Mesh(logoGeo, logoMat);
+          logoMesh.name = 'udo_logo_inlay';
+          G[0].add(logoMesh);
+        }
         document.getElementById('wkExBezel').disabled = !oledOn() || oledPlug();
         document.getElementById('wkExCaps').disabled = !x114On();
         if (x114On()) {
@@ -1423,11 +1496,7 @@ export function initWorkout(env) {
         applyWorkoutExplode(); setRulerExtras('workout', workoutRulerDims(lastLayout));
         const totalH = lastLayout.baseH + lastLayout.trayTop + LID_PLATE
           + (oledOn() ? oledDims().rimH + oledLift() : 0);
-        let totalW = oledOn() ? Math.max(lastLayout.W, oledDims().outW) : lastLayout.W;
-        if (P.wkLoopOn) {   // 고리 탭은 +X로만 튀어나온다
-          const l = loopDims(lastLayout);
-          totalW = Math.max(totalW, lastLayout.W / 2 + l.cx + l.outR);
-        }
+        const totalW = oledOn() ? Math.max(lastLayout.W, oledDims().outW) : lastLayout.W;
         const totalD = oledOn() ? Math.max(lastLayout.D, oledDims().outD) : lastLayout.D;
         document.getElementById('dims').textContent =
           t('workoutDims', totalW.toFixed(1), totalD.toFixed(1), totalH.toFixed(1),
@@ -1446,6 +1515,10 @@ export function initWorkout(env) {
     if (geos[0]) downloadSTL(geos[0].clone(), P.wkHallOn
       ? 'workout_sensor_ky035_tw802040_base.stl'
       : 'workout_sensor_tw802040_base.stl');
+  });
+  document.getElementById('wkExLogo').addEventListener('click', () => {
+    // 본체 STL과 같은 좌표 그대로 — 슬라이서에서 본체의 파트로 넣으면 제자리에 앉는다.
+    if (P.wkLogoOn && logoGeo) downloadSTL(logoGeo.clone(), 'workout_sensor_udo_logo_inlay.stl');
   });
   document.getElementById('wkExTray').addEventListener('click', () => {
     if (geos[1]) downloadSTL(geos[1].clone(), x114On()
