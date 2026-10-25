@@ -429,14 +429,7 @@ const STATIC_I18N = {
     lblWkX114LcdRecess: 'XIAO 1.14" lid recess over LCD',
     lblWkX114BtnCatch: 'XIAO 1.14" button cap catch',
     lblWkX114BtnScoop: 'XIAO 1.14" side button nail scoop',
-    lblWkX114SwCapOn: 'XIAO 1.14" side switch slider cap',
-    lblWkX114SwFork: 'Switch cap fork opening', lblWkX114SwTravel: 'Switch travel',
-    lblWkX114SwFit: 'Slider clearance per side', lblWkX114SwPos: 'Slider preview position (0 / 1)',
-    hintWkX114SwCap: 'Separate printed slider with a 6×4mm grip and an open fork around the tiny switch lever. Slide the cap down into the side-wall guide before fitting the board, engage the lever, then close the lid to retain the cap. Dimensions are estimated from the official photo and STEP; test print and adjust the fork opening and travel. Export the updated tray, lid and slider together. The slider exports grip-face down; use supports under the inner retaining flange.',
-    wkX114SwRoom: '⚠ Switch slider needs more room between the board and +Y wall — increase case depth or move the board toward −Y',
-    wkX114SwFloor: '⚠ Switch guide is too close to the tray floor — raise floor↔PCB',
-    btnWkExSwitchCap: 'Side switch slider.stl',
-    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, holes for front buttons A/B sized by the cap diameter (print the button caps), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has openings for side button C and the switch next to it. Front button height is estimated from the reference caps — adjust after a test print.',
+    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, holes for front buttons A/B sized by the cap diameter (print the button caps), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has a nail-scoop opening for side button C only; the power switch next to it is covered by the wall. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
     wkX114CompFit: d => `⚠ Parts under the board (PH2.0 5.6mm deep) hit the tray floor — raise floor↔PCB to ${d}mm or more`,
     btnWkExCaps: 'Front button caps.stl',
@@ -630,14 +623,7 @@ const STATIC_I18N = {
     lblWkX114LcdRecess: 'XIAO 1.14" LCD 닿는 면 파냄',
     lblWkX114BtnCatch: 'XIAO 1.14" 버튼 캡 걸림 턱',
     lblWkX114BtnScoop: 'XIAO 1.14" 옆 버튼 손톱 홈',
-    lblWkX114SwCapOn: 'XIAO 1.14" 옆 스위치 슬라이더 캡',
-    lblWkX114SwFork: '스위치 캡 끼움 폭', lblWkX114SwTravel: '스위치 이동거리',
-    lblWkX114SwFit: '슬라이더 한쪽 유격', lblWkX114SwPos: '슬라이더 미리보기 위치 (0 / 1)',
-    hintWkX114SwCap: '6×4mm 손잡이와 작은 스위치 돌기를 감싸는 포크가 있는 별도 출력 캡입니다. 보드를 넣기 전 옆벽 가이드에 캡을 위에서 내려 끼우고, 돌기를 포크에 넣은 뒤 뚜껑을 닫으면 빠지지 않습니다. 공식 사진·STEP 기준 시험 설계이므로 끼움 폭과 이동거리를 시험 출력 후 맞추세요. 트레이·뚜껑·슬라이더를 함께 새로 출력해야 합니다. 캡은 손잡이 면이 베드로 향하게 내보내며 안쪽 걸림 턱 밑에 서포트를 사용하세요.',
-    wkX114SwRoom: '⚠ 스위치 슬라이더와 보드 사이가 좁습니다 — 케이스 세로를 늘리거나 보드를 −Y로 옮기세요',
-    wkX114SwFloor: '⚠ 스위치 가이드가 트레이 바닥과 너무 가깝습니다 — 바닥↔PCB 높이를 올리세요',
-    btnWkExSwitchCap: '옆 스위치 슬라이더.stl',
-    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B용 구멍(캡 지름 + 0.3, 버튼 캡 별도 출력), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C와 그 옆 스위치 창이 뚫립니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
+    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B용 구멍(캡 지름 + 0.3, 버튼 캡 별도 출력), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C 창(손톱 홈)만 뚫리고, 전원 스위치 자리는 벽으로 덮습니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
     wkX114CompFit: d => `⚠ 보드 밑 부품(PH2.0 깊이 5.6)이 트레이 바닥에 닿습니다 — 바닥↔PCB를 ${d}mm 이상으로 올리세요`,
     btnWkExCaps: '앞 버튼 캡.stl',
@@ -976,7 +962,6 @@ const P = {
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
   wkLoopOn: true, wkLoopD: 4.0, wkLoopRim: 2.2, wkLoopT: 3.0, wkLoopY: 0,   // 1층 +X 끝 키링 고리 탭 (구멍 지름, 구멍 둘레 살, 두께, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
-  wkX114SwCapOn: true, wkX114SwFork: 2.1, wkX114SwTravel: 1.5, wkX114SwFit: 0.25, wkX114SwPos: 0,
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1098,7 +1083,6 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopRim','wkLoopT','wkLoopY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop',
-                 'wkX114SwFork','wkX114SwTravel','wkX114SwFit','wkX114SwPos',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1176,17 +1160,8 @@ const applyWorkoutOptionsUI = () => {
     document.getElementById(id).disabled = !tftOnly;
   document.getElementById('wkTftEndGap').disabled = !tft;
   for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess', 'wkX114BtnCatch', 'wkX114BtnScoop']) document.getElementById(id).disabled = !x114;
-  document.getElementById('wkX114SwCapOn').checked = P.wkX114SwCapOn;
-  document.getElementById('wkX114SwCapOn').disabled = !x114;
-  for (const id of ['wkX114SwFork', 'wkX114SwTravel', 'wkX114SwFit', 'wkX114SwPos'])
-    document.getElementById(id).disabled = !x114 || !P.wkX114SwCapOn;
 };
 document.getElementById('wkEspType').value = P.wkEspType;
-document.getElementById('wkX114SwCapOn').addEventListener('change', e => {
-  P.wkX114SwCapOn = e.target.checked;
-  applyWorkoutOptionsUI();
-  queueRebuild();
-});
 document.getElementById('wkModType').value = P.wkModType;
 document.getElementById('wkModType').addEventListener('change', e => {
   P.wkModType = e.target.value;
@@ -1953,6 +1928,13 @@ const add = (a, b) => csgOp(a, b, 'add');
 const sub = (a, b) => csgOp(a, b, 'subtract');
 const inter = (a, b) => csgOp(a, b, 'intersect');
 const meshBrush = (geo, matrix, tol) => toMan(geo, matrix, tol);
+// 2D 윤곽 목록([[x, y], ...] 여러 개)을 NonZero로 채워 z0부터 h만큼 뽑는다 (글자·로고용).
+function polyBrush(polys, h, z0 = 0) {
+  const cs = new M.CrossSection(polys, 'NonZero');
+  const ex = cs.extrude(h); cs.delete();
+  const r = ex.translate([0, 0, z0]); ex.delete();
+  return r;
+}
 
 // ------------------------------------------------------------------
 // 외부 STL 로드 (usb 구멍, 스위치 스탠드, 고스트 부품들)
@@ -4650,7 +4632,7 @@ productSel.addEventListener('change', e => {
 ({ rebuildWorkout, applyWorkoutExplode, drawWorkoutWires } = initWorkout({
   THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
   matCase, matCaseX, boxBrush, add, sub,
-  meshBrush, ASSETS,
+  meshBrush, polyBrush, ASSETS,
   manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,
   getView: () => ({ xray, showGhosts }),
   clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
