@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { zipSync, strToU8 } from 'three/addons/libs/fflate.module.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import ManifoldModule from './vendor/manifold.js';
@@ -415,8 +416,7 @@ const STATIC_I18N = {
     lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance', lblWkLidGrip: 'Lid grip ribs (interference per side)',
     lblWkLoopOn: 'Keyring loop', lblWkLoopD: 'Loop tunnel Ø', lblWkLoopR: 'Loop ring radius', lblWkLoopZ: 'Loop height', lblWkLoopY: 'Loop Y position',
     lblWkLogoOn: 'UDO logo (2-color)', lblWkLogoW: 'Logo width', lblWkLogoDepth: 'Inlay depth', lblWkLogoY: 'Logo Y position',
-    hintWkLogo: 'Inlays the UDO app mark (lime rounded square with the dumbbell left open) and "UDO" into the magnet face of the base, mirrored so it reads from below. Export the base and the logo inlay, load both into the slicer as parts of one object (same coordinates), print the base in black and give only the inlay part the logo color. The face stays flat; the color starts on the first layer. At least 0.2mm of black skin stays under the magnet.',
-    btnWkExLogo: 'UDO logo inlay.stl',
+    hintWkLogo: 'Inlays the UDO app mark (lime rounded square with the dumbbell left open) and "UDO" into the magnet face of the base, mirrored so it reads from below. The base export becomes a single .3mf with two parts (base + logo inlay) in one object; open it in the slicer, print the base in black and assign the logo color to the inlay part only. The face stays flat; the color starts on the first layer. At least 0.2mm of black skin stays under the magnet.',
     hintWkLoop: 'A half-ring tunnel sunk into the +X end of the base (opposite USB, away from the KY-035). Two side-by-side openings on the end face join in a U inside, so a keyring threads through sideways and nothing sticks out. Tunnel Ø is the passage size, ring radius sets the spacing of the two openings (centre to centre = 2 × radius) and how deep it goes; if the battery pocket is too close it automatically sinks in less than half. The teardrop section prints without supports.',
     lblWkMagSkin: 'Magnet skin', lblWkMagH: 'Magnet thickness', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
@@ -464,7 +464,7 @@ const STATIC_I18N = {
     lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" plugs into XIAO (no solder)', hintWkOledPlug: 'The 0.49" header order GND·VCC·SCL·SDA matches the XIAO row GND·3V3·D10·D9, so the OLED plugs straight in, lying face-up over the board. The lid presses it from above and only the display window shows. I2C becomes SDA=GPIO9, SCL=GPIO10 (wire the MPU6050 there too). Lower the ESP section height until the pins grip well.',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
     hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and a lid with an optional 0.96" or 0.49" OLED set flush into its flat top under a bezel that shows only the display. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
-    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl', btnWkExBezel: 'OLED bezel.stl',
+    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl / .3mf', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl', btnWkExBezel: 'OLED bezel.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the OLED pocket faces up; use bridge-friendly settings for the ESP32-cage ceiling and the hollowed top skin. Print the OLED bezel separately (exported face-down), drop the OLED in, then press the bezel into its recess (a dot of glue if loose). Only the display window stays visible.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
     workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
@@ -616,8 +616,7 @@ const STATIC_I18N = {
     lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격', lblWkLidGrip: '뚜껑 조임 돌기',
     lblWkLoopOn: '키링 고리', lblWkLoopD: '고리 터널 지름', lblWkLoopR: '고리 링 반지름', lblWkLoopZ: '고리 높이', lblWkLoopY: '고리 Y 위치',
     lblWkLogoOn: 'UDO 로고 (2색)', lblWkLogoW: '로고 전체 폭', lblWkLogoDepth: '인레이 깊이', lblWkLogoY: '로고 Y 위치',
-    hintWkLogo: '베이스 바닥(자석면)에 UDO 앱 마크(라임 둥근 네모, 덤벨 모양은 비움)와 "UDO" 글자를 인레이합니다. 밑에서 읽히도록 좌우를 뒤집어 넣습니다. 베이스와 로고 인레이 STL을 함께 내보내 슬라이서에서 한 오브젝트의 파트로 불러오고(좌표가 같아 제자리에 앉음), 베이스는 검정, 인레이 파트에만 로고 색을 지정하세요. 바닥은 평평하게 남고 첫 레이어부터 색이 바뀝니다. 자석 밑 피부는 최소 0.2mm 검정으로 남습니다.',
-    btnWkExLogo: 'UDO 로고 인레이.stl',
+    hintWkLogo: '베이스 바닥(자석면)에 UDO 앱 마크(라임 둥근 네모, 덤벨 모양은 비움)와 "UDO" 글자를 인레이합니다. 밑에서 읽히도록 좌우를 뒤집어 넣습니다. 베이스 내보내기가 베이스 + 로고 인레이 두 파트가 한 오브젝트로 들어간 .3mf 파일 하나로 나옵니다. 슬라이서에서 열어 베이스는 검정, 인레이 파트에만 로고 색을 지정하세요. 바닥은 평평하게 남고 첫 레이어부터 색이 바뀝니다. 자석 밑 피부는 최소 0.2mm 검정으로 남습니다.',
     hintWkLoop: '1층 +X 끝면(USB 반대쪽, KY-035에서 먼 쪽) 안으로 반원 링 터널을 팝니다. 끝면에 나란한 구멍 두 개가 안에서 U자로 이어져 키링을 가로로 꿰어 걸고, 바깥으로 튀어나온 부분이 없습니다. 터널 지름은 통로 굵기, 링 반지름은 두 구멍 간격(중심 간 2×반지름)과 파고드는 깊이입니다. 배터리 포켓과 가까우면 절반보다 덜 묻히도록 자동으로 줄입니다. 단면 위쪽이 45° 물방울이라 서포트 없이 출력됩니다.',
     lblWkMagSkin: '자석 앞 스킨', lblWkMagH: '자석 두께', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
@@ -665,7 +664,7 @@ const STATIC_I18N = {
     lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" XIAO 핀 직결 (납땜 없음)', hintWkOledPlug: '0.49" 헤더 순서 GND·VCC·SCL·SDA가 XIAO 핀 열 GND·3V3·D10·D9와 같아 OLED를 화면이 위로 오게 보드 위에 눕혀 그대로 꽂습니다. 뚜껑이 위에서 눌러 주고 화면 창만 보입니다. I2C는 SDA=GPIO9, SCL=GPIO10이 되며 MPU6050도 여기에 연결하세요. 핀이 충분히 물리도록 ESP 칸 높이를 낮추세요.',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
     hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" 또는 0.49" OLED가 평평한 윗면에 박히고 화면 창만 보이는 베젤로 덮는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
-    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl', btnWkExBezel: 'OLED 베젤.stl',
+    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl / .3mf', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl', btnWkExBezel: 'OLED 베젤.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 윗면 OLED 포켓이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장과 속을 비운 윗면 스킨에 브리지 설정을 사용하세요. OLED 베젤은 따로 출력(보이는 면이 베드)하고, OLED를 넣은 뒤 베젤을 홈에 눌러 끼우세요(헐거우면 접착제 한 방울). 화면 창만 보이고 나머지는 가려집니다.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
     workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
@@ -4502,6 +4501,59 @@ function downloadSTL(geo, name) {
   downloadBlob(new Blob([data], { type: 'application/octet-stream' }), name);
 }
 
+// 여러 파트를 한 오브젝트(components)로 묶은 3MF. 슬라이서(Bambu/Orca/Prusa)에서 한 파일로 열면
+// 파트별로 색(필라멘트)만 바꾸면 된다. 모든 파트는 같은 좌표계(mm) 그대로 넣는다.
+// parts: [{ geo, name, color(0xrrggbb) }]
+function download3MF(parts, name, objectName = 'model') {
+  const xml = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const hex = c => '#' + c.toString(16).padStart(6, '0').toUpperCase() + 'FF';
+  const f = v => (Math.abs(v) < 5e-7 ? 0 : v).toFixed(6).replace(/\.?0+$/, '');
+  let out = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    + '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">\n'
+    + ' <metadata name="Title">' + xml(objectName) + '</metadata>\n <resources>\n'
+    + '  <basematerials id="1">\n'
+    + parts.map(pt => '   <base name="' + xml(pt.name) + '" displaycolor="' + hex(pt.color ?? 0xdec08c) + '"/>\n').join('')
+    + '  </basematerials>\n';
+  parts.forEach((pt, pi) => {
+    // toNonIndexed 지오메트리라 꼭짓점을 다시 합쳐 3MF 크기를 줄인다.
+    const pos = pt.geo.getAttribute('position'), idx = pt.geo.getIndex();
+    const map = new Map(), verts = [], tri = [];
+    const n = idx ? idx.count : pos.count;
+    for (let i = 0; i < n; i++) {
+      const vi = idx ? idx.getX(i) : i;
+      const x = pos.getX(vi), y = pos.getY(vi), z = pos.getZ(vi);
+      const key = f(x) + ' ' + f(y) + ' ' + f(z);
+      let k = map.get(key);
+      if (k === undefined) { k = verts.length; verts.push(key); map.set(key, k); }
+      tri.push(k);
+    }
+    out += '  <object id="' + (pi + 2) + '" type="model" name="' + xml(pt.name) + '" pid="1" pindex="' + pi + '">\n   <mesh>\n    <vertices>\n';
+    for (const v of verts) { const [x, y, z] = v.split(' '); out += '     <vertex x="' + x + '" y="' + y + '" z="' + z + '"/>\n'; }
+    out += '    </vertices>\n    <triangles>\n';
+    for (let i = 0; i < tri.length; i += 3) {
+      if (tri[i] === tri[i + 1] || tri[i + 1] === tri[i + 2] || tri[i] === tri[i + 2]) continue;   // 합치면서 생긴 퇴화 삼각형
+      out += '     <triangle v1="' + tri[i] + '" v2="' + tri[i + 1] + '" v3="' + tri[i + 2] + '"/>\n';
+    }
+    out += '    </triangles>\n   </mesh>\n  </object>\n';
+  });
+  const groupId = parts.length + 2;
+  out += '  <object id="' + groupId + '" type="model" name="' + xml(objectName) + '">\n   <components>\n'
+    + parts.map((_, pi) => '    <component objectid="' + (pi + 2) + '"/>\n').join('')
+    + '   </components>\n  </object>\n </resources>\n <build>\n  <item objectid="' + groupId + '"/>\n </build>\n</model>\n';
+  const files = {
+    '[Content_Types].xml': strToU8('<?xml version="1.0" encoding="UTF-8"?>\n'
+      + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n'
+      + ' <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n'
+      + ' <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>\n</Types>\n'),
+    '_rels/.rels': strToU8('<?xml version="1.0" encoding="UTF-8"?>\n'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n'
+      + ' <Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>\n</Relationships>\n'),
+    '3D/3dmodel.model': strToU8(out),
+  };
+  const zip = zipSync(files, { level: 6 });
+  downloadBlob(new Blob([zip], { type: 'model/3mf' }), name);
+}
+
 function exportFloor(i, name) {
   if (!exportGeos[i]) return;
   let geo = (texGeos[i] || exportGeos[i]).clone();   // 무늬가 켜져 있으면 무늬 있는 쪽
@@ -4685,7 +4737,7 @@ productSel.addEventListener('change', e => {
   THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
   matCase, matCaseX, boxBrush, add, sub,
   meshBrush, polyBrush, ASSETS,
-  manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,
+  manToGeo, downloadSTL, download3MF, status, queueRebuild, markRulers, setRulerExtras,
   getView: () => ({ xray, showGhosts }),
   clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
   setFloorMeshes: meshes => { floorMeshes = meshes; },

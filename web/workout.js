@@ -9,7 +9,7 @@ export function initWorkout(env) {
     THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
     matCase, matCaseX, boxBrush, add, sub,
     meshBrush, polyBrush, ASSETS,
-    manToGeo, downloadSTL, status, getView, clearFloors, setFloorMeshes,
+    manToGeo, downloadSTL, download3MF, status, getView, clearFloors, setFloorMeshes,
     markRulers, setRulerExtras, refreshWires = () => {},
   } = env;
 
@@ -1558,7 +1558,6 @@ export function initWorkout(env) {
         meshes = geos.map(g => new THREE.Mesh(g, xray ? matCaseX : matCase));
         for (let i = 0; i < 3; i++) G[i].add(meshes[i]);
         bezelGeo = null; capGeo = null; logoGeo = null;
-        document.getElementById('wkExLogo').disabled = !P.wkLogoOn;
         if (P.wkLogoOn) {
           const q0 = layout(), lm = logoInlay(q0, 0, logoDims(q0).depth);
           logoGeo = manToGeo(lm); lm.delete();
@@ -1605,13 +1604,15 @@ export function initWorkout(env) {
   }
 
   document.getElementById('wkExBody').addEventListener('click', () => {
-    if (geos[0]) downloadSTL(geos[0].clone(), P.wkHallOn
-      ? 'workout_sensor_ky035_tw802040_base.stl'
-      : 'workout_sensor_tw802040_base.stl');
-  });
-  document.getElementById('wkExLogo').addEventListener('click', () => {
-    // 본체 STL과 같은 좌표 그대로 — 슬라이서에서 본체의 파트로 넣으면 제자리에 앉는다.
-    if (P.wkLogoOn && logoGeo) downloadSTL(logoGeo.clone(), 'workout_sensor_udo_logo_inlay.stl');
+    if (!geos[0]) return;
+    const stem = P.wkHallOn ? 'workout_sensor_ky035_tw802040_base' : 'workout_sensor_tw802040_base';
+    if (P.wkLogoOn && logoGeo) {
+      // 베이스 + 로고 인레이를 한 오브젝트의 두 파트로 묶은 3MF 하나. 좌표가 같아 제자리에 앉는다.
+      download3MF([
+        { geo: geos[0], name: 'base', color: 0x222222 },
+        { geo: logoGeo, name: 'udo_logo_inlay', color: UDO_MARK.color },
+      ], stem + '_udo_logo.3mf', stem);
+    } else downloadSTL(geos[0].clone(), stem + '.stl');
   });
   document.getElementById('wkExTray').addEventListener('click', () => {
     if (geos[1]) downloadSTL(geos[1].clone(), x114On()
