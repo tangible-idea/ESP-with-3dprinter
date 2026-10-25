@@ -412,7 +412,7 @@ const STATIC_I18N = {
     hintProduct: 'Choose which 3D design to configure. Each product has its own settings below.',
     // 운동 모션 센서
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
-    lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance',
+    lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance', lblWkLidGrip: 'Lid grip ribs (interference per side)',
     lblWkLoopOn: 'Keyring loop', lblWkLoopD: 'Loop tunnel Ø', lblWkLoopR: 'Loop ring radius', lblWkLoopZ: 'Loop height', lblWkLoopY: 'Loop Y position',
     lblWkLogoOn: 'UDO logo (2-color)', lblWkLogoW: 'Logo width', lblWkLogoDepth: 'Inlay depth', lblWkLogoY: 'Logo Y position',
     hintWkLogo: 'Inlays the UDO app mark (lime rounded square with the dumbbell left open) and "UDO" into the magnet face of the base, mirrored so it reads from below. Export the base and the logo inlay, load both into the slicer as parts of one object (same coordinates), print the base in black and give only the inlay part the logo color. The face stays flat; the color starts on the first layer. At least 0.2mm of black skin stays under the magnet.',
@@ -613,7 +613,7 @@ const STATIC_I18N = {
     hintProduct: '설계할 3D 디자인을 선택하세요. 제품마다 아래에 별도 설정이 있습니다.',
     // 운동 모션 센서
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
-    lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격',
+    lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격', lblWkLidGrip: '뚜껑 조임 돌기',
     lblWkLoopOn: '키링 고리', lblWkLoopD: '고리 터널 지름', lblWkLoopR: '고리 링 반지름', lblWkLoopZ: '고리 높이', lblWkLoopY: '고리 Y 위치',
     lblWkLogoOn: 'UDO 로고 (2색)', lblWkLogoW: '로고 전체 폭', lblWkLogoDepth: '인레이 깊이', lblWkLogoY: '로고 Y 위치',
     hintWkLogo: '베이스 바닥(자석면)에 UDO 앱 마크(라임 둥근 네모, 덤벨 모양은 비움)와 "UDO" 글자를 인레이합니다. 밑에서 읽히도록 좌우를 뒤집어 넣습니다. 베이스와 로고 인레이 STL을 함께 내보내 슬라이서에서 한 오브젝트의 파트로 불러오고(좌표가 같아 제자리에 앉음), 베이스는 검정, 인레이 파트에만 로고 색을 지정하세요. 바닥은 평평하게 남고 첫 레이어부터 색이 바뀝니다. 자석 밑 피부는 최소 0.2mm 검정으로 남습니다.',
@@ -977,7 +977,7 @@ const P = {
   wkLoopOn: true, wkLoopD: 2.6, wkLoopR: 3.2, wkLoopZ: 5.8, wkLoopY: 0,   // 1층 +X 끝면 안 반원 키링 터널 (터널 지름, 링 반지름, 높이, Y 위치)
   wkLogoOn: true, wkLogoW: 32, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 UDO 2색 인레이 (전체 폭, 깊이, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
-  wkX114BtnFlex: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
+  wkX114BtnFlex: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.15, wkLidGrip: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1008,7 +1008,7 @@ const P = {
   nfcOn: true, nfcFloor: '2', nfcD: 26.6, nfcT: 0.5, nfcBase: 0.6, nfcX: 5.5, nfcY: 3,
   // 측면 텍스처 (Weave 1·2·3) — 바깥 옆면에만 무늬를 새김. texture.js 참고
   texKey: 'none', texDepth: 0.4, texTile: 12, texRes: 0.45,
-  pinRev: 2, bzFitRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
+  pinRev: 2, bzFitRev: 2, x114PinRev: 2,   // 핀 기본값 리비전 (localStorage 마이그레이션용)
 };
 
 // 예전 기본 Ø1.5/1.4 저장값과 프리셋만 새 기본 Ø1.0으로 옮기고 사용자 조절값은 유지한다.
@@ -1020,11 +1020,19 @@ function migrateBuzzerFit(source) {
   }
 }
 
+// XIAO 1.14 뚜껑 핀 소켓 첫 기본값 0.1은 너무 빡빡했다. 그 값 그대로인 저장본만 0.15로 옮긴다.
+function migrateX114PinFit(source) {
+  if (!source.x114PinRev || Number(source.x114PinRev) < 2) {
+    if (!('wkX114PinFit' in source) || Number(source.wkX114PinFit) === 0.1) P.wkX114PinFit = 0.15;
+    P.x114PinRev = 2;
+  }
+}
+
 // 저장된 설정 복원 (localStorage)
 try {
   const saved = JSON.parse(localStorage.getItem('dimsum-params') || '{}');
   for (const k in saved) if (k in P) P[k] = saved[k];
-  migrateBuzzerFit(saved);
+  migrateBuzzerFit(saved); migrateX114PinFit(saved);
   if (!('wkOledOn' in saved) && 'wkLedOn' in saved) P.wkOledOn = saved.wkLedOn;
   // 운동 센서: 저장된 값이 항상 이깁니다. 리비전 마이그레이션은 TW802040 배치 이전
   // (wkRev < 3)의 옛 저장본만 되돌리고, 그 뒤로는 사용자가 맞춘 수치를 덮지 않습니다.
@@ -1098,7 +1106,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopR','wkLoopZ','wkLoopY','wkLogoW','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit',
+                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1597,7 +1605,7 @@ document.getElementById('presetExport').addEventListener('click', () => {
 function applyPreset(obj) {
   let n = 0;
   for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
-  migrateBuzzerFit(obj);
+  migrateBuzzerFit(obj); migrateX114PinFit(obj);
   syncControls();
   applyProductUI();
   saveParams();
@@ -1770,7 +1778,7 @@ presetFile.addEventListener('change', e => {
       persistMeta();
       if (pulled) {
         quiet = true;
-        migrateBuzzerFit(P);
+        migrateBuzzerFit(P); migrateX114PinFit(P);
         syncControls();
         applyProductUI();
         saveParams();

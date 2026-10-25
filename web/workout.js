@@ -85,7 +85,7 @@ export function initWorkout(env) {
   const pinsOn = () => x114On() && P.wkX114PinsOn !== false;
   function x114PinDims(q) {
     const b = q.x114, pinD = X114.holeD - 0.3;
-    const fit = Math.max(0, Math.min(0.3, Number(P.wkX114PinFit ?? 0.1)));
+    const fit = Math.max(0, Math.min(0.3, Number(P.wkX114PinFit ?? 0.15)));
     const sockD = pinD + 2 * fit, toLid = q.trayTop - q.lidCageH;
     return { pinD, shoulderD: 3.2, sockD, bossD: sockD + 1.6,
              tipZ: b.faceZ + Math.min(3.0, q.trayTop - b.faceZ - 0.6), bossZ0: b.faceZ + 0.3, toLid,
@@ -947,6 +947,20 @@ export function initWorkout(env) {
                         j.inW + 2 * fit, j.inD + 2 * fit,
                         JOINT_H, q.lidCageH - JOINT_H,
                         Math.max(0.6, r - q.wall - fit)));
+    // 조임 돌기: 긴 변 텅 바깥면에 Ø1 반원 기둥 3개씩. 결합 유격과 상관없이 트레이 벽(홈 면)보다
+    // wkLidGrip 만큼 더 나와 눌려 들어가며 꽉 낀다. 아래 0.4는 비우고 모따기해 텅이 먼저 들어간다.
+    const grip = Math.max(0, Math.min(0.3, Number(P.wkLidGrip ?? 0.1)));
+    if (grip > 0) {
+      const wallY = j.outD / 2, rr = 0.5, z0 = q.lidCageH - JOINT_H + 0.4, z1 = q.lidCageH + 0.1;
+      for (const x of [-q.W / 4, 0, q.W / 4])
+        for (const sy of [-1, 1]) {
+          const g = new THREE.LatheGeometry([[0, z0], [rr - 0.35, z0], [rr, z0 + 0.35], [rr, z1], [0, z1]]
+            .map(([a, z]) => new THREE.Vector2(a, z)), 24);
+          g.rotateX(Math.PI / 2); g.translate(x, sy * (wallY + grip - rr), 0);
+          g.deleteAttribute('uv'); g.deleteAttribute('normal');
+          lid = add(lid, meshBrush(g));
+        }
+    }
     // 전원 스위치 몸통과 리브가 결합 텅 높이까지 올라오므로 그 자리 텅만 비워 둔다.
     // 나머지 세 변의 텅으로도 뚜껑 위치는 충분히 잡힌다.
     if (P.wkSwOn && miniOn()) {
