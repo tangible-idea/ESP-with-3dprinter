@@ -498,15 +498,68 @@ export function initWorkout(env) {
                                 b.pcbZ0, 0, q.hallY, -0.1, 0.45));
     tray = sub(tray, ring(j.outW, j.outD, j.inW, j.inD, JOINT_H + 0.15,
                           q.trayTop - JOINT_H, Math.max(0.8, r - q.wall)));
-    // 옆 버튼 창: 부품 외형 + 0.5 여유로 +Y 벽을 관통
-    for (const [u0, u1, w0, w1] of (switchCapOn() ? X114.side.slice(0, 1) : X114.side))
-      tray = sub(tray, boxBrush(u1 - u0 + 1.0, q.wall + 2, w1 - w0 + 1.0,
-                                b.cx + (u0 + u1) / 2, q.D / 2 - q.wall / 2,
-                                b.faceZ + w0 - 0.5, 0.4));
+    // 옆 버튼 창: 부품 외형 + 0.5 여유로 +Y 벽을 관통. 버튼 C(side[0])는 둥근 창 둘레를
+    // 벽 바깥으로 갈수록 부드럽게 넓혀 손톱이 미끄러져 들어가게 한다(wkX114BtnScoop = 0이면 직사각 창).
+    X114.side.forEach(([u0, u1, w0, w1], i) => {
+      if (i > 0 && switchCapOn()) return;
+      const flare = i === 0 ? x114ScoopFlare(q, r, u0, u1, w0, w1) : 0;
+      tray = sub(tray, flare > 0
+        ? meshBrush(x114ScoopGeo(q, b.cx + (u0 + u1) / 2, b.faceZ + (w0 + w1) / 2,
+                                 (u1 - u0 + 1.0) / 2, (w1 - w0 + 1.0) / 2, flare))
+        : boxBrush(u1 - u0 + 1.0, q.wall + 2, w1 - w0 + 1.0,
+                   b.cx + (u0 + u1) / 2, q.D / 2 - q.wall / 2, b.faceZ + w0 - 0.5, 0.4));
+    });
     if (switchCapOn())
       tray = cutXiaoSwitchGuide(tray, q, xiaoSwitchSliderDims(q, P), sliderCSG);
     tray = sub(tray, usbCut(q));
     return tray;
+  }
+
+  // 옆 버튼 손톱 홈의 바깥 벌어짐(반지름 증가량). 위로는 결합 홈, 아래로는 트레이 바닥,
+  // +X로는 케이스 둥근 모서리 시작점에서 멈춘다.
+  function x114ScoopFlare(q, r, u0, u1, w0, w1) {
+    const b = q.x114, hz = (w1 - w0 + 1.0) / 2, zc = b.faceZ + (w0 + w1) / 2;
+    const xc = b.cx + (u0 + u1) / 2, hx = (u1 - u0 + 1.0) / 2;
+    const want = Math.max(0, Math.min(2.5, Number(P.wkX114BtnScoop ?? 1.8)));
+    return Math.max(0, Math.min(want, q.trayTop - JOINT_H - 0.6 - (zc + hz),
+                                zc - hz - TRAY_FLOOR - 0.8, q.W / 2 - r + 0.5 - (xc + hx)));
+  }
+  // 옆 버튼 손톱 홈 절삭체: X-Z 단면이 경기장(stadium) 모양인 창을 +Y 벽 두께 방향으로 뽑되,
+  // 바깥면에서 flare만큼 넓고 안쪽면에서 창 크기로 줄어드는 1/4 타원 필렛 단면으로 깎는다.
+  // 바깥 가장자리는 벽면에 접하고 안쪽은 창 벽에 접해 모서리 없이 이어진다.
+  function x114ScoopGeo(q, xc, zc, hx, hz, flare) {
+    const outer = q.D / 2, inner = outer - q.wall, seg = 20, N = 64;
+    const levels = [[outer + 1, flare]];
+    for (let k = 0; k <= seg; k++) {
+      const s = k / seg;
+      levels.push([outer - s * q.wall, flare * (1 - Math.sqrt(1 - (1 - s) * (1 - s)))]);
+    }
+    levels.push([inner - 1, 0]);
+    const v = [], idx = [];
+    for (const [y, e] of levels) {
+      // 경기장 둘레: 가로 직선 + 양 끝 반원. 벌어질 때는 반지름과 직선 길이가 함께 커진다.
+      const rr = hz + e, half = Math.max(0, hx - hz);
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+        v.push(xc + Math.sign(ca) * half + rr * ca, y, zc + rr * sa);
+      }
+    }
+    const L = levels.length;
+    for (let l = 0; l < L - 1; l++)
+      for (let i = 0; i < N; i++) {
+        const a = l * N + i, b2 = l * N + (i + 1) % N, c = a + N, d = b2 + N;
+        idx.push(a, b2, c, b2, d, c);
+      }
+    const c0 = v.length / 3, c1 = c0 + 1;
+    v.push(xc, levels[0][0], zc, xc, levels[L - 1][0], zc);
+    for (let i = 0; i < N; i++) {
+      idx.push(c0, (i + 1) % N, i);
+      idx.push(c1, (L - 1) * N + i, (L - 1) * N + (i + 1) % N);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    g.setIndex(idx);
+    return g;
   }
 
   // XIAO 1.14" 앞면 버튼 캡: 걸림 턱(Ø9.1)이 상판 밑에 걸리고 기둥(Ø7.4)이 Ø7.7 구멍으로

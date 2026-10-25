@@ -428,6 +428,7 @@ const STATIC_I18N = {
     lblWkX114CompD: 'XIAO 1.14" floor ↔ PCB (parts side down)', lblWkX114BtnH: 'XIAO 1.14" front button height', lblWkX114BtnD: 'XIAO 1.14" button cap diameter',
     lblWkX114LcdRecess: 'XIAO 1.14" lid recess over LCD',
     lblWkX114BtnCatch: 'XIAO 1.14" button cap catch',
+    lblWkX114BtnScoop: 'XIAO 1.14" side button nail scoop',
     lblWkX114SwCapOn: 'XIAO 1.14" side switch slider cap',
     lblWkX114SwFork: 'Switch cap fork opening', lblWkX114SwTravel: 'Switch travel',
     lblWkX114SwFit: 'Slider clearance per side', lblWkX114SwPos: 'Slider preview position (0 / 1)',
@@ -628,6 +629,7 @@ const STATIC_I18N = {
     lblWkX114CompD: 'XIAO 1.14" 바닥↔PCB (부품면 아래)', lblWkX114BtnH: 'XIAO 1.14" 앞 버튼 높이', lblWkX114BtnD: 'XIAO 1.14" 버튼 캡 지름',
     lblWkX114LcdRecess: 'XIAO 1.14" LCD 닿는 면 파냄',
     lblWkX114BtnCatch: 'XIAO 1.14" 버튼 캡 걸림 턱',
+    lblWkX114BtnScoop: 'XIAO 1.14" 옆 버튼 손톱 홈',
     lblWkX114SwCapOn: 'XIAO 1.14" 옆 스위치 슬라이더 캡',
     lblWkX114SwFork: '스위치 캡 끼움 폭', lblWkX114SwTravel: '스위치 이동거리',
     lblWkX114SwFit: '슬라이더 한쪽 유격', lblWkX114SwPos: '슬라이더 미리보기 위치 (0 / 1)',
@@ -973,7 +975,7 @@ const P = {
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
   wkLoopOn: true, wkLoopD: 4.0, wkLoopRim: 2.2, wkLoopT: 3.0, wkLoopY: 0,   // 1층 +X 끝 키링 고리 탭 (구멍 지름, 구멍 둘레 살, 두께, Y 위치)
-  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
+  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkX114SwCapOn: true, wkX114SwFork: 2.1, wkX114SwTravel: 1.5, wkX114SwFit: 0.25, wkX114SwPos: 0,
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
@@ -1095,7 +1097,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopRim','wkLoopT','wkLoopY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch',
+                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop',
                  'wkX114SwFork','wkX114SwTravel','wkX114SwFit','wkX114SwPos',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1173,7 +1175,7 @@ const applyWorkoutOptionsUI = () => {
   for (const id of ['wkTftCompH', 'wkTftLcdX', 'wkTftWinW', 'wkTftWinD', 'wkTftWinX'])
     document.getElementById(id).disabled = !tftOnly;
   document.getElementById('wkTftEndGap').disabled = !tft;
-  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess', 'wkX114BtnCatch']) document.getElementById(id).disabled = !x114;
+  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess', 'wkX114BtnCatch', 'wkX114BtnScoop']) document.getElementById(id).disabled = !x114;
   document.getElementById('wkX114SwCapOn').checked = P.wkX114SwCapOn;
   document.getElementById('wkX114SwCapOn').disabled = !x114;
   for (const id of ['wkX114SwFork', 'wkX114SwTravel', 'wkX114SwFit', 'wkX114SwPos'])
