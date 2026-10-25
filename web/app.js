@@ -413,8 +413,11 @@ const STATIC_I18N = {
     // 운동 모션 센서
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
     lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance',
-    lblWkLoopOn: 'Keyring loop', lblWkLoopD: 'Loop hole Ø', lblWkLoopRim: 'Loop rim', lblWkLoopT: 'Loop thickness', lblWkLoopY: 'Loop Y position',
-    hintWkLoop: 'A tab with a keyring hole on the +X end of the base (opposite USB, away from the KY-035). It sits flush with the magnet face, so it prints without supports and the case still lies flat on steel. Ø4 fits a typical 1mm jump ring or lobster clasp for a kettlebell charm.',
+    lblWkLoopOn: 'Keyring loop', lblWkLoopD: 'Loop tunnel Ø', lblWkLoopR: 'Loop ring radius', lblWkLoopZ: 'Loop height', lblWkLoopY: 'Loop Y position',
+    lblWkLogoOn: 'UDO logo (2-color)', lblWkLogoW: 'Logo width', lblWkLogoDepth: 'Inlay depth', lblWkLogoY: 'Logo Y position',
+    hintWkLogo: 'Inlays the UDO app mark (lime rounded square with the dumbbell left open) and "UDO" into the magnet face of the base, mirrored so it reads from below. Export the base and the logo inlay, load both into the slicer as parts of one object (same coordinates), print the base in black and give only the inlay part the logo color. The face stays flat; the color starts on the first layer. At least 0.2mm of black skin stays under the magnet.',
+    btnWkExLogo: 'UDO logo inlay.stl',
+    hintWkLoop: 'A half-ring tunnel sunk into the +X end of the base (opposite USB, away from the KY-035). Two side-by-side openings on the end face join in a U inside, so a keyring threads through sideways and nothing sticks out. Tunnel Ø is the passage size, ring radius sets the spacing of the two openings (centre to centre = 2 × radius) and how deep it goes; if the battery pocket is too close it automatically sinks in less than half. The teardrop section prints without supports.',
     lblWkMagSkin: 'Magnet skin', lblWkMagH: 'Magnet thickness', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
     lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
@@ -432,14 +435,8 @@ const STATIC_I18N = {
     lblWkX114PinsOn: 'XIAO 1.14" pins through PCB mounting holes', lblWkX114PinFit: 'Lid pin socket clearance per side',
     hintWkX114Pins: 'Posts rise from the tray through the four Ø2.5 PCB holes. The two near the buttons continue into sockets under the lid, so the lid locks to the tray directly. The middle two stop flush with the PCB because the LCD edge covers them. Lower the clearance for a tighter lid.',
     hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click.',
-    lblWkX114SwCapOn: 'XIAO 1.14" side switch slider cap',
-    lblWkX114SwFork: 'Switch cap fork opening', lblWkX114SwTravel: 'Switch travel',
-    lblWkX114SwFit: 'Slider clearance per side', lblWkX114SwPos: 'Slider preview position (0 / 1)',
-    hintWkX114SwCap: 'Separate printed slider with a 6×4mm grip and an open fork around the tiny switch lever. Slide the cap down into the side-wall guide before fitting the board, engage the lever, then close the lid to retain the cap. Dimensions are estimated from the official photo and STEP; test print and adjust the fork opening and travel. Export the updated tray, lid and slider together. The slider exports grip-face down; use supports under the inner retaining flange.',
-    wkX114SwRoom: '⚠ Switch slider needs more room between the board and +Y wall — increase case depth or move the board toward −Y',
-    wkX114SwFloor: '⚠ Switch guide is too close to the tray floor — raise floor↔PCB',
-    btnWkExSwitchCap: 'Side switch slider.stl',
-    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, front buttons A/B as flush flexure pads in the lid (or holes for separate caps when that option is off), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has openings for side button C and the switch next to it. Front button height is estimated from the reference caps — adjust after a test print.',
+    lblWkX114BtnScoop: 'XIAO 1.14" side button nail scoop',
+    hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, front buttons A/B as flush flexure pads in the lid (or holes for separate caps when that option is off), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has a nail-scoop opening for side button C only; the power switch next to it is covered by the wall. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
     wkX114CompFit: d => `⚠ Parts under the board (PH2.0 5.6mm deep) hit the tray floor — raise floor↔PCB to ${d}mm or more`,
     btnWkExCaps: 'Front button caps.stl',
@@ -617,8 +614,11 @@ const STATIC_I18N = {
     // 운동 모션 센서
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
     lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격',
-    lblWkLoopOn: '키링 고리', lblWkLoopD: '고리 구멍 지름', lblWkLoopRim: '구멍 둘레 살', lblWkLoopT: '고리 두께', lblWkLoopY: '고리 Y 위치',
-    hintWkLoop: '1층 +X 끝(USB 반대쪽, KY-035에서 먼 쪽)에 키링 구멍이 있는 탭을 붙입니다. 자석면과 같은 바닥에 붙어 서포트 없이 출력되고, 쇠판에 붙일 때도 평평하게 닿습니다. Ø4면 케틀벨 참 장식의 1mm 오링이나 랍스터 고리가 들어갑니다.',
+    lblWkLoopOn: '키링 고리', lblWkLoopD: '고리 터널 지름', lblWkLoopR: '고리 링 반지름', lblWkLoopZ: '고리 높이', lblWkLoopY: '고리 Y 위치',
+    lblWkLogoOn: 'UDO 로고 (2색)', lblWkLogoW: '로고 전체 폭', lblWkLogoDepth: '인레이 깊이', lblWkLogoY: '로고 Y 위치',
+    hintWkLogo: '베이스 바닥(자석면)에 UDO 앱 마크(라임 둥근 네모, 덤벨 모양은 비움)와 "UDO" 글자를 인레이합니다. 밑에서 읽히도록 좌우를 뒤집어 넣습니다. 베이스와 로고 인레이 STL을 함께 내보내 슬라이서에서 한 오브젝트의 파트로 불러오고(좌표가 같아 제자리에 앉음), 베이스는 검정, 인레이 파트에만 로고 색을 지정하세요. 바닥은 평평하게 남고 첫 레이어부터 색이 바뀝니다. 자석 밑 피부는 최소 0.2mm 검정으로 남습니다.',
+    btnWkExLogo: 'UDO 로고 인레이.stl',
+    hintWkLoop: '1층 +X 끝면(USB 반대쪽, KY-035에서 먼 쪽) 안으로 반원 링 터널을 팝니다. 끝면에 나란한 구멍 두 개가 안에서 U자로 이어져 키링을 가로로 꿰어 걸고, 바깥으로 튀어나온 부분이 없습니다. 터널 지름은 통로 굵기, 링 반지름은 두 구멍 간격(중심 간 2×반지름)과 파고드는 깊이입니다. 배터리 포켓과 가까우면 절반보다 덜 묻히도록 자동으로 줄입니다. 단면 위쪽이 45° 물방울이라 서포트 없이 출력됩니다.',
     lblWkMagSkin: '자석 앞 스킨', lblWkMagH: '자석 두께', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
     lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
@@ -636,14 +636,8 @@ const STATIC_I18N = {
     lblWkX114PinsOn: 'XIAO 1.14" PCB 고정 구멍 핀', lblWkX114PinFit: '뚜껑 핀 소켓 한쪽 유격',
     hintWkX114Pins: '트레이에서 올라온 기둥이 PCB의 Ø2.5 구멍 4개를 지나 보드를 잡습니다. 버튼 쪽 두 개는 뚜껑 밑 소켓까지 올라가 뚜껑이 트레이에 직접 맞물리고, 가운데 두 개는 LCD 가장자리가 위를 덮어 PCB 면에서 멈춥니다. 뚜껑을 더 꽉 끼우려면 유격을 줄이세요.',
     hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요.',
-    lblWkX114SwCapOn: 'XIAO 1.14" 옆 스위치 슬라이더 캡',
-    lblWkX114SwFork: '스위치 캡 끼움 폭', lblWkX114SwTravel: '스위치 이동거리',
-    lblWkX114SwFit: '슬라이더 한쪽 유격', lblWkX114SwPos: '슬라이더 미리보기 위치 (0 / 1)',
-    hintWkX114SwCap: '6×4mm 손잡이와 작은 스위치 돌기를 감싸는 포크가 있는 별도 출력 캡입니다. 보드를 넣기 전 옆벽 가이드에 캡을 위에서 내려 끼우고, 돌기를 포크에 넣은 뒤 뚜껑을 닫으면 빠지지 않습니다. 공식 사진·STEP 기준 시험 설계이므로 끼움 폭과 이동거리를 시험 출력 후 맞추세요. 트레이·뚜껑·슬라이더를 함께 새로 출력해야 합니다. 캡은 손잡이 면이 베드로 향하게 내보내며 안쪽 걸림 턱 밑에 서포트를 사용하세요.',
-    wkX114SwRoom: '⚠ 스위치 슬라이더와 보드 사이가 좁습니다 — 케이스 세로를 늘리거나 보드를 −Y로 옮기세요',
-    wkX114SwFloor: '⚠ 스위치 가이드가 트레이 바닥과 너무 가깝습니다 — 바닥↔PCB 높이를 올리세요',
-    btnWkExSwitchCap: '옆 스위치 슬라이더.stl',
-    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B(기본은 뚜껑 일체형 휨 버튼, 끄면 별도 캡용 구멍), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C와 그 옆 스위치 창이 뚫립니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
+    lblWkX114BtnScoop: 'XIAO 1.14" 옆 버튼 손톱 홈',
+    hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B(기본은 뚜껑 일체형 휨 버튼, 끄면 별도 캡용 구멍), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C 창(손톱 홈)만 뚫리고, 전원 스위치 자리는 벽으로 덮습니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
     wkX114CompFit: d => `⚠ 보드 밑 부품(PH2.0 깊이 5.6)이 트레이 바닥에 닿습니다 — 바닥↔PCB를 ${d}mm 이상으로 올리세요`,
     btnWkExCaps: '앞 버튼 캡.stl',
@@ -980,10 +974,10 @@ const P = {
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
-  wkLoopOn: true, wkLoopD: 4.0, wkLoopRim: 2.2, wkLoopT: 3.0, wkLoopY: 0,   // 1층 +X 끝 키링 고리 탭 (구멍 지름, 구멍 둘레 살, 두께, Y 위치)
-  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15,
+  wkLoopOn: true, wkLoopD: 2.6, wkLoopR: 3.2, wkLoopZ: 5.8, wkLoopY: 0,   // 1층 +X 끝면 안 반원 키링 터널 (터널 지름, 링 반지름, 높이, Y 위치)
+  wkLogoOn: true, wkLogoW: 32, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 UDO 2색 인레이 (전체 폭, 깊이, Y 위치)
+  wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkX114BtnFlex: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
-  wkX114SwCapOn: true, wkX114SwFork: 2.1, wkX114SwTravel: 1.5, wkX114SwFit: 0.25, wkX114SwPos: 0,
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1103,9 +1097,8 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopRim','wkLoopT','wkLoopY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114FlexT','wkX114BtnGap','wkX114PinFit',
-                 'wkX114SwFork','wkX114SwTravel','wkX114SwFit','wkX114SwPos',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopR','wkLoopZ','wkLoopY','wkLogoW','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1161,8 +1154,10 @@ const applyWorkoutOptionsUI = () => {
   const tftOnly = P.wkEspType === 'tft', tft = tftOnly || x114, mini = !xiao && !tft;
   for (const id of ['wkHallGap', 'wkHallT'])
     document.getElementById(id).disabled = !P.wkHallOn;
-  for (const id of ['wkLoopD', 'wkLoopRim', 'wkLoopT', 'wkLoopY'])
+  for (const id of ['wkLoopD', 'wkLoopR', 'wkLoopZ', 'wkLoopY'])
     document.getElementById(id).disabled = !P.wkLoopOn;
+  for (const id of ['wkLogoW', 'wkLogoDepth', 'wkLogoY'])
+    document.getElementById(id).disabled = !P.wkLogoOn;
   document.getElementById('wkSwOn').checked = P.wkSwOn && mini;
   document.getElementById('wkSwOn').disabled = !mini;
   document.getElementById('wkModType').disabled = !mini;
@@ -1182,7 +1177,7 @@ const applyWorkoutOptionsUI = () => {
   for (const id of ['wkTftCompH', 'wkTftLcdX', 'wkTftWinW', 'wkTftWinD', 'wkTftWinX'])
     document.getElementById(id).disabled = !tftOnly;
   document.getElementById('wkTftEndGap').disabled = !tft;
-  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess']) document.getElementById(id).disabled = !x114;
+  for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess', 'wkX114BtnCatch', 'wkX114BtnScoop']) document.getElementById(id).disabled = !x114;
   document.getElementById('wkX114BtnFlex').checked = P.wkX114BtnFlex;
   document.getElementById('wkX114BtnFlex').disabled = !x114;
   document.getElementById('wkX114BtnCatch').disabled = !x114 || P.wkX114BtnFlex;
@@ -1191,10 +1186,6 @@ const applyWorkoutOptionsUI = () => {
   document.getElementById('wkX114PinsOn').checked = P.wkX114PinsOn;
   document.getElementById('wkX114PinsOn').disabled = !x114;
   document.getElementById('wkX114PinFit').disabled = !x114 || !P.wkX114PinsOn;
-  document.getElementById('wkX114SwCapOn').checked = P.wkX114SwCapOn;
-  document.getElementById('wkX114SwCapOn').disabled = !x114;
-  for (const id of ['wkX114SwFork', 'wkX114SwTravel', 'wkX114SwFit', 'wkX114SwPos'])
-    document.getElementById(id).disabled = !x114 || !P.wkX114SwCapOn;
 };
 document.getElementById('wkEspType').value = P.wkEspType;
 document.getElementById('wkX114PinsOn').addEventListener('change', e => {
@@ -1204,11 +1195,6 @@ document.getElementById('wkX114PinsOn').addEventListener('change', e => {
 });
 document.getElementById('wkX114BtnFlex').addEventListener('change', e => {
   P.wkX114BtnFlex = e.target.checked;
-  applyWorkoutOptionsUI();
-  queueRebuild();
-});
-document.getElementById('wkX114SwCapOn').addEventListener('change', e => {
-  P.wkX114SwCapOn = e.target.checked;
   applyWorkoutOptionsUI();
   queueRebuild();
 });
@@ -1246,6 +1232,12 @@ document.getElementById('wkEspType').addEventListener('change', e => {
 document.getElementById('wkHallOn').checked = P.wkHallOn;
 document.getElementById('wkOledOn').checked = P.wkOledOn;
 applyWorkoutOptionsUI();
+document.getElementById('wkLogoOn').checked = P.wkLogoOn;
+document.getElementById('wkLogoOn').addEventListener('change', e => {
+  P.wkLogoOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
 document.getElementById('wkLoopOn').checked = P.wkLoopOn;
 document.getElementById('wkLoopOn').addEventListener('change', e => {
   P.wkLoopOn = e.target.checked;
@@ -1978,6 +1970,15 @@ const add = (a, b) => csgOp(a, b, 'add');
 const sub = (a, b) => csgOp(a, b, 'subtract');
 const inter = (a, b) => csgOp(a, b, 'intersect');
 const meshBrush = (geo, matrix, tol) => toMan(geo, matrix, tol);
+// 2D 윤곽 목록([[x, y], ...] 여러 개)을 NonZero로 채워 z0부터 h만큼 뽑는다 (글자·로고용).
+// grow > 0이면 윤곽을 그만큼 둥글게 키운 뒤 뽑는다 (가는 획을 노즐 폭 이상으로).
+function polyBrush(polys, h, z0 = 0, grow = 0) {
+  let cs = new M.CrossSection(polys, 'NonZero');
+  if (grow > 0) { const g = cs.offset(grow, 'Round'); cs.delete(); cs = g; }
+  const ex = cs.extrude(h); cs.delete();
+  const r = ex.translate([0, 0, z0]); ex.delete();
+  return r;
+}
 
 // ------------------------------------------------------------------
 // 외부 STL 로드 (usb 구멍, 스위치 스탠드, 고스트 부품들)
@@ -4675,7 +4676,7 @@ productSel.addEventListener('change', e => {
 ({ rebuildWorkout, applyWorkoutExplode, drawWorkoutWires } = initWorkout({
   THREE, P, t, G, MATS, ESP_TYPES, ESP_PINS_XIAO, ESP_PINS_TFT, ESP_PINS_X114,
   matCase, matCaseX, boxBrush, add, sub,
-  meshBrush, ASSETS,
+  meshBrush, polyBrush, ASSETS,
   manToGeo, downloadSTL, status, queueRebuild, markRulers, setRulerExtras,
   getView: () => ({ xray, showGhosts }),
   clearFloors: () => { floorMeshes = [null, null, null, null]; exportGeos = [null, null, null, null]; },
