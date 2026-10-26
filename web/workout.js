@@ -2,7 +2,7 @@
 // 1) KY-035+자석+배터리 베이스, 2) 충전모듈 또는 XIAO+MPU6050 트레이, 3) SuperMini 또는 OLED 뚜껑.
 // 좌표: X=배터리 40mm 방향, Y=20mm/운동 상하 방향, Z=자석면→뚜껑.
 
-import { UDO_MARK, UDO_ICON, UDO_TEXT, UDO_TEXT_W } from './udo-logo.js';
+import { UDO_MARK, UDO_FLAME, UDO_FLAME_U, UDO_TEXT, UDO_TEXT_W } from './udo-logo.js';
 
 export function initWorkout(env) {
   const {
@@ -411,37 +411,30 @@ export function initWorkout(env) {
     return body;
   }
 
-  // UDO 로고 인레이: 1층 바깥 바닥(자석면)에 앱 헤더 마크(라임 둥근 네모 + 덤벨 자리 비움)와
+  // UDO 로고 인레이: 1층 바깥 바닥(자석면)에 앱 헤더 마크(라임 불꽃, 가운데 U자는 비움)와
   // 소문자 "udo" 글자를 파고, 같은 모양의 별도 바디를 만든다. 베이스와 함께 3MF 한 파일의
   // 두 파트로 내보내 로고 파트에만 색을 주면 첫 레이어부터 2색으로 나오고 바닥은 평평하게 남는다.
   // 비율은 앱 헤더(마크 38, 간격 10, 글자 27px, 줄 상자 세로 가운데)를 따른다. 밑에서 읽히도록 X를 뒤집는다.
-  const LOGO_GAP = 10 / 38, LOGO_FS = 27 / 38;
-  // 32mm 폭에서 덤벨 손잡이 빈 자리가 0.4mm라 노즐 폭에 걸린다 — 덤벨을 둘레로 키워 비운다.
-  const LOGO_ICON_GROW = 0.15;
+  // 앱의 짙은 네모는 검정 바닥과 같은 색이라 따로 만들지 않고, 폭과 가운데 맞춤은 보이는 잉크
+  // (불꽃 왼쪽 끝 ~ 글자 오른쪽 끝) 기준으로 잡는다. 32mm 폭에서 U자 홈은 약 0.95mm.
+  const LOGO_GAP = 10 / 38, LOGO_FS = 27 / 38, LOGO_INK_L = 0.5 + UDO_MARK.left;
   function logoDims(q) {
     const maxW = q.W - 2 * caseR(q) + 4;
     const w = Math.max(10, Math.min(maxW, Number(P.wkLogoW) || 32));
-    const box = w / (1 + LOGO_GAP + LOGO_FS * UDO_TEXT_W);
+    const box = w / (1 + LOGO_GAP + LOGO_FS * UDO_TEXT_W - LOGO_INK_L);
     // 자석 포켓 밑 피부를 0.2 이상 검정으로 남긴다.
     const depth = Math.max(0.2, Math.min(Number(P.wkLogoDepth) || 0.4, P.wkMagSkin - 0.2));
-    return { w, box, depth, x0: -w / 2, y: Number(P.wkLogoY) || 0 };
+    return { w, box, depth, x0: -w / 2 - LOGO_INK_L * box, y: Number(P.wkLogoY) || 0 };
   }
 
   function logoInlay(q, z0, h) {
     const l = logoDims(q), s = l.box, fs = LOGO_FS * s;
     const pt = (x, y) => [-(l.x0 + x), l.y + y];
-    const sq = [], r = UDO_MARK.corner * s, n = 8;
-    for (const [cx, cy, a0] of [[s - r, r - s / 2, -90], [s - r, s / 2 - r, 0],
-                                [r, s / 2 - r, 90], [r, r - s / 2, 180]])
-      for (let i = 0; i <= n; i++) {
-        const a = (a0 + 90 * i / n) * Math.PI / 180;
-        sq.push(pt(cx + r * Math.cos(a), cy + r * Math.sin(a)));
-      }
-    const gs = UDO_MARK.glyph * s;
-    const icon = UDO_ICON.map(c => c.map(([x, y]) => pt(s / 2 + x * gs, y * gs)));
+    const flame = UDO_FLAME.map(([x, y]) => pt(s / 2 + x * s, y * s));
+    const u = UDO_FLAME_U.map(([x, y]) => pt(s / 2 + x * s, y * s));
     const tx = s * (1 + LOGO_GAP);
     const text = UDO_TEXT.map(c => c.map(([x, y]) => pt(tx + x * fs, y * fs)));
-    const mark = sub(polyBrush([sq], h, z0), polyBrush(icon, h + 0.4, z0 - 0.2, LOGO_ICON_GROW));
+    const mark = sub(polyBrush([flame], h, z0), polyBrush([u], h + 0.4, z0 - 0.2));
     return add(mark, polyBrush(text, h, z0));
   }
 
