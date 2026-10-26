@@ -445,41 +445,46 @@ export function initWorkout(env) {
     return add(mark, polyBrush(text, h, z0));
   }
 
-  // 키링 고리: 1층 +X 끝면(USB 반대쪽, KY-035에서도 먼 쪽) 안으로 반원 링 터널을 판다.
-  // 끝면에 Y로 나란한 구멍 두 개가 나고 안에서 U자로 이어져, 키링을 가로로 꿰어 건다.
-  // 튀어나온 부분이 없다. 링 축은 Z, 중심은 끝면 위 → 링의 절반이 몸통 안에 묻힌다.
-  // 배터리 포켓까지 0.8은 남기도록, 자리가 모자라면 중심을 바깥으로 밀어 덜 묻는다.
-  // 단면은 위가 45°로 뾰족한 물방울이라 터널 천장도 서포트 없이 출력된다.
+  // 키링 고리: 1층 +X 끝면(USB 반대쪽, KY-035에서도 먼 쪽)에 옆으로 나란한 둥근 구멍 두 개를
+  // 뚫고, 안에서 반타원으로 휘는 통로로 잇는다. 키링은 한쪽 구멍으로 들어가 다른 쪽으로 나오며
+  // 두 구멍 사이 기둥을 감는다. 이전 반원 터널은 기둥(폭 3.8)이 가늘고 물방울 꼭짓점이
+  // 처져 무너졌다 → 구멍 간격을 넓혀 기둥을 굵게 하고, 단면 위쪽은 45°로 좁히다 끝을
+  // 평평하게 잘라(짧은 브리지) 서포트 없이 출력한다. 배터리 포켓까지 1.0은 남기고
+  // 남는 깊이를 기둥 깊이(X)로 쓴다.
+  const LOOP_TOP = 1.1;   // 단면 평평한 천장 높이 (× 반지름)
   function loopDims(q) {
-    const tubeR = Math.max(0.75, Math.min(2.2, (Number(P.wkLoopD) || 2.6) / 2));
-    const ringR = Math.max(tubeR + 1.0, Math.min(6, Number(P.wkLoopR) || 3.2));
-    const yLim = Math.max(0, q.D / 2 - caseR(q) - ringR - tubeR - 0.3);
+    const r = Math.max(0.8, Math.min(1.7, (Number(P.wkLoopD) || 2.4) / 2));
+    const bar = Math.max(2, Math.min(8, Number(P.wkLoopBar) || 4));
+    const half = bar / 2 + 2 * r;   // 중심에서 바깥 구멍 가장자리까지 (Y)
+    const yLim = Math.max(0, q.D / 2 - caseR(q) - half - 0.5);
     const y = Math.max(-yLim, Math.min(yLim, Number(P.wkLoopY) || 0));
-    const tip = tubeR * Math.SQRT2;
-    const z = Math.max(tubeR + 0.8, Math.min(q.baseH - tip - 0.8, Number(P.wkLoopZ) || q.baseH / 2));
-    const room = q.W / 2 - (BAT.w + CLR) / 2 - 0.8;
-    const cx = q.W / 2 + Math.max(0, ringR + tubeR - room);
-    return { tubeR, ringR, y, z, cx };
+    const z = Math.max(r + 0.8, Math.min(q.baseH - LOOP_TOP * r - 1.0, Number(P.wkLoopZ) || 5));
+    const xf = q.W / 2;
+    const room = xf - (BAT.w + CLR) / 2 - 1.0;
+    // 반타원 통로 중심선: X 반지름 a(깊이), Y 반지름 b(구멍 중심 간 절반)
+    return { r, y, z, bar, xf, a: Math.max(r + 1.0, room - r), b: bar / 2 + r };
   }
 
   function loopTunnelGeo(q) {
-    const l = loopDims(q), M = 32, seg = 36, ext = l.cx + 2;
-    // 단면 (a = 링 바깥 방향, b = Z): 아래는 원, 위 90°는 꼭짓점으로 모은 물방울.
-    const sec = [[0, l.tubeR * Math.SQRT2]];
+    const l = loopDims(q), M = 32, seg = 40, ext = l.xf + 1.5;
+    // 단면 (u = XY 평면 안 바깥 법선 방향, w = Z): 아래는 원, 위는 45°로 좁혀 평평하게 자른다.
+    const top = LOOP_TOP * l.r, ft = l.r * Math.SQRT2 - top;
+    const sec = [[ft, top], [-ft, top]];
     for (let i = 0; i <= M; i++) {
       const p = (135 + 270 * i / M) * Math.PI / 180;
-      sec.push([l.tubeR * Math.cos(p), l.tubeR * Math.sin(p)]);
+      sec.push([l.r * Math.cos(p), l.r * Math.sin(p)]);
     }
-    // 경로: 끝면 밖(-R 쪽) → 반원(θ 270° → 90°, 가장 깊은 곳이 θ = 180°) → 끝면 밖(+R 쪽)
-    const path = [[ext, l.y - l.ringR, 0, -1]];
+    // 경로 점 [x, y, nx, ny]: 끝면 밖(-Y 구멍) → 반타원(가장 깊은 곳이 t = 180°) → 끝면 밖(+Y 구멍)
+    const path = [[ext, l.y - l.b, 0, -1]];
     for (let k = 0; k <= seg; k++) {
-      const th = (270 - 180 * k / seg) * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
-      path.push([l.cx + l.ringR * c, l.y + l.ringR * s, c, s]);
+      const t = (270 - 180 * k / seg) * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+      const nx = l.b * c, ny = l.a * s, nl = Math.hypot(nx, ny);
+      path.push([l.xf + l.a * c, l.y + l.b * s, nx / nl, ny / nl]);
     }
-    path.push([ext, l.y + l.ringR, 0, 1]);
+    path.push([ext, l.y + l.b, 0, 1]);
     const v = [], idx = [], n = sec.length;
-    for (const [px, py, ux, uy] of path)
-      for (const [a, b] of sec) v.push(px + a * ux, py + a * uy, l.z + b);
+    for (const [px, py, nx, ny] of path)
+      for (const [u, w] of sec) v.push(px + u * nx, py + u * ny, l.z + w);
     for (let k = 0; k < path.length - 1; k++)
       for (let i = 0; i < n; i++) {
         const a = k * n + i, b = k * n + (i + 1) % n, c = a + n, d = b + n;
@@ -487,7 +492,7 @@ export function initWorkout(env) {
       }
     const last = (path.length - 1) * n;
     for (let i = 1; i < n - 1; i++) idx.push(0, i + 1, i, last, last + i, last + i + 1);
-    // 감김 방향은 부호 있는 부피로 확인해 바깥을 향하게 맞춘다.
+  // 감김 방향은 부호 있는 부피로 확인해 바깥을 향하게 맞춘다.
     let vol = 0;
     for (let t = 0; t < idx.length; t += 3) {
       const [a, b, c] = [idx[t], idx[t + 1], idx[t + 2]].map(i => v.slice(3 * i, 3 * i + 3));
