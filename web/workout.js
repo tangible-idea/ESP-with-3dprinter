@@ -412,23 +412,23 @@ export function initWorkout(env) {
   }
 
   // UDO 로고 인레이: 1층 바깥 바닥(자석면)에 앱 헤더 마크(라임 둥근 네모 + 덤벨 자리 비움)와
-  // "UDO" 글자를 파고, 같은 모양의 별도 바디를 만든다. 두 STL을 슬라이서에서 한 오브젝트의
-  // 파트로 합쳐 로고 파트에만 색을 주면 첫 레이어부터 2색으로 나오고 바닥은 평평하게 남는다.
-  // 비율은 앱 헤더(마크 38, 간격 10, 글자 27px)를 따른다. 밑에서 읽히도록 X를 뒤집는다.
-  const LOGO_GAP = 10 / 38, LOGO_CAP = 27 * (1456 / 2048) / 38;
+  // 소문자 "udo" 글자를 파고, 같은 모양의 별도 바디를 만든다. 베이스와 함께 3MF 한 파일의
+  // 두 파트로 내보내 로고 파트에만 색을 주면 첫 레이어부터 2색으로 나오고 바닥은 평평하게 남는다.
+  // 비율은 앱 헤더(마크 38, 간격 10, 글자 27px, 줄 상자 세로 가운데)를 따른다. 밑에서 읽히도록 X를 뒤집는다.
+  const LOGO_GAP = 10 / 38, LOGO_FS = 27 / 38;
   // 32mm 폭에서 덤벨 손잡이 빈 자리가 0.4mm라 노즐 폭에 걸린다 — 덤벨을 둘레로 키워 비운다.
   const LOGO_ICON_GROW = 0.15;
   function logoDims(q) {
     const maxW = q.W - 2 * caseR(q) + 4;
     const w = Math.max(10, Math.min(maxW, Number(P.wkLogoW) || 32));
-    const box = w / (1 + LOGO_GAP + LOGO_CAP * UDO_TEXT_W);
+    const box = w / (1 + LOGO_GAP + LOGO_FS * UDO_TEXT_W);
     // 자석 포켓 밑 피부를 0.2 이상 검정으로 남긴다.
     const depth = Math.max(0.2, Math.min(Number(P.wkLogoDepth) || 0.4, P.wkMagSkin - 0.2));
     return { w, box, depth, x0: -w / 2, y: Number(P.wkLogoY) || 0 };
   }
 
   function logoInlay(q, z0, h) {
-    const l = logoDims(q), s = l.box, cap = LOGO_CAP * s;
+    const l = logoDims(q), s = l.box, fs = LOGO_FS * s;
     const pt = (x, y) => [-(l.x0 + x), l.y + y];
     const sq = [], r = UDO_MARK.corner * s, n = 8;
     for (const [cx, cy, a0] of [[s - r, r - s / 2, -90], [s - r, s / 2 - r, 0],
@@ -440,7 +440,7 @@ export function initWorkout(env) {
     const gs = UDO_MARK.glyph * s;
     const icon = UDO_ICON.map(c => c.map(([x, y]) => pt(s / 2 + x * gs, y * gs)));
     const tx = s * (1 + LOGO_GAP);
-    const text = UDO_TEXT.map(c => c.map(([x, y]) => pt(tx + x * cap, (y - 0.5) * cap)));
+    const text = UDO_TEXT.map(c => c.map(([x, y]) => pt(tx + x * fs, y * fs)));
     const mark = sub(polyBrush([sq], h, z0), polyBrush(icon, h + 0.4, z0 - 0.2, LOGO_ICON_GROW));
     return add(mark, polyBrush(text, h, z0));
   }
