@@ -415,8 +415,8 @@ const STATIC_I18N = {
     secWorkoutCase: 'Case & magnet fit', lblWkWidth: 'Long side X', lblWkLength: 'Short side Y',
     lblWkBodyH: 'Battery base height', lblWkWall: 'Wall thickness', lblWkRound: 'Corner rounding', lblWkFit: 'Joint clearance', lblWkLidGrip: 'Lid grip ribs (interference per side)',
     lblWkLoopOn: 'Keyring loop', lblWkLoopD: 'Loop hole Ø', lblWkLoopBar: 'Loop post width', lblWkLoopZ: 'Loop height', lblWkLoopY: 'Loop Y position',
-    lblWkLogoOn: 'UDO logo (2-color)', lblWkLogoW: 'Logo width', lblWkLogoDepth: 'Inlay depth', lblWkLogoY: 'Logo Y position',
-    hintWkLogo: 'Inlays the UDO app mark (lime flame with the U left open) and the lowercase "udo" wordmark into the magnet face of the base, mirrored so it reads from below. The base export becomes a single .3mf with two parts (base + logo inlay) in one object; open it in the slicer, print the base in black and assign the logo color to the inlay part only. The face stays flat; the color starts on the first layer. At least 0.2mm of black skin stays under the magnet.',
+    lblWkLogoOn: 'UDO flame logo (2-color)', lblWkLogoL: 'Flame length', lblWkLogoDepth: 'Inlay depth', lblWkLogoY: 'Logo Y position',
+    hintWkLogo: 'Inlays the UDO app mark (lime flame with the U left open) in the middle of the magnet face of the base, turned 90° so it runs along the long side with the tip toward the keyring end. The base export becomes a single .3mf with two parts (base + logo inlay) in one object; open it in the slicer, print the base in black and assign the logo color to the inlay part only. The face stays flat; the color starts on the first layer. At least 0.2mm of black skin stays under the magnet.',
     hintWkLoop: 'Two round holes side by side on the +X end face of the base (opposite USB, away from the KY-035), joined inside by a curved passage. Thread a keyring in through one hole and out the other so it wraps the post between them. Hole Ø = passage size, post width = gap between the two holes (wider = stronger). The passage top narrows at 45° to a short flat bridge, so it prints without supports. Nothing sticks out.',
     lblWkMagSkin: 'Magnet skin', lblWkMagH: 'Magnet thickness', lblWkBatH: 'Battery thickness', lblWkHallOn: 'Use KY-035',
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
@@ -615,8 +615,8 @@ const STATIC_I18N = {
     secWorkoutCase: '케이스 & 자석 결합', lblWkWidth: '긴 변 X', lblWkLength: '짧은 변 Y',
     lblWkBodyH: '배터리 베이스 높이', lblWkWall: '벽 두께', lblWkRound: '모서리 라운딩', lblWkFit: '결합 유격', lblWkLidGrip: '뚜껑 조임 돌기',
     lblWkLoopOn: '키링 고리', lblWkLoopD: '고리 구멍 지름', lblWkLoopBar: '고리 기둥 폭', lblWkLoopZ: '고리 높이', lblWkLoopY: '고리 Y 위치',
-    lblWkLogoOn: 'UDO 로고 (2색)', lblWkLogoW: '로고 전체 폭', lblWkLogoDepth: '인레이 깊이', lblWkLogoY: '로고 Y 위치',
-    hintWkLogo: '베이스 바닥(자석면)에 UDO 앱 마크(라임 불꽃, 가운데 U자는 비움)와 소문자 "udo" 글자를 인레이합니다. 밑에서 읽히도록 좌우를 뒤집어 넣습니다. 베이스 내보내기가 베이스 + 로고 인레이 두 파트가 한 오브젝트로 들어간 .3mf 파일 하나로 나옵니다. 슬라이서에서 열어 베이스는 검정, 인레이 파트에만 로고 색을 지정하세요. 바닥은 평평하게 남고 첫 레이어부터 색이 바뀝니다. 자석 밑 피부는 최소 0.2mm 검정으로 남습니다.',
+    lblWkLogoOn: 'UDO 불꽃 로고 (2색)', lblWkLogoL: '불꽃 길이', lblWkLogoDepth: '인레이 깊이', lblWkLogoY: '로고 Y 위치',
+    hintWkLogo: '베이스 바닥(자석면) 가운데에 UDO 앱 마크(라임 불꽃, 가운데 U자는 비움)를 인레이합니다. 90° 눕혀 긴 변을 따라 놓고 불꽃 끝이 키링 쪽을 향합니다. 베이스 내보내기가 베이스 + 로고 인레이 두 파트가 한 오브젝트로 들어간 .3mf 파일 하나로 나옵니다. 슬라이서에서 열어 베이스는 검정, 인레이 파트에만 로고 색을 지정하세요. 바닥은 평평하게 남고 첫 레이어부터 색이 바뀝니다. 자석 밑 피부는 최소 0.2mm 검정으로 남습니다.',
     hintWkLoop: '1층 +X 끝면(USB 반대쪽, KY-035에서 먼 쪽)에 옆으로 나란한 둥근 구멍 두 개를 뚫고, 안에서 휘는 통로로 잇습니다. 키링을 한쪽 구멍으로 넣어 다른 쪽으로 빼면 두 구멍 사이 기둥을 감습니다. 구멍 지름은 통로 굵기, 기둥 폭은 두 구멍 사이 간격(넓을수록 튼튼)입니다. 통로 위쪽은 45°로 좁히다 짧은 평평한 브리지로 닫아 서포트 없이 출력됩니다. 바깥으로 튀어나온 부분은 없습니다.',
     lblWkMagSkin: '자석 앞 스킨', lblWkMagH: '자석 두께', lblWkBatH: '배터리 두께', lblWkHallOn: 'KY-035 사용',
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
@@ -974,7 +974,7 @@ const P = {
   // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
   wkLoopOn: true, wkLoopD: 2.4, wkLoopBar: 4.0, wkLoopZ: 5.0, wkLoopY: 0,   // 1층 +X 끝면 옆으로 나란한 둥근 구멍 키링 통로 (구멍 지름, 구멍 사이 기둥 폭, 높이, Y 위치)
-  wkLogoOn: true, wkLogoW: 32, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 UDO 2색 인레이 (전체 폭, 깊이, Y 위치)
+  wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkX114BtnFlex: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.15, wkLidGrip: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
@@ -1104,7 +1104,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoW','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1163,7 +1163,7 @@ const applyWorkoutOptionsUI = () => {
     document.getElementById(id).disabled = !P.wkHallOn;
   for (const id of ['wkLoopD', 'wkLoopBar', 'wkLoopZ', 'wkLoopY'])
     document.getElementById(id).disabled = !P.wkLoopOn;
-  for (const id of ['wkLogoW', 'wkLogoDepth', 'wkLogoY'])
+  for (const id of ['wkLogoL', 'wkLogoDepth', 'wkLogoY'])
     document.getElementById(id).disabled = !P.wkLogoOn;
   document.getElementById('wkSwOn').checked = P.wkSwOn && mini;
   document.getElementById('wkSwOn').disabled = !mini;

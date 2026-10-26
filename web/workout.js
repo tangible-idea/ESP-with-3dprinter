@@ -2,7 +2,7 @@
 // 1) KY-035+자석+배터리 베이스, 2) 충전모듈 또는 XIAO+MPU6050 트레이, 3) SuperMini 또는 OLED 뚜껑.
 // 좌표: X=배터리 40mm 방향, Y=20mm/운동 상하 방향, Z=자석면→뚜껑.
 
-import { UDO_MARK, UDO_FLAME, UDO_FLAME_U, UDO_TEXT, UDO_TEXT_W } from './udo-logo.js';
+import { UDO_MARK, UDO_FLAME, UDO_FLAME_U } from './udo-logo.js';
 
 export function initWorkout(env) {
   const {
@@ -411,31 +411,30 @@ export function initWorkout(env) {
     return body;
   }
 
-  // UDO 로고 인레이: 1층 바깥 바닥(자석면)에 앱 헤더 마크(라임 불꽃, 가운데 U자는 비움)와
-  // 소문자 "udo" 글자를 파고, 같은 모양의 별도 바디를 만든다. 베이스와 함께 3MF 한 파일의
-  // 두 파트로 내보내 로고 파트에만 색을 주면 첫 레이어부터 2색으로 나오고 바닥은 평평하게 남는다.
-  // 비율은 앱 헤더(마크 38, 간격 10, 글자 27px, 줄 상자 세로 가운데)를 따른다. 밑에서 읽히도록 X를 뒤집는다.
-  // 앱의 짙은 네모는 검정 바닥과 같은 색이라 따로 만들지 않고, 폭과 가운데 맞춤은 보이는 잉크
-  // (불꽃 왼쪽 끝 ~ 글자 오른쪽 끝) 기준으로 잡는다. 32mm 폭에서 U자 홈은 약 0.95mm.
-  const LOGO_GAP = 10 / 38, LOGO_FS = 27 / 38, LOGO_INK_L = 0.5 + UDO_MARK.left;
+  // UDO 로고 인레이: 1층 바깥 바닥(자석면) 가운데에 앱 마크(라임 불꽃, 가운데 U자는 비움)를 파고,
+  // 같은 모양의 별도 바디를 만든다. 베이스와 함께 3MF 한 파일의 두 파트로 내보내 로고 파트에만
+  // 색을 주면 첫 레이어부터 2색으로 나오고 바닥은 평평하게 남는다.
+  // 불꽃은 90° 눕혀 긴 축을 케이스 긴 변(X)에 맞추고 끝이 +X(키링 쪽)를 향한다. 케이스를 X축으로
+  // 뒤집어 밑에서 보면 앱 마크를 시계 방향으로 90° 돌린 모양이 되도록 Y를 뒤집어 넣는다.
+  // 앱의 짙은 네모는 검정 바닥과 같은 색이라 따로 만들지 않는다. 13mm 길이에서 U자 홈은 약 1.3mm.
+  const FLAME_X0 = Math.min(...UDO_FLAME.map(p => p[0])), FLAME_X1 = Math.max(...UDO_FLAME.map(p => p[0]));
+  const FLAME_Y0 = Math.min(...UDO_FLAME.map(p => p[1])), FLAME_Y1 = Math.max(...UDO_FLAME.map(p => p[1]));
+  const FLAME_ASPECT = (FLAME_X1 - FLAME_X0) / (FLAME_Y1 - FLAME_Y0);   // 폭 / 길이
   function logoDims(q) {
-    const maxW = q.W - 2 * caseR(q) + 4;
-    const w = Math.max(10, Math.min(maxW, Number(P.wkLogoW) || 32));
-    const box = w / (1 + LOGO_GAP + LOGO_FS * UDO_TEXT_W - LOGO_INK_L);
+    // 둥근 모서리 안쪽 X, 벽에서 2mm 띄운 Y 안에 들어가게 길이를 제한한다.
+    const maxL = Math.max(6, Math.min(q.W - 2 * caseR(q), (q.D - 4) / FLAME_ASPECT));
+    const len = Math.max(6, Math.min(maxL, Number(P.wkLogoL) || 13));
     // 자석 포켓 밑 피부를 0.2 이상 검정으로 남긴다.
     const depth = Math.max(0.2, Math.min(Number(P.wkLogoDepth) || 0.4, P.wkMagSkin - 0.2));
-    return { w, box, depth, x0: -w / 2 - LOGO_INK_L * box, y: Number(P.wkLogoY) || 0 };
+    return { len, k: len / (FLAME_Y1 - FLAME_Y0), depth, y: Number(P.wkLogoY) || 0 };
   }
 
   function logoInlay(q, z0, h) {
-    const l = logoDims(q), s = l.box, fs = LOGO_FS * s;
-    const pt = (x, y) => [-(l.x0 + x), l.y + y];
-    const flame = UDO_FLAME.map(([x, y]) => pt(s / 2 + x * s, y * s));
-    const u = UDO_FLAME_U.map(([x, y]) => pt(s / 2 + x * s, y * s));
-    const tx = s * (1 + LOGO_GAP);
-    const text = UDO_TEXT.map(c => c.map(([x, y]) => pt(tx + x * fs, y * fs)));
-    const mark = sub(polyBrush([flame], h, z0), polyBrush([u], h + 0.4, z0 - 0.2));
-    return add(mark, polyBrush(text, h, z0));
+    const l = logoDims(q), cx = (FLAME_X0 + FLAME_X1) / 2, cy = (FLAME_Y0 + FLAME_Y1) / 2;
+    // 마크 (x, y↑끝) → 모델 (X = y, Y = x): 끝이 +X, 밑에서 보면 시계 방향 90°.
+    const pt = ([x, y]) => [(y - cy) * l.k, l.y + (x - cx) * l.k];
+    const flame = UDO_FLAME.map(pt), u = UDO_FLAME_U.map(pt);
+    return sub(polyBrush([flame], h, z0), polyBrush([u], h + 0.4, z0 - 0.2));
   }
 
   // 키링 고리: 1층 +X 끝면(USB 반대쪽, KY-035에서도 먼 쪽)에 옆으로 나란한 둥근 구멍 두 개를
