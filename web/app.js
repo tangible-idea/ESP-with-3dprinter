@@ -431,10 +431,10 @@ const STATIC_I18N = {
     lblWkX114CompD: 'XIAO 1.14" floor ↔ PCB (parts side down)', lblWkX114BtnH: 'XIAO 1.14" front button height', lblWkX114BtnD: 'XIAO 1.14" button cap diameter',
     lblWkX114LcdRecess: 'XIAO 1.14" lid recess over LCD',
     lblWkX114BtnCatch: 'XIAO 1.14" button cap catch',
-    lblWkX114BtnFlex: 'XIAO 1.14" front buttons printed in the lid (flexure)', lblWkX114FlexT: 'Flexure arm thickness', lblWkX114BtnGap: 'Plunger ↔ button gap',
+    lblWkX114BtnFlex: 'XIAO 1.14" front buttons printed in the lid (flexure)', lblWkX114BtnFlame: 'Flame-shaped buttons, lime 2-color (.3mf)', lblWkX114FlexT: 'Flexure arm thickness', lblWkX114BtnGap: 'Plunger ↔ button gap',
     lblWkX114PinsOn: 'XIAO 1.14" pins through PCB mounting holes', lblWkX114PinFit: 'Lid pin socket clearance per side',
     hintWkX114Pins: 'Posts rise from the tray through the four Ø2.5 PCB holes. The two near the buttons continue into sockets under the lid, so the lid locks to the tray directly. The middle two stop flush with the PCB because the LCD edge covers them. Lower the clearance for a tighter lid.',
-    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click.',
+    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click. With flame buttons on, each pad is the UDO flame (tip toward the screen) and its top 0.4mm is a separate lime part; the lid export becomes one .3mf with the lid and the flames as two parts of one object.',
     lblWkX114BtnScoop: 'XIAO 1.14" side button nail scoop',
     hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, front buttons A/B as flush flexure pads in the lid (or holes for separate caps when that option is off), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has a nail-scoop opening for side button C only; the power switch next to it is covered by the wall. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
@@ -464,7 +464,7 @@ const STATIC_I18N = {
     lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" plugs into XIAO (no solder)', hintWkOledPlug: 'The 0.49" header order GND·VCC·SCL·SDA matches the XIAO row GND·3V3·D10·D9, so the OLED plugs straight in, lying face-up over the board. The lid presses it from above and only the display window shows. I2C becomes SDA=GPIO9, SCL=GPIO10 (wire the MPU6050 there too). Lower the ESP section height until the pins grip well.',
     lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
     hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and a lid with an optional 0.96" or 0.49" OLED set flush into its flat top under a bezel that shows only the display. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
-    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl / .3mf', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl', btnWkExBezel: 'OLED bezel.stl',
+    secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl / .3mf', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl / .3mf', btnWkExBezel: 'OLED bezel.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the OLED pocket faces up; use bridge-friendly settings for the ESP32-cage ceiling and the hollowed top skin. Print the OLED bezel separately (exported face-down), drop the OLED in, then press the bezel into its recess (a dot of glue if loose). Only the display window stays visible.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
     workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
@@ -631,10 +631,10 @@ const STATIC_I18N = {
     lblWkX114CompD: 'XIAO 1.14" 바닥↔PCB (부품면 아래)', lblWkX114BtnH: 'XIAO 1.14" 앞 버튼 높이', lblWkX114BtnD: 'XIAO 1.14" 버튼 캡 지름',
     lblWkX114LcdRecess: 'XIAO 1.14" LCD 닿는 면 파냄',
     lblWkX114BtnCatch: 'XIAO 1.14" 버튼 캡 걸림 턱',
-    lblWkX114BtnFlex: 'XIAO 1.14" 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkX114FlexT: '휨 팔 두께', lblWkX114BtnGap: '누름 기둥 ↔ 버튼 틈',
+    lblWkX114BtnFlex: 'XIAO 1.14" 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkX114BtnFlame: '불꽃 모양 버튼, 라임 2색 (.3mf)', lblWkX114FlexT: '휨 팔 두께', lblWkX114BtnGap: '누름 기둥 ↔ 버튼 틈',
     lblWkX114PinsOn: 'XIAO 1.14" PCB 고정 구멍 핀', lblWkX114PinFit: '뚜껑 핀 소켓 한쪽 유격',
     hintWkX114Pins: '트레이에서 올라온 기둥이 PCB의 Ø2.5 구멍 4개를 지나 보드를 잡습니다. 버튼 쪽 두 개는 뚜껑 밑 소켓까지 올라가 뚜껑이 트레이에 직접 맞물리고, 가운데 두 개는 LCD 가장자리가 위를 덮어 PCB 면에서 멈춥니다. 뚜껑을 더 꽉 끼우려면 유격을 줄이세요.',
-    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요.',
+    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요. 불꽃 버튼을 켜면 패드가 UDO 불꽃 모양(끝이 화면 쪽)이 되고 윗면 0.4mm가 라임 파트로 따로 나옵니다. 뚜껑 내보내기가 뚜껑 + 불꽃 두 파트가 한 오브젝트로 들어간 .3mf 하나로 바뀝니다.',
     lblWkX114BtnScoop: 'XIAO 1.14" 옆 버튼 손톱 홈',
     hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B(기본은 뚜껑 일체형 휨 버튼, 끄면 별도 캡용 구멍), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C 창(손톱 홈)만 뚫리고, 전원 스위치 자리는 벽으로 덮습니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
@@ -664,7 +664,7 @@ const STATIC_I18N = {
     lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" XIAO 핀 직결 (납땜 없음)', hintWkOledPlug: '0.49" 헤더 순서 GND·VCC·SCL·SDA가 XIAO 핀 열 GND·3V3·D10·D9와 같아 OLED를 화면이 위로 오게 보드 위에 눕혀 그대로 꽂습니다. 뚜껑이 위에서 눌러 주고 화면 창만 보입니다. I2C는 SDA=GPIO9, SCL=GPIO10이 되며 MPU6050도 여기에 연결하세요. 핀이 충분히 물리도록 ESP 칸 높이를 낮추세요.',
     lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
     hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" 또는 0.49" OLED가 평평한 윗면에 박히고 화면 창만 보이는 베젤로 덮는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
-    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl / .3mf', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl', btnWkExBezel: 'OLED 베젤.stl',
+    secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl / .3mf', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl / .3mf', btnWkExBezel: 'OLED 베젤.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 윗면 OLED 포켓이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장과 속을 비운 윗면 스킨에 브리지 설정을 사용하세요. OLED 베젤은 따로 출력(보이는 면이 베드)하고, OLED를 넣은 뒤 베젤을 홈에 눌러 끼우세요(헐거우면 접착제 한 방울). 화면 창만 보이고 나머지는 가려집니다.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
     workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
@@ -976,7 +976,7 @@ const P = {
   wkLoopOn: true, wkLoopD: 2.4, wkLoopBar: 4.0, wkLoopZ: 5.0, wkLoopY: 0,   // 1층 +X 끝면 옆으로 나란한 둥근 구멍 키링 통로 (구멍 지름, 구멍 사이 기둥 폭, 높이, Y 위치)
   wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
-  wkX114BtnFlex: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.15, wkLidGrip: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
+  wkX114BtnFlex: true, wkX114BtnFlame: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.15, wkLidGrip: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1187,6 +1187,8 @@ const applyWorkoutOptionsUI = () => {
   for (const id of ['wkX114CompD', 'wkX114BtnH', 'wkX114BtnD', 'wkX114LcdRecess', 'wkX114BtnCatch', 'wkX114BtnScoop']) document.getElementById(id).disabled = !x114;
   document.getElementById('wkX114BtnFlex').checked = P.wkX114BtnFlex;
   document.getElementById('wkX114BtnFlex').disabled = !x114;
+  document.getElementById('wkX114BtnFlame').checked = P.wkX114BtnFlame !== false;
+  document.getElementById('wkX114BtnFlame').disabled = !x114 || !P.wkX114BtnFlex;
   document.getElementById('wkX114BtnCatch').disabled = !x114 || P.wkX114BtnFlex;
   for (const id of ['wkX114FlexT', 'wkX114BtnGap'])
     document.getElementById(id).disabled = !x114 || !P.wkX114BtnFlex;
@@ -1197,6 +1199,11 @@ const applyWorkoutOptionsUI = () => {
 document.getElementById('wkEspType').value = P.wkEspType;
 document.getElementById('wkX114PinsOn').addEventListener('change', e => {
   P.wkX114PinsOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+document.getElementById('wkX114BtnFlame').addEventListener('change', e => {
+  P.wkX114BtnFlame = e.target.checked;
   applyWorkoutOptionsUI();
   queueRebuild();
 });

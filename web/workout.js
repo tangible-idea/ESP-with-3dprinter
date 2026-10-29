@@ -80,6 +80,10 @@ export function initWorkout(env) {
   // 윗면은 상판과 같은 면이라 뒤집어 출력해도 튀어나오지 않고, 누름 기둥은 패드 밑에 붙는다.
   const btnFlexOn = () => x114On() && P.wkX114BtnFlex !== false;
   const FLEX_SLOT = 0.5, FLEX_ARM = 6.5;
+  // 불꽃 버튼: 휨 패드를 UDO 불꽃 모양으로 바꾸고 윗면 0.4mm를 라임 파트로 따로 만들어 3MF 2색으로 낸다.
+  // 불꽃 둥근 몸통(1024 그리드 중심 (512, 620))이 버튼 위에 오고, 끝은 화면 쪽(−X), 경첩 팔은 몸통 쪽(+X).
+  const flameBtnOn = () => btnFlexOn() && P.wkX114BtnFlame !== false;
+  const FLAME_BTN_INLAY = 0.4, FLAME_BODY_Y = (512 - 620) / 1024;
   // PCB 고정 구멍 핀: 트레이 바닥에서 올라온 기둥(어깨가 PCB 밑면을 받침)이 구멍을 지나고,
   // 버튼 쪽 두 핀은 뚜껑 밑 소켓에 꽂혀 뚜껑을 트레이에 직접 맞춘다. wkX114PinFit = 소켓 한쪽 유격.
   const pinsOn = () => x114On() && P.wkX114PinsOn !== false;
@@ -228,7 +232,7 @@ export function initWorkout(env) {
   const oledLift = () => (oledOn() && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
 
-  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null, logoGeo = null;
+  let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null, logoGeo = null, btnFlameGeo = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
   const mpuMat = partMat(0x3c9b70);
   const hallMat = partMat(0x8f5aa8);
@@ -435,6 +439,17 @@ export function initWorkout(env) {
     const pt = ([x, y]) => [(y - cy) * l.k, l.y + (x - cx) * l.k];
     const flame = UDO_FLAME.map(pt), u = UDO_FLAME_U.map(pt);
     return sub(polyBrush([flame], h, z0), polyBrush([u], h + 0.4, z0 - 0.2));
+  }
+
+  // 불꽃 버튼 윤곽: 폭 = 패드 지름 + 1.2. 마크 (x, y↑끝) → 뚜껑 (X = −y, Y = x)로 반시계 90° 돌려
+  // 끝을 −X(화면 쪽)로 보낸다. 위에서 보면 앱 마크를 그대로 돌린 모양이다.
+  function flameBtnPts(f, p) {
+    const k = (f.pad + 1.2) / (FLAME_X1 - FLAME_X0), cx = (FLAME_X0 + FLAME_X1) / 2;
+    return UDO_FLAME.map(([x, y]) => [p.x - (y - FLAME_BODY_Y) * k, p.y + (x - cx) * k]);
+  }
+  function flameBtnInlay(q, z0, h) {
+    const f = x114FlexDims(q);
+    return polyBrush(f.pads.map(p => flameBtnPts(f, p)), h, z0);
   }
 
   // 키링 고리: 1층 +X 끝면(USB 반대쪽, KY-035에서도 먼 쪽)에 옆으로 나란한 둥근 구멍 두 개를
@@ -1025,18 +1040,29 @@ export function initWorkout(env) {
                               q.lidCageH - JOINT_H - 0.2, 0.4));
       if (btnFlexOn()) {
         const f = x114FlexDims(q), lidTop = q.lidCageH + LID_PLATE;
+        const flame = flameBtnOn();
         for (const p of f.pads) {
-          const x0 = p.x - f.pad / 2 - FLEX_SLOT, hw = f.pad / 2 + FLEX_SLOT;
-          lid = sub(lid, boxBrush(p.hinge - x0, 2 * hw, LID_PLATE + 1, (x0 + p.hinge) / 2, p.y,
-                                  q.lidCageH - 0.5, 0.4));
+          if (flame) {
+            // 불꽃 둘레로 FLEX_SLOT 틈 + 경첩까지 팔 양옆 0.5 틈.
+            lid = sub(lid, polyBrush([flameBtnPts(f, p)], LID_PLATE + 1, q.lidCageH - 0.5, FLEX_SLOT));
+            lid = sub(lid, boxBrush(p.hinge - p.x, f.armW + 2 * FLEX_SLOT, LID_PLATE + 1, (p.x + p.hinge) / 2, p.y,
+                                    q.lidCageH - 0.5, 0.4));
+          } else {
+            const x0 = p.x - f.pad / 2 - FLEX_SLOT, hw = f.pad / 2 + FLEX_SLOT;
+            lid = sub(lid, boxBrush(p.hinge - x0, 2 * hw, LID_PLATE + 1, (x0 + p.hinge) / 2, p.y,
+                                    q.lidCageH - 0.5, 0.4));
+          }
           // 팔은 윗면 쪽(출력 시 베드 쪽)에 armT만 남겨 휘게 하고, 패드는 상판 두께 그대로 둔다.
           lid = add(lid, boxBrush(p.hinge + 0.2 - p.x, f.armW, f.armT, (p.x + p.hinge + 0.2) / 2, p.y,
                                   lidTop - f.armT, 0.2));
-          lid = add(lid, boxBrush(f.pad, f.pad, LID_PLATE, p.x, p.y, q.lidCageH, f.pad / 2));
+          lid = add(lid, flame ? polyBrush([flameBtnPts(f, p)], LID_PLATE, q.lidCageH)
+                               : boxBrush(f.pad, f.pad, LID_PLATE, p.x, p.y, q.lidCageH, f.pad / 2));
           if (q.lidCageH - f.plungerZ0 > 0.1)
             lid = add(lid, boxBrush(f.plungerD, f.plungerD, q.lidCageH - f.plungerZ0 + 0.1, p.x, p.y,
                                     f.plungerZ0, f.plungerD / 2));
         }
+        // 불꽃 윗면 0.4mm는 라임 파트 자리로 비운다 (flameBtnInlay와 같은 모양).
+        if (flame) lid = sub(lid, flameBtnInlay(q, lidTop - FLAME_BTN_INLAY, FLAME_BTN_INLAY + 0.1));
       } else {
         // 앞면 버튼 A·B 구멍 (별도 출력 캡)
         for (const [u, v] of X114.btns)
@@ -1562,6 +1588,15 @@ export function initWorkout(env) {
           logoMesh.name = 'udo_logo_inlay';
           G[0].add(logoMesh);
         }
+        btnFlameGeo = null;
+        if (flameBtnOn()) {
+          const q0 = layout(), top = q0.lidCageH + LID_PLATE;
+          const fm = flameBtnInlay(q0, top - FLAME_BTN_INLAY, FLAME_BTN_INLAY);
+          btnFlameGeo = manToGeo(fm); fm.delete();
+          const flameMesh = new THREE.Mesh(btnFlameGeo, logoMat);
+          flameMesh.name = 'x114_button_flames';
+          G[2].add(flameMesh);
+        }
         document.getElementById('wkExBezel').disabled = !oledOn() || oledPlug();
         document.getElementById('wkExCaps').disabled = !x114On() || btnFlexOn();
         if (x114On() && !btnFlexOn()) {
@@ -1625,7 +1660,19 @@ export function initWorkout(env) {
     // 향해야 하므로 모델 방향 그대로 내보내고 ESP32 케이지 쪽 브리지만 출력한다.
     if (!oledOn()) geo.rotateX(Math.PI);
     geo.computeBoundingBox();
-    geo.translate(0, 0, -geo.boundingBox.min.z);
+    const dz = -geo.boundingBox.min.z;
+    geo.translate(0, 0, dz);
+    if (flameBtnOn() && btnFlameGeo) {
+      // 뚜껑 + 라임 불꽃 버튼 윗면을 한 오브젝트의 두 파트로 묶은 3MF. 같은 회전·이동을 준다.
+      const fl = btnFlameGeo.clone();
+      if (!oledOn()) fl.rotateX(Math.PI);
+      fl.translate(0, 0, dz);
+      download3MF([
+        { geo, name: 'lid', color: 0x222222 },
+        { geo: fl, name: 'button_flames', color: UDO_MARK.color },
+      ], 'workout_sensor_xiao114_lid_flame_buttons.3mf', 'workout_sensor_xiao114_lid');
+      return;
+    }
     downloadSTL(geo, x114On() ? 'workout_sensor_xiao114_lid.stl' : tftOn() ? 'workout_sensor_tft114_lid.stl' : xiaoOn()
       ? (oledOn() ? `workout_sensor_xiao_oled${P.wkOledType}_lid.stl` : 'workout_sensor_xiao_lid.stl')
       : (oledOn() ? `workout_sensor_esp32_oled${P.wkOledType}_lid.stl` : 'workout_sensor_esp32_lid.stl'));
