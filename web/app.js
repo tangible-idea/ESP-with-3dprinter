@@ -434,7 +434,7 @@ const STATIC_I18N = {
     lblWkX114BtnFlex: 'XIAO 1.14" front buttons printed in the lid (flexure)', lblWkX114BtnFlame: 'Flame-shaped buttons, lime 2-color (.3mf)', lblWkX114FlexT: 'Flexure arm thickness', lblWkX114BtnGap: 'Plunger ↔ button gap',
     lblWkX114PinsOn: 'XIAO 1.14" pins through PCB mounting holes', lblWkX114PinFit: 'Lid pin clearance in PCB hole per side',
     hintWkX114Pins: 'Tray posts hold the PCB from below at all four Ø2.5 holes. The two middle posts carry short pins up through the holes to locate the board. At the two holes by the buttons, the pins hang from the lid instead: a Ø4.2 boss comes down from the lid ceiling, its face rests on the PCB to clamp it, and a short chamfered pin drops into the hole. Nothing tall stands on the tray, so it no longer snaps when the lid goes on. Lower the clearance for a tighter pin.',
-    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click. With flame buttons on, each pad is the UDO flame (tip toward the screen) and its top 0.4mm is a separate lime part; the lid export becomes one .3mf with the lid and the flames as two parts of one object.',
+    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click. With flame buttons on, each pad is the UDO flame (tip toward the screen) and its top 0.4mm is a separate lime part; the lid export becomes one .3mf with the lid and the flames as two parts of one object. USR1 gets one black dot and USR2 two, so you can tell the buttons apart.',
     lblWkX114BtnScoop: 'XIAO 1.14" side button nail scoop',
     hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, front buttons A/B as flush flexure pads in the lid (or holes for separate caps when that option is off), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has a nail-scoop opening for side button C only; the power switch next to it is covered by the wall. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
@@ -442,7 +442,7 @@ const STATIC_I18N = {
     btnWkExCaps: 'Front button caps.stl',
     wtGrpPowerX114: 'Power (battery → XIAO 1.14" PH2.0, onboard charging)',
     wtX114HallNote: 'Grove SDA (D4) is shared with the IMU I2C — pick a free analog pin before wiring',
-    wtX114Btns: 'Buttons', wtX114BtnNote: 'A·B front caps, C on the side',
+    wtX114Btns: 'Buttons', wtX114BtnNote: 'USR1 (left, 1 dot) · USR2 (right, 2 dots) on the front, USR3 on the side',
     optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
     lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'Display board USB end ↔ wall gap',
     lblWkTftLcdX: 'TFT LCD center X (from board center)', lblWkTftWinW: 'TFT window long side',
@@ -634,7 +634,7 @@ const STATIC_I18N = {
     lblWkX114BtnFlex: 'XIAO 1.14" 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkX114BtnFlame: '불꽃 모양 버튼, 라임 2색 (.3mf)', lblWkX114FlexT: '휨 팔 두께', lblWkX114BtnGap: '누름 기둥 ↔ 버튼 틈',
     lblWkX114PinsOn: 'XIAO 1.14" PCB 고정 구멍 핀', lblWkX114PinFit: '뚜껑 핀 ↔ PCB 구멍 한쪽 유격',
     hintWkX114Pins: '네 개의 Ø2.5 구멍 모두 트레이 기둥이 PCB 밑을 받칩니다. 가운데 두 기둥은 짧은 핀이 구멍을 지나 보드 자리를 잡습니다. 버튼 쪽 두 구멍은 핀이 뚜껑에 달려 있습니다: 뚜껑 천장에서 Ø4.2 보스가 내려와 밑면으로 PCB를 눌러 잡고, 끝을 모따기한 짧은 핀이 위에서 구멍에 들어갑니다. 트레이에 길게 선 핀이 없어 뚜껑을 닫을 때 부러지지 않습니다. 더 꽉 끼우려면 유격을 줄이세요.',
-    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요. 불꽃 버튼을 켜면 패드가 UDO 불꽃 모양(끝이 화면 쪽)이 되고 윗면 0.4mm가 라임 파트로 따로 나옵니다. 뚜껑 내보내기가 뚜껑 + 불꽃 두 파트가 한 오브젝트로 들어간 .3mf 하나로 바뀝니다.',
+    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요. 불꽃 버튼을 켜면 패드가 UDO 불꽃 모양(끝이 화면 쪽)이 되고 윗면 0.4mm가 라임 파트로 따로 나옵니다. 뚜껑 내보내기가 뚜껑 + 불꽃 두 파트가 한 오브젝트로 들어간 .3mf 하나로 바뀝니다. USR1에는 검은 점 1개, USR2에는 2개가 찍혀 버튼을 구분할 수 있습니다.',
     lblWkX114BtnScoop: 'XIAO 1.14" 옆 버튼 손톱 홈',
     hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B(기본은 뚜껑 일체형 휨 버튼, 끄면 별도 캡용 구멍), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C 창(손톱 홈)만 뚫리고, 전원 스위치 자리는 벽으로 덮습니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
@@ -642,7 +642,7 @@ const STATIC_I18N = {
     btnWkExCaps: '앞 버튼 캡.stl',
     wtGrpPowerX114: '전원 (배터리 → XIAO 1.14" PH2.0, 보드 자체 충전)',
     wtX114HallNote: 'Grove SDA(D4)는 IMU I2C와 공유 — 배선 전 빈 아날로그 핀을 정하세요',
-    wtX114Btns: '버튼', wtX114BtnNote: 'A·B 앞면 캡, C 옆면',
+    wtX114Btns: '버튼', wtX114BtnNote: '앞면 USR1(왼쪽, 점 1개) · USR2(오른쪽, 점 2개), 옆면 USR3',
     optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
     lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: '디스플레이 보드 USB 끝↔벽 간격',
     lblWkTftLcdX: 'TFT LCD 중심 X (보드 중심 기준)', lblWkTftWinW: 'TFT 화면 창 긴 변',
@@ -3767,7 +3767,7 @@ function renderWireTable() {
     grp(t('wtGrpTftOnboard'));
     row(WIRE_COLORS.sda, 'IMU (LSM6DS3)', 'SDA D4 / SCL D5', t('wtTftImuNote'));
     row(WIRE_COLORS.gpio, '1.14" IPS', 'CS D2 · DC D3 · SCK D8 · MOSI D10', t('wtTftLcdNote'));
-    row(WIRE_COLORS.gpio, t('wtX114Btns'), 'A D6 · B D7 · C D19', t('wtX114BtnNote'));
+    row(WIRE_COLORS.gpio, t('wtX114Btns'), 'USR1 D6 · USR2 D7 · USR3 D19', t('wtX114BtnNote'));
     row(WIRE_COLORS.gpio, 'PDM mic', 'CLK D0 · DATA D1');
     wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
     return;

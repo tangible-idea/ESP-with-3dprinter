@@ -56,7 +56,10 @@ export function initWorkout(env) {
     lcd: { u: -7.2, l: 31, w: 17.6 },
     win: { u: -8.55, l: 24.4, w: 14.7 },          // 참고 인클로저 화면 창 (VA 24.9 × 14.9)
     usb: { v: 0, w: -4.34, over: 1.39 },           // XIAO 위 USB-C 셸 중심 (PCB 끝 밖 1.39)
-    btns: [[14.35, 6.95], [14.35, -6.95]],         // 앞면 버튼 A·B (참고 구멍 Ø7.7)
+    btns: [[14.35, 6.95], [14.35, -6.95]],         // 앞면 버튼 (참고 구멍 Ø7.7)
+    // Seeed 위키 앞면 그림(USB 위)에서 왼쪽 USR1(D6), 오른쪽 USR2(D7). 화면 오른쪽 = +v(옆 버튼 쪽)이라
+    // +v가 USR2, −v가 USR1. 불꽃 버튼 윗면에 이 수만큼 검은 점을 남긴다.
+    btnUsr: [2, 1],
     mic: [14.9, 0], micD: 2.3,   // 버튼 구멍은 wkX114BtnD(캡 기둥) + 0.3 (참고 인클로저는 Ø7.7)
     // 옆면 버튼 C (+v 긴 변): [u0, u1, w0, w1] — 미리보기와 케이스 구멍 높이를 함께 맞춘다.
     // 그 옆 전원 스위치(u 3.99~10.69)는 벽으로 덮어 두므로 창을 내지 않는다.
@@ -84,6 +87,9 @@ export function initWorkout(env) {
   // 불꽃 둥근 몸통(1024 그리드 중심 (512, 620))이 버튼 위에 오고, 끝은 화면 쪽(−X), 경첩 팔은 몸통 쪽(+X).
   const flameBtnOn = () => btnFlexOn() && P.wkX114BtnFlame !== false;
   const FLAME_BTN_INLAY = 0.4, FLAME_BODY_Y = (512 - 620) / 1024;
+  // USR 번호 점: Ø1.2 검은 점(라임 인레이에 구멍 → 그 자리는 뚜껑 검정)을 불꽃 몸통 가운데에,
+  // 두 개면 화면 가로 방향(Y)으로 2.0 간격.
+  const BTN_DOT_D = 1.2, BTN_DOT_GAP = 2.0;
   // PCB 고정 구멍 핀: 네 구멍 모두 트레이 기둥(어깨)이 PCB 밑면을 받친다. 가운데 두 구멍은 트레이 핀이
   // PCB 면까지 올라와 보드를 자리 잡는다. 버튼 쪽 두 구멍은 트레이에서 길게 세운 핀이 뚜껑 소켓에 꽂히다
   // 자꾸 부러져서, 뚜껑에 굵은 보스와 짧은 핀을 달아 위에서 구멍에 꽂는다(보스 밑면이 PCB를 눌러 잡음).
@@ -452,8 +458,18 @@ export function initWorkout(env) {
     return UDO_FLAME.map(([x, y]) => [p.x - (y - FLAME_BODY_Y) * k, p.y + (x - cx) * k]);
   }
   function flameBtnInlay(q, z0, h) {
-    const f = x114FlexDims(q);
-    return polyBrush(f.pads.map(p => flameBtnPts(f, p)), h, z0);
+    const f = x114FlexDims(q), dots = [];
+    f.pads.forEach((p, i) => {
+      const n = X114.btnUsr[i] || 0;
+      for (let j = 0; j < n; j++) {
+        const cy = p.y + (j - (n - 1) / 2) * BTN_DOT_GAP, c = [];
+        for (let a = 0; a < 32; a++)
+          c.push([p.x + BTN_DOT_D / 2 * Math.cos(a / 16 * Math.PI), cy + BTN_DOT_D / 2 * Math.sin(a / 16 * Math.PI)]);
+        dots.push(c);
+      }
+    });
+    const flames = polyBrush(f.pads.map(p => flameBtnPts(f, p)), h, z0);
+    return dots.length ? sub(flames, polyBrush(dots, h + 0.4, z0 - 0.2)) : flames;
   }
 
   // 키링 고리: 1층 +X 끝면(USB 반대쪽, KY-035에서도 먼 쪽)에 옆으로 나란한 둥근 구멍 두 개를
