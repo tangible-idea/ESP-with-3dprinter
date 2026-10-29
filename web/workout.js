@@ -84,22 +84,26 @@ export function initWorkout(env) {
   // 불꽃 둥근 몸통(1024 그리드 중심 (512, 620))이 버튼 위에 오고, 끝은 화면 쪽(−X), 경첩 팔은 몸통 쪽(+X).
   const flameBtnOn = () => btnFlexOn() && P.wkX114BtnFlame !== false;
   const FLAME_BTN_INLAY = 0.4, FLAME_BODY_Y = (512 - 620) / 1024;
-  // PCB 고정 구멍 핀: 트레이 바닥에서 올라온 기둥(어깨가 PCB 밑면을 받침)이 구멍을 지나고,
-  // 버튼 쪽 두 핀은 뚜껑 밑 소켓에 꽂혀 뚜껑을 트레이에 직접 맞춘다. wkX114PinFit = 소켓 한쪽 유격.
+  // PCB 고정 구멍 핀: 네 구멍 모두 트레이 기둥(어깨)이 PCB 밑면을 받친다. 가운데 두 구멍은 트레이 핀이
+  // PCB 면까지 올라와 보드를 자리 잡는다. 버튼 쪽 두 구멍은 트레이에서 길게 세운 핀이 뚜껑 소켓에 꽂히다
+  // 자꾸 부러져서, 뚜껑에 굵은 보스와 짧은 핀을 달아 위에서 구멍에 꽂는다(보스 밑면이 PCB를 눌러 잡음).
+  // wkX114PinFit = 뚜껑 핀과 PCB 구멍 사이 한쪽 유격.
   const pinsOn = () => x114On() && P.wkX114PinsOn !== false;
   function x114PinDims(q) {
     const b = q.x114, pinD = X114.holeD - 0.3;
     const fit = Math.max(0, Math.min(0.3, Number(P.wkX114PinFit ?? 0.15)));
-    const sockD = pinD + 2 * fit, toLid = q.trayTop - q.lidCageH;
-    return { pinD, shoulderD: 3.2, sockD, bossD: sockD + 1.6,
-             tipZ: b.faceZ + Math.min(3.0, q.trayTop - b.faceZ - 0.6), bossZ0: b.faceZ + 0.3, toLid,
+    const toLid = q.trayTop - q.lidCageH;
+    // 뚜껑 핀: 보스 밑면(PCB 면 + 0.1)에서 PCB 밑면 0.15 위까지. 짧고 뿌리가 보스라 휘지 않는다.
+    return { pinD, shoulderD: 3.2, lidPinD: X114.holeD - 2 * fit, bossD: 4.2,
+             bossZ0: b.faceZ + 0.1, lidTipZ: b.pcbZ0 + 0.15, toLid,
              pins: X114.holes.map(([u, v, up]) => ({ x: b.cx + u, y: b.y + v, up })) };
   }
-  // 끝을 0.4 모따기한 원기둥 핀 (z0 → z1)
-  function pinGeo(r, z0, z1, x, y) {
+  // 끝을 0.4 모따기한 원기둥 핀 (z0 → z1). down = true면 아래 끝(z0)을 모따기한다(뚜껑에 매단 핀).
+  function pinGeo(r, z0, z1, x, y, down = false) {
     const c = Math.min(0.4, r * 0.4, (z1 - z0) / 2);
-    const g = new THREE.LatheGeometry([[0, z0], [r, z0], [r, z1 - c], [r - c, z1], [0, z1]]
-      .map(([a, z]) => new THREE.Vector2(a, z)), 40);
+    const prof = down ? [[0, z0], [r - c, z0], [r, z0 + c], [r, z1], [0, z1]]
+                      : [[0, z0], [r, z0], [r, z1 - c], [r - c, z1], [0, z1]];
+    const g = new THREE.LatheGeometry(prof.map(([a, z]) => new THREE.Vector2(a, z)), 40);
     g.rotateX(Math.PI / 2); g.translate(x, y, 0);
     g.deleteAttribute('uv'); g.deleteAttribute('normal');
     return g;
@@ -608,11 +612,12 @@ export function initWorkout(env) {
                                   b.cx + (u0 + u1) / 2, b.y + sv * (X114.w / 2 - 0.6),
                                   TRAY_FLOOR - 0.1, 0.3));
     // 고정 구멍 기둥: 바닥이 뚫린 자리라 베드에서 세우고, 어깨는 옆 리브·바닥 띠와 붙는다.
+    // 버튼 쪽(up) 두 구멍은 뚜껑 핀이 위에서 들어오므로 어깨만 세우고 핀은 달지 않는다.
     if (pinsOn()) {
       const pd = x114PinDims(q);
       for (const p of pd.pins) {
         tray = add(tray, boxBrush(pd.shoulderD, pd.shoulderD, b.pcbZ0, p.x, p.y, 0, pd.shoulderD / 2));
-        tray = add(tray, meshBrush(pinGeo(pd.pinD / 2, b.pcbZ0 - 0.1, p.up ? pd.tipZ : b.faceZ, p.x, p.y)));
+        if (!p.up) tray = add(tray, meshBrush(pinGeo(pd.pinD / 2, b.pcbZ0 - 0.1, b.faceZ, p.x, p.y)));
       }
     }
     // KY-035 슬롯은 PCB 밑면까지 올려, 바닥 위로 솟은 KY-035가 리브에 걸리지 않게 한다.
@@ -1080,10 +1085,10 @@ export function initWorkout(env) {
       if (pinsOn()) {
         const pd = x114PinDims(q);
         for (const p of pd.pins.filter(p => p.up)) {
+          // 뚜껑 천장에서 내려오는 Ø4.2 보스(밑면이 PCB 면을 누름) + 끝을 모따기한 짧은 핀.
           const z0 = pd.bossZ0 - toLid;
           lid = add(lid, boxBrush(pd.bossD, pd.bossD, q.lidCageH - z0 + 0.1, p.x, p.y, z0, pd.bossD / 2));
-          lid = sub(lid, boxBrush(pd.sockD, pd.sockD, pd.tipZ + 0.3 - pd.bossZ0 + 0.1, p.x, p.y,
-                                  z0 - 0.1, pd.sockD / 2));
+          lid = add(lid, meshBrush(pinGeo(pd.lidPinD / 2, pd.lidTipZ - toLid, z0 + 0.1, p.x, p.y, true)));
         }
       }
     }
