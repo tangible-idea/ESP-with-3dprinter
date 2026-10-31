@@ -434,7 +434,7 @@ const STATIC_I18N = {
     lblWkX114BtnFlex: 'XIAO 1.14" front buttons printed in the lid (flexure)', lblWkX114BtnFlame: 'Flame-shaped buttons, lime 2-color (.3mf)', lblWkX114FlexT: 'Flexure arm thickness', lblWkX114BtnGap: 'Plunger ↔ button gap',
     lblWkX114PinsOn: 'XIAO 1.14" pins through PCB mounting holes', lblWkX114PinFit: 'Lid pin clearance in PCB hole per side',
     hintWkX114Pins: 'Tray posts hold the PCB from below at all four Ø2.5 holes. The two middle posts carry short pins up through the holes to locate the board. At the two holes by the buttons, the pins hang from the lid instead: a Ø4.2 boss comes down from the lid ceiling, its face rests on the PCB to clamp it, and a short chamfered pin drops into the hole. Nothing tall stands on the tray, so it no longer snaps when the lid goes on. Lower the clearance for a tighter pin.',
-    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click. With flame buttons on, each pad is the UDO flame (tip toward the screen) and its top 0.4mm is a separate lime part; the lid export becomes one .3mf with the lid and the flames as two parts of one object. USR1 gets one black dot and USR2 two, so you can tell the buttons apart.',
+    hintWkX114BtnFlex: 'A/B are cut into the lid plate as pads on a U-shaped slot hinged toward +X, with a plunger under each pad — no separate caps. The top stays flush, so nothing sticks out when the lid prints upside down. Thinner arm = softer press; lower gap if the button does not click. With flame buttons on, each pad is the UDO flame (tip toward the screen) and its top 0.4mm is a separate lime part; the lid export becomes one .3mf with the lid and the flames as two parts of one object.',
     lblWkX114BtnScoop: 'XIAO 1.14" side button nail scoop',
     hintWkX114: 'Seeed XIAO 1.14" IPS (25×46.7, from the official STEP and the reference enclosure) lies display-up with USB-C toward the −X wall. Its parts side (XIAO, USB-C, PH2.0, Grove, side buttons, up to 5.6 deep) faces down onto ribs along the long edges. The floor under it is open to layer 1 for the PH2.0 battery wires. The lid has the reference 24.4×14.7 window with a 45° chamfer, front buttons A/B as flush flexure pads in the lid (or holes for separate caps when that option is off), a Ø2.3 mic hole, and ribs that hold the PCB edges without touching the LCD. The +Y wall has a nail-scoop opening for side button C only; the power switch next to it is covered by the wall. Front button height is estimated from the reference caps — adjust after a test print.',
     wkX114Fit: (w, d) => `⚠ The XIAO 1.14" board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
@@ -442,12 +442,15 @@ const STATIC_I18N = {
     btnWkExCaps: 'Front button caps.stl',
     wtGrpPowerX114: 'Power (battery → XIAO 1.14" PH2.0, onboard charging)',
     wtX114HallNote: 'Grove SDA (D4) is shared with the IMU I2C — pick a free analog pin before wiring',
-    wtX114Btns: 'Buttons', wtX114BtnNote: 'USR1 (left, 1 dot) · USR2 (right, 2 dots) on the front, USR3 on the side',
-    optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
+    wtX114Btns: 'Buttons', wtX114BtnNote: 'A·B front caps, C on the side',
+    lblWkTftBtnOn: 'TENSTAR front buttons printed in the lid (flexure)', lblWkTftBtn1X: 'Button 1 X (from board center)', lblWkTftBtn1Y: 'Button 1 Y (from board center)', lblWkTftBtn2X: 'Button 2 X (from board center)', lblWkTftBtn2Y: 'Button 2 Y (from board center)', lblWkTftBtnH: 'Button height above PCB',
+    hintWkTftBtn: 'Same flexure and flame buttons as the XIAO 1.14", hinged toward the USB end with the flame tip toward the screen. The default positions are estimates: measure your board from its center and set X and Y, then test print the lid. Pad size, arm thickness, plunger gap and the flame option are shared with the XIAO settings.',
+    wkTftBtnFit: '⚠ TENSTAR buttons overlap the screen window, a wall or each other — adjust the button positions',
+    optWkEspTft: 'TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)',
     lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'Display board USB end ↔ wall gap',
     lblWkTftLcdX: 'TFT LCD center X (from board center)', lblWkTftWinW: 'TFT window long side',
     lblWkTftWinD: 'TFT window short side', lblWkTftWinX: 'TFT window X (from LCD center)',
-    hintWkTft: 'ESP32-S3 1.14" TFT (50.8×22.9, PCB 1.3, 3.0 with LCD, LCD 30.9×17.6) lies screen-up in the tray with USB-C toward the −X wall. Its onboard QMI8658C IMU and charger replace the MPU6050 and charge module, so those pockets and the power switch go away. The USB end sits against the −X wall so USB-C plugs in fully (a USB-C plug only reaches about 1.8mm into the jack per 3mm of gap). Plug the battery into the PH2.0 connector. The pocket floor is open between the X-end ledges for back-side parts and battery wires. The lid ceiling clears the tallest connector without touching the LCD, and the display window has a 45° chamfer. Connector height and window position are estimated from photos — measure and adjust.',
+    hintWkTft: 'TENSTAR ESP32-S3 1.14" TFT (50.8×22.9, PCB 1.3, 3.0 with LCD, LCD 30.9×17.6) lies screen-up in the tray with USB-C toward the −X wall. Its onboard QMI8658C IMU and charger replace the MPU6050 and charge module, so those pockets and the power switch go away. The USB end sits against the −X wall so USB-C plugs in fully (a USB-C plug only reaches about 1.8mm into the jack per 3mm of gap). Plug the battery into the PH2.0 connector. The pocket floor is open between the X-end ledges for back-side parts and battery wires. The lid ceiling clears the tallest connector without touching the LCD, and the display window has a 45° chamfer. Connector height and window position are estimated from photos — measure and adjust.',
     wkTftFit: (w, d) => `⚠ The 1.14" TFT board needs at least ${w}×${d}mm outside (long side X × short side Y)`,
     wkTftWinFit: '⚠ The display window reaches past the LCD glass — reduce window size or offset',
     wtGrpPowerTft: 'Power (battery → TFT board PH2.0, onboard charging)',
@@ -467,7 +470,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl / .3mf', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl / .3mf', btnWkExBezel: 'OLED bezel.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the OLED pocket faces up; use bridge-friendly settings for the ESP32-cage ceiling and the hollowed top skin. Print the OLED bezel separately (exported face-down), drop the OLED in, then press the bezel into its recess (a dot of glue if loose). Only the display window stays visible.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'TENSTAR ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
     wkPlugWall: d => `⚠ The plugged-in OLED hits the tray wall — make the short side Y at least ${d}mm`,
     wkPlugLow: h => `⚠ The lid sits too low for the plugged-in OLED header — raise ESP section height to about ${h}mm`,
@@ -634,7 +637,7 @@ const STATIC_I18N = {
     lblWkX114BtnFlex: 'XIAO 1.14" 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkX114BtnFlame: '불꽃 모양 버튼, 라임 2색 (.3mf)', lblWkX114FlexT: '휨 팔 두께', lblWkX114BtnGap: '누름 기둥 ↔ 버튼 틈',
     lblWkX114PinsOn: 'XIAO 1.14" PCB 고정 구멍 핀', lblWkX114PinFit: '뚜껑 핀 ↔ PCB 구멍 한쪽 유격',
     hintWkX114Pins: '네 개의 Ø2.5 구멍 모두 트레이 기둥이 PCB 밑을 받칩니다. 가운데 두 기둥은 짧은 핀이 구멍을 지나 보드 자리를 잡습니다. 버튼 쪽 두 구멍은 핀이 뚜껑에 달려 있습니다: 뚜껑 천장에서 Ø4.2 보스가 내려와 밑면으로 PCB를 눌러 잡고, 끝을 모따기한 짧은 핀이 위에서 구멍에 들어갑니다. 트레이에 길게 선 핀이 없어 뚜껑을 닫을 때 부러지지 않습니다. 더 꽉 끼우려면 유격을 줄이세요.',
-    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요. 불꽃 버튼을 켜면 패드가 UDO 불꽃 모양(끝이 화면 쪽)이 되고 윗면 0.4mm가 라임 파트로 따로 나옵니다. 뚜껑 내보내기가 뚜껑 + 불꽃 두 파트가 한 오브젝트로 들어간 .3mf 하나로 바뀝니다. USR1에는 검은 점 1개, USR2에는 2개가 찍혀 버튼을 구분할 수 있습니다.',
+    hintWkX114BtnFlex: '앞 버튼 A·B를 별도 캡 없이 뚜껑 상판에 U자 틈으로 따낸 패드로 만들고, 패드 밑 누름 기둥이 버튼을 누릅니다(경첩은 +X 쪽). 윗면이 상판과 같은 높이라 뚜껑을 뒤집어 출력해도 튀어나오는 부분이 없습니다. 팔이 얇을수록 가볍게 눌리고, 눌러도 딸깍하지 않으면 틈을 줄이세요. 불꽃 버튼을 켜면 패드가 UDO 불꽃 모양(끝이 화면 쪽)이 되고 윗면 0.4mm가 라임 파트로 따로 나옵니다. 뚜껑 내보내기가 뚜껑 + 불꽃 두 파트가 한 오브젝트로 들어간 .3mf 하나로 바뀝니다.',
     lblWkX114BtnScoop: 'XIAO 1.14" 옆 버튼 손톱 홈',
     hintWkX114: 'Seeed XIAO 1.14" IPS(25×46.7, 공식 STEP과 참고 인클로저 실측)를 화면이 위로, USB-C가 −X 벽을 향하게 놓습니다. 부품면(XIAO·USB-C·PH2.0·Grove·옆 버튼, 최대 5.6 깊이)은 아래를 향하고 긴 변 리브에 얹힙니다. 보드 밑 바닥은 1층까지 뚫려 PH2.0 배터리 선이 지나갑니다. 뚜껑에는 참고 인클로저와 같은 24.4×14.7 화면 창(45° 모따기), 앞 버튼 A·B(기본은 뚜껑 일체형 휨 버튼, 끄면 별도 캡용 구멍), Ø2.3 마이크 구멍, 그리고 LCD는 건드리지 않고 PCB 가장자리만 눌러 주는 리브가 있습니다. +Y 벽에는 옆 버튼 C 창(손톱 홈)만 뚫리고, 전원 스위치 자리는 벽으로 덮습니다. 앞 버튼 높이는 참고 캡에서 추정한 값이라 시험 출력 후 조절하세요.',
     wkX114Fit: (w, d) => `⚠ XIAO 1.14" 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
@@ -642,12 +645,15 @@ const STATIC_I18N = {
     btnWkExCaps: '앞 버튼 캡.stl',
     wtGrpPowerX114: '전원 (배터리 → XIAO 1.14" PH2.0, 보드 자체 충전)',
     wtX114HallNote: 'Grove SDA(D4)는 IMU I2C와 공유 — 배선 전 빈 아날로그 핀을 정하세요',
-    wtX114Btns: '버튼', wtX114BtnNote: '앞면 USR1(왼쪽, 점 1개) · USR2(오른쪽, 점 2개), 옆면 USR3',
-    optWkEspTft: 'ESP32-S3 1.14" TFT (50.8×22.9)',
+    wtX114Btns: '버튼', wtX114BtnNote: 'A·B 앞면 캡, C 옆면',
+    lblWkTftBtnOn: 'TENSTAR 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkTftBtn1X: '버튼 1 X (보드 중심 기준)', lblWkTftBtn1Y: '버튼 1 Y (보드 중심 기준)', lblWkTftBtn2X: '버튼 2 X (보드 중심 기준)', lblWkTftBtn2Y: '버튼 2 Y (보드 중심 기준)', lblWkTftBtnH: '버튼 높이 (PCB 위)',
+    hintWkTftBtn: 'XIAO 1.14"와 같은 휨·불꽃 버튼입니다. 경첩은 USB 쪽, 불꽃 끝은 화면 쪽을 향합니다. 기본 위치는 추정값이니 보드 중심에서 잰 X·Y를 넣고 뚜껑을 시험 출력하세요. 패드 크기, 팔 두께, 누름 기둥 틈, 불꽃 옵션은 XIAO 설정과 함께 씁니다.',
+    wkTftBtnFit: '⚠ TENSTAR 버튼이 화면 창이나 벽, 다른 버튼과 겹칩니다 — 버튼 위치를 조절하세요',
+    optWkEspTft: 'TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)',
     lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: '디스플레이 보드 USB 끝↔벽 간격',
     lblWkTftLcdX: 'TFT LCD 중심 X (보드 중심 기준)', lblWkTftWinW: 'TFT 화면 창 긴 변',
     lblWkTftWinD: 'TFT 화면 창 짧은 변', lblWkTftWinX: 'TFT 화면 창 X (LCD 중심 기준)',
-    hintWkTft: 'ESP32-S3 1.14" TFT(50.8×22.9, PCB 1.3, LCD 포함 3.0, LCD 30.9×17.6)를 화면이 위로, USB-C가 −X 벽을 향하게 트레이에 눕힙니다. 보드의 QMI8658C IMU와 충전 회로가 MPU6050·충전모듈을 대신하므로 그 포켓과 전원 스위치는 빠집니다. USB 끝은 −X 벽에 붙여 USB-C 플러그가 끝까지 들어가게 합니다(벽에서 띄우면 플러그가 덜 꽂힙니다). 배터리는 PH2.0 커넥터에 꽂습니다. 포켓 바닥은 X 양 끝 받침턱 사이가 뚫려 있어 뒷면 부품과 배터리 배선이 지나갑니다. 뚜껑 천장은 가장 높은 커넥터를 피하고 LCD에는 닿지 않으며, 화면 창은 45° 모따기입니다. 커넥터 높이와 창 위치는 사진 기준 추정값이니 실측해서 맞추세요.',
+    hintWkTft: 'TENSTAR ESP32-S3 1.14" TFT(50.8×22.9, PCB 1.3, LCD 포함 3.0, LCD 30.9×17.6)를 화면이 위로, USB-C가 −X 벽을 향하게 트레이에 눕힙니다. 보드의 QMI8658C IMU와 충전 회로가 MPU6050·충전모듈을 대신하므로 그 포켓과 전원 스위치는 빠집니다. USB 끝은 −X 벽에 붙여 USB-C 플러그가 끝까지 들어가게 합니다(벽에서 띄우면 플러그가 덜 꽂힙니다). 배터리는 PH2.0 커넥터에 꽂습니다. 포켓 바닥은 X 양 끝 받침턱 사이가 뚫려 있어 뒷면 부품과 배터리 배선이 지나갑니다. 뚜껑 천장은 가장 높은 커넥터를 피하고 LCD에는 닿지 않으며, 화면 창은 45° 모따기입니다. 커넥터 높이와 창 위치는 사진 기준 추정값이니 실측해서 맞추세요.',
     wkTftFit: (w, d) => `⚠ 1.14" TFT 보드를 넣으려면 외형이 최소 ${w}×${d}mm(긴 변 X × 짧은 변 Y)여야 합니다`,
     wkTftWinFit: '⚠ 화면 창이 LCD 유리 밖으로 나갑니다 — 창 크기나 위치를 줄이세요',
     wtGrpPowerTft: '전원 (배터리 → TFT 보드 PH2.0, 보드 자체 충전)',
@@ -667,7 +673,7 @@ const STATIC_I18N = {
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl / .3mf', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl / .3mf', btnWkExBezel: 'OLED 베젤.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 윗면 OLED 포켓이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장과 속을 비운 윗면 스킨에 브리지 설정을 사용하세요. OLED 베젤은 따로 출력(보이는 면이 베드)하고, OLED를 넣은 뒤 베젤을 홈에 눌러 끼우세요(헐거우면 접착제 한 방울). 화면 창만 보이고 나머지는 가려집니다.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'TENSTAR ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
     wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
     wkPlugWall: d => `⚠ 직결 OLED가 트레이 벽에 닿습니다 — 짧은 변 Y를 최소 ${d}mm로 늘리세요`,
     wkPlugLow: h => `⚠ 꽂은 OLED 헤더에 비해 뚜껑이 너무 낮습니다 — ESP 칸 높이를 약 ${h}mm로 올리세요`,
@@ -794,7 +800,7 @@ const espStand = () => !noMod() && ['s0', 's90', 'u0', 'u90'].includes(P.espRot)
 const ESP_TYPES = {
   c3mini: { l: 24, w: 18, h: 4.2, usbZ: 2.6 },     // usbZ = USB 셸 z중심 (실측 1.0~4.2)
   xiao:   { l: 22.7, w: 18, h: 4.6, usbZ: 3.0, pcbRise: 0.4 },
-  tft:    { l: 50.8, w: 22.9, h: 3.0, usbZ: 1.3 + 3.26 / 2 },   // ESP32-S3 1.14" TFT (운동 센서 전용)
+  tft:    { l: 50.8, w: 22.9, h: 3.0, usbZ: 1.3 + 3.26 / 2 },   // TENSTAR ESP32-S3 1.14" TFT (운동 센서 전용)
   x114:   { l: 46.7, w: 25, h: 5.2, usbZ: 4.34 },                 // Seeed XIAO 1.14" IPS (운동 센서 전용)
 };
 const ESP = { ...ESP_TYPES.c3mini };
@@ -971,12 +977,13 @@ const P = {
   wkHallGap: 1, wkHallT: 3.25,
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
-  // ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
+  // TENSTAR ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
   wkLoopOn: true, wkLoopD: 2.4, wkLoopBar: 4.0, wkLoopZ: 5.0, wkLoopY: 0,   // 1층 +X 끝면 옆으로 나란한 둥근 구멍 키링 통로 (구멍 지름, 구멍 사이 기둥 폭, 높이, Y 위치)
   wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkX114BtnFlex: true, wkX114BtnFlame: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.15, wkLidGrip: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
+  wkTftBtnOn: true, wkTftBtn1X: -16, wkTftBtn1Y: -6.8, wkTftBtn2X: -16, wkTftBtn2Y: 6.8, wkTftBtnH: 1.6,
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1105,7 +1112,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
+                 'wkTftBtn1X','wkTftBtn1Y','wkTftBtn2X','wkTftBtn2Y','wkTftBtnH','wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1188,10 +1195,16 @@ const applyWorkoutOptionsUI = () => {
   document.getElementById('wkX114BtnFlex').checked = P.wkX114BtnFlex;
   document.getElementById('wkX114BtnFlex').disabled = !x114;
   document.getElementById('wkX114BtnFlame').checked = P.wkX114BtnFlame !== false;
-  document.getElementById('wkX114BtnFlame').disabled = !x114 || !P.wkX114BtnFlex;
+  const tftBtn = tftOnly && P.wkTftBtnOn !== false;
+  document.getElementById('wkTftBtnOn').checked = P.wkTftBtnOn !== false;
+  document.getElementById('wkTftBtnOn').disabled = !tftOnly;
+  for (const id of ['wkTftBtn1X', 'wkTftBtn1Y', 'wkTftBtn2X', 'wkTftBtn2Y', 'wkTftBtnH'])
+    document.getElementById(id).disabled = !tftBtn;
+  document.getElementById('wkX114BtnD').disabled = !x114 && !tftBtn;
+  document.getElementById('wkX114BtnFlame').disabled = !(x114 && P.wkX114BtnFlex) && !tftBtn;
   document.getElementById('wkX114BtnCatch').disabled = !x114 || P.wkX114BtnFlex;
   for (const id of ['wkX114FlexT', 'wkX114BtnGap'])
-    document.getElementById(id).disabled = !x114 || !P.wkX114BtnFlex;
+    document.getElementById(id).disabled = !(x114 && P.wkX114BtnFlex) && !tftBtn;
   document.getElementById('wkX114PinsOn').checked = P.wkX114PinsOn;
   document.getElementById('wkX114PinsOn').disabled = !x114;
   document.getElementById('wkX114PinFit').disabled = !x114 || !P.wkX114PinsOn;
@@ -1199,6 +1212,11 @@ const applyWorkoutOptionsUI = () => {
 document.getElementById('wkEspType').value = P.wkEspType;
 document.getElementById('wkX114PinsOn').addEventListener('change', e => {
   P.wkX114PinsOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+document.getElementById('wkTftBtnOn').addEventListener('change', e => {
+  P.wkTftBtnOn = e.target.checked;
   applyWorkoutOptionsUI();
   queueRebuild();
 });
@@ -3690,7 +3708,7 @@ const ESP_PINS_XIAO = (() => {
   [2, 3, 4, 5, 6, 7, 21].forEach((n, i) => { m[n] = [px(i), -y]; });
   return m;
 })();
-// ESP32-S3 1.14" TFT (Feather 규격, 운동 센서에서 USB를 −x로 돌려 놓은 자세, 보드 중심 기준).
+// TENSTAR ESP32-S3 1.14" TFT (Feather 규격, 운동 센서에서 USB를 −x로 돌려 놓은 자세, 보드 중심 기준).
 // 16핀 열(−y): RST,3V3,3V3,GND,A0~A5(18,17,16,15,14,8),SCK36,MOSI35,MISO37,RX2,TX1,TXD0
 // 12핀 열(+y, LCD 쪽으로 붙음): VBAT,EN,VBUS,13,12,11,10,9,6,5,SCL41,SDA42. 2.54 피치, 열 간격 20.32
 const ESP_PINS_TFT = (() => {
@@ -3767,7 +3785,7 @@ function renderWireTable() {
     grp(t('wtGrpTftOnboard'));
     row(WIRE_COLORS.sda, 'IMU (LSM6DS3)', 'SDA D4 / SCL D5', t('wtTftImuNote'));
     row(WIRE_COLORS.gpio, '1.14" IPS', 'CS D2 · DC D3 · SCK D8 · MOSI D10', t('wtTftLcdNote'));
-    row(WIRE_COLORS.gpio, t('wtX114Btns'), 'USR1 D6 · USR2 D7 · USR3 D19', t('wtX114BtnNote'));
+    row(WIRE_COLORS.gpio, t('wtX114Btns'), 'A D6 · B D7 · C D19', t('wtX114BtnNote'));
     row(WIRE_COLORS.gpio, 'PDM mic', 'CLK D0 · DATA D1');
     wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
     return;

@@ -414,7 +414,7 @@
   <details open data-product="workout">
     <summary data-i18n="secWorkoutComp">Electronics layout</summary>
     <div class="body">
-      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="tft" data-i18n="optWkEspTft">ESP32-S3 1.14" TFT (50.8×22.9)</option><option value="x114" data-i18n="optWkEspX114">Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)</option></select></div>
+      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="tft" data-i18n="optWkEspTft">TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)</option><option value="x114" data-i18n="optWkEspX114">Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)</option></select></div>
       <div class="row"><label data-i18n="lblWkModType">Charge module</label><select id="wkModType"><option value="tp4056" data-i18n="optModTp4056">TP4056 USB-C (27×17.3×4.0)</option><option value="generic" data-i18n="optModGeneric">Existing module (19×14×4.5)</option></select></div>
       <div class="row"><label data-i18n="lblWkChgW">Charger long side X</label><input type="range" id="wkChgW" min="15" max="30" step="0.1" value="27"><span class="val" id="wkChgWv"></span></div>
       <div class="row"><label data-i18n="lblWkChgD">Charger short side Y</label><input type="range" id="wkChgD" min="10" max="20" step="0.1" value="17.3"><span class="val" id="wkChgDv"></span></div>
@@ -431,7 +431,14 @@
       <div class="row"><label data-i18n="lblWkTftWinW">TFT window long side</label><input type="range" id="wkTftWinW" min="15" max="30" step="0.1" value="24"><span class="val" id="wkTftWinWv"></span></div>
       <div class="row"><label data-i18n="lblWkTftWinD">TFT window short side</label><input type="range" id="wkTftWinD" min="8" max="17" step="0.1" value="13.6"><span class="val" id="wkTftWinDv"></span></div>
       <div class="row"><label data-i18n="lblWkTftWinX">TFT window X (from LCD center)</label><input type="range" id="wkTftWinX" min="-4" max="4" step="0.1" value="-1"><span class="val" id="wkTftWinXv"></span></div>
-      <div class="hint" data-i18n="hintWkTft">ESP32-S3 1.14" TFT lies screen-up in the tray.</div>
+      <div class="row"><label data-i18n="lblWkTftBtnOn">TENSTAR front buttons printed in the lid (flexure)</label><input type="checkbox" id="wkTftBtnOn" checked></div>
+      <div class="row"><label data-i18n="lblWkTftBtn1X">Button 1 X (from board center)</label><input type="range" id="wkTftBtn1X" min="-24" max="24" step="0.1" value="-16"><span class="val" id="wkTftBtn1Xv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftBtn1Y">Button 1 Y (from board center)</label><input type="range" id="wkTftBtn1Y" min="-11" max="11" step="0.1" value="-6.8"><span class="val" id="wkTftBtn1Yv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftBtn2X">Button 2 X (from board center)</label><input type="range" id="wkTftBtn2X" min="-24" max="24" step="0.1" value="-16"><span class="val" id="wkTftBtn2Xv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftBtn2Y">Button 2 Y (from board center)</label><input type="range" id="wkTftBtn2Y" min="-11" max="11" step="0.1" value="6.8"><span class="val" id="wkTftBtn2Yv"></span></div>
+      <div class="row"><label data-i18n="lblWkTftBtnH">Button height above PCB</label><input type="range" id="wkTftBtnH" min="0.5" max="3.5" step="0.1" value="1.6"><span class="val" id="wkTftBtnHv"></span></div>
+      <div class="hint" data-i18n="hintWkTftBtn">Same flexure buttons as the XIAO 1.14"; default positions are estimates.</div>
+      <div class="hint" data-i18n="hintWkTft">TENSTAR ESP32-S3 1.14" TFT lies screen-up in the tray.</div>
       <div class="row"><label data-i18n="lblWkX114CompD">XIAO 1.14" floor ↔ PCB (parts side down)</label><input type="range" id="wkX114CompD" min="3" max="9" step="0.1" value="5.9"><span class="val" id="wkX114CompDv"></span></div>
       <div class="row"><label data-i18n="lblWkX114BtnH">XIAO 1.14" front button height</label><input type="range" id="wkX114BtnH" min="0.5" max="3.5" step="0.1" value="1.8"><span class="val" id="wkX114BtnHv"></span></div>
       <div class="row"><label data-i18n="lblWkX114BtnD">XIAO 1.14" button cap diameter</label><input type="range" id="wkX114BtnD" min="2.5" max="7.4" step="0.1" value="4.5"><span class="val" id="wkX114BtnDv"></span></div>
