@@ -83,8 +83,9 @@ export function initWorkout(env) {
   const FLEX_SLOT = 0.5, FLEX_ARM = 6.5;
   // 불꽃 버튼: 휨 패드를 UDO 불꽃 모양으로 바꾸고 윗면 0.4mm를 라임 파트로 따로 만들어 3MF 2색으로 낸다.
   // 불꽃 둥근 몸통(1024 그리드 중심 (512, 620))이 버튼 위에 오고, 끝은 화면 쪽(−X), 경첩 팔은 몸통 쪽(+X).
-  // TENSTAR ESP32-S3 1.14" TFT도 같은 휨 버튼을 쓴다. 빈 자리가 USB 쪽이라 경첩은 −X, 불꽃 끝은 화면 쪽 +X.
-  // 버튼 위치는 공개 도면을 못 찾은 추정값이라 슬라이더(wkTftBtn1X 등, 보드 중심 기준)로 맞춘다.
+  // TENSTAR ESP32-S3 1.14" TFT도 같은 휨 버튼을 쓴다. 판매 사진에서 핀 간격 2.54로 잰 두 버튼이 16핀 열(−Y) 옆에
+  // X로 4.5 간격이라 XIAO 크기 불꽃은 안 들어간다. 폭 4.2 불꽃을 어긋나게 놓아(버튼 기준 오프셋) 기둥은 버튼 위에
+  // 두고, 경첩은 빈 자리가 넓은 +Y, 불꽃 끝은 −Y(USB를 오른쪽에 둔 사진에서 위쪽)로 향한다.
   const tftBtnOn = () => tftOn() && P.wkTftBtnOn !== false;
   const flexBtnOn = () => btnFlexOn() || tftBtnOn();
   const flameBtnOn = () => flexBtnOn() && P.wkX114BtnFlame !== false;
@@ -114,24 +115,26 @@ export function initWorkout(env) {
     return g;
   }
   function flexBtnDims(q) {
-    const tft = tftOn(), b = tft ? q.tft : q.x114, pad = x114Btn().stem;
+    const tft = tftOn(), b = tft ? q.tft : q.x114, pad = tft ? 3.0 : x114Btn().stem;
     const armT = Math.max(0.6, Math.min(LID_PLATE, Number(P.wkX114FlexT) || 0.8));
     const gap = Math.max(0, Math.min(0.8, Number(P.wkX114BtnGap ?? 0.2)));
     // 경첩은 뚜껑 결합 텅 안쪽에서 끝낸다(텅은 상판 밑이라 겹쳐도 되지만 상판이 너무 얇아지지 않게).
-    const hingeMax = q.W / 2 - q.wall - jointW() - 0.5;
-    const plungerD = Math.min(2.6, pad - 1.0);
+    const hingeMax = (tft ? q.D : q.W) / 2 - q.wall - jointW() - 0.5;
+    const plungerD = tft ? 1.6 : Math.min(2.6, pad - 1.0);
     const toLid = q.trayTop - q.lidCageH;
     const face = tft ? b.pcbTop : b.faceZ, btnH = tft ? Number(P.wkTftBtnH ?? 1.6) : b.btnH;
-    // dir = 경첩 방향(+1 = +X). 불꽃 끝은 그 반대쪽을 향한다.
-    const dir = tft ? -1 : 1;
-    const spots = tft ? [[Number(P.wkTftBtn1X ?? -16), Number(P.wkTftBtn1Y ?? -6.8)],
-                         [Number(P.wkTftBtn2X ?? -16), Number(P.wkTftBtn2Y ?? 6.8)]] : X114.btns;
-    return { pad, armT, gap, plungerD, armW: Math.min(3.2, pad - 0.8), dir,
+    // ax = 경첩 방향 단위 벡터. 불꽃 끝은 그 반대쪽. [버튼 u, v, 패드 오프셋 u, v]
+    const ax = tft ? [0, 1] : [1, 0];
+    const spots = tft
+      ? [[Number(P.wkTftBtnUsbX ?? -16), Number(P.wkTftBtnUsbY ?? -5.7), -1.0, -0.9],
+         [Number(P.wkTftBtnLcdX ?? -11.5), Number(P.wkTftBtnLcdY ?? -5.8), -0.1, 1.3]]
+      : X114.btns.map(([u, v]) => [u, v, 0, 0]);
+    return { pad, armT, gap, plungerD, armW: Math.min(3.2, pad - 0.8), ax,
              plungerZ0: face + btnH + gap - toLid,
-             pads: spots.map(([u, v]) => {
-               const x = b.cx + u, y = b.y + v;
-               const hinge = dir * Math.max(dir * x + pad / 2 + 1.5, Math.min(hingeMax, dir * x + FLEX_ARM));
-               return { x, y, hinge };
+             pads: spots.map(([u, v, du, dv]) => {
+               const x = b.cx + u + du, y = b.y + v + dv, at = x * ax[0] + y * ax[1];
+               return { x, y, bx: b.cx + u, by: b.y + v, at,
+                        hinge: Math.max(at + pad / 2 + 1.5, Math.min(hingeMax, at + FLEX_ARM)) };
              }) };
   }
   const dispOn = () => tftOn() || x114On();      // 디스플레이 일체형 보드 (MPU·충전모듈·OLED 없음)
@@ -460,7 +463,11 @@ export function initWorkout(env) {
   // 끝을 −X(화면 쪽)로 보낸다. 위에서 보면 앱 마크를 그대로 돌린 모양이다.
   function flameBtnPts(f, p) {
     const k = (f.pad + 1.2) / (FLAME_X1 - FLAME_X0), cx = (FLAME_X0 + FLAME_X1) / 2;
-    return UDO_FLAME.map(([x, y]) => [p.x - f.dir * (y - FLAME_BODY_Y) * k, p.y + f.dir * (x - cx) * k]);
+    const tx = -f.ax[0], ty = -f.ax[1];   // 불꽃 끝 방향
+    return UDO_FLAME.map(([x, y]) => {
+      const a = (y - FLAME_BODY_Y) * k, c = (x - cx) * k;
+      return [p.x + a * tx + c * ty, p.y + a * ty - c * tx];
+    });
   }
   function flameBtnInlay(q, z0, h) {
     const f = flexBtnDims(q);
@@ -970,26 +977,27 @@ export function initWorkout(env) {
   // 휨 버튼: 상판에 틈을 내 패드를 경첩에 매달고, 패드 밑 누름 기둥이 보드 버튼을 누른다.
   function addFlexBtns(lid, q) {
     const f = flexBtnDims(q), lidTop = q.lidCageH + LID_PLATE, flame = flameBtnOn();
+    // 패드 쪽 위치 a0에서 a1까지 경첩 축을 따라 가는 상자 (옆 위치는 패드 중심).
+    const span = (p, a0, a1, w, h, z0, r) => {
+      const m = (a0 + a1) / 2, l = Math.abs(a1 - a0);
+      return f.ax[0] ? boxBrush(l, w, h, m, p.y, z0, r) : boxBrush(w, l, h, p.x, m, z0, r);
+    };
     for (const p of f.pads) {
       if (flame) {
         // 불꽃 둘레로 FLEX_SLOT 틈 + 경첩까지 팔 양옆 0.5 틈.
         lid = sub(lid, polyBrush([flameBtnPts(f, p)], LID_PLATE + 1, q.lidCageH - 0.5, FLEX_SLOT));
-        lid = sub(lid, boxBrush(Math.abs(p.hinge - p.x), f.armW + 2 * FLEX_SLOT, LID_PLATE + 1, (p.x + p.hinge) / 2, p.y,
-                                q.lidCageH - 0.5, 0.4));
+        lid = sub(lid, span(p, p.at, p.hinge, f.armW + 2 * FLEX_SLOT, LID_PLATE + 1, q.lidCageH - 0.5, 0.4));
       } else {
-        const x0 = p.x - f.dir * (f.pad / 2 + FLEX_SLOT), hw = f.pad / 2 + FLEX_SLOT;
-        lid = sub(lid, boxBrush(Math.abs(p.hinge - x0), 2 * hw, LID_PLATE + 1, (x0 + p.hinge) / 2, p.y,
-                                q.lidCageH - 0.5, 0.4));
+        const hw = f.pad / 2 + FLEX_SLOT;
+        lid = sub(lid, span(p, p.at - hw, p.hinge, 2 * hw, LID_PLATE + 1, q.lidCageH - 0.5, 0.4));
       }
       // 팔은 윗면 쪽(출력 시 베드 쪽)에 armT만 남겨 휘게 하고, 패드는 상판 두께 그대로 둔다.
-      const armEnd = p.hinge + f.dir * 0.2;
-      lid = add(lid, boxBrush(Math.abs(armEnd - p.x), f.armW, f.armT, (p.x + armEnd) / 2, p.y,
-                              lidTop - f.armT, 0.2));
+      lid = add(lid, span(p, p.at, p.hinge + 0.2, f.armW, f.armT, lidTop - f.armT, 0.2));
       lid = add(lid, flame ? polyBrush([flameBtnPts(f, p)], LID_PLATE, q.lidCageH)
                            : boxBrush(f.pad, f.pad, LID_PLATE, p.x, p.y, q.lidCageH, f.pad / 2));
       if (q.lidCageH - f.plungerZ0 > 0.1)
-        lid = add(lid, boxBrush(f.plungerD, f.plungerD, q.lidCageH - f.plungerZ0 + 0.1, p.x, p.y,
-                            f.plungerZ0, f.plungerD / 2));
+        lid = add(lid, boxBrush(f.plungerD, f.plungerD, q.lidCageH - f.plungerZ0 + 0.1, p.bx, p.by,
+                                f.plungerZ0, f.plungerD / 2));
     }
     // 불꽃 윗면 0.4mm는 라임 파트 자리로 비운다 (flameBtnInlay와 같은 모양).
     if (flame) lid = sub(lid, flameBtnInlay(q, lidTop - FLAME_BTN_INLAY, FLAME_BTN_INLAY + 0.1));
@@ -1224,7 +1232,7 @@ export function initWorkout(env) {
       ghostBox(G[1], [7.35, USB_C.w, USB_C.d],
                [edge + 7.35 / 2 - 0.5, b.y + TFT.usbY, b.pcbTop + USB_C.d / 2], MATS.esp);
       if (tftBtnOn()) for (const p of flexBtnDims(q).pads)
-        ghostBox(G[1], [3, 3, Number(P.wkTftBtnH ?? 1.6)], [p.x, p.y, b.pcbTop + Number(P.wkTftBtnH ?? 1.6) / 2], switchMat);
+        ghostBox(G[1], [3, 3, Number(P.wkTftBtnH ?? 1.6)], [p.bx, p.by, b.pcbTop + Number(P.wkTftBtnH ?? 1.6) / 2], switchMat);
       const jstH = Math.min(b.compH, 4.5);
       ghostBox(G[1], [4.5, 6.0, jstH],
                [edge + TFT.jstX, b.y + TFT.jstY, b.pcbTop + jstH / 2], jstMat);
@@ -1514,13 +1522,12 @@ export function initWorkout(env) {
         || b.winD / 2 > TFT.lcdW / 2 - 0.5;
       if (winOver) warnings.push(t('wkTftWinFit'));
       if (tftBtnOn()) {
-        // 불꽃(끝까지 약 0.46 × 상자) + 틈이 화면 창 모따기나 벽에 닿거나 두 버튼끼리 겹치는지 본다.
-        const f = flexBtnDims(q), reach = (f.pad + 1.2) * 0.85 + FLEX_SLOT, half = (f.pad + 1.2) / 2 + FLEX_SLOT;
-        const [a, c] = f.pads, winEdge = b.winX - b.winW / 2 - (LID_PLATE + 0.5);
-        if (f.pads.some(p => p.x + reach > winEdge
-                          || Math.abs(p.y) + half > q.D / 2 - q.wall
-                          || p.x - f.pad / 2 - FLEX_SLOT < -q.W / 2 + q.wall)
-            || (Math.abs(a.y - c.y) < 2 * half && Math.abs(a.x - c.x) < 2 * reach))
+        // 불꽃 + 틈이 화면 창 모따기나 벽에 닿거나 두 패드끼리 겹치는지 본다.
+        const f = flexBtnDims(q), winEdge = b.winX - b.winW / 2 - (LID_PLATE + 0.5);
+        const [a, c] = f.pads, w = f.pad + 1.2;
+        const out = f.pads.some(p => flameBtnPts(f, p).some(([x, y]) => x + FLEX_SLOT > winEdge
+          || x - FLEX_SLOT < -q.W / 2 + q.wall || Math.abs(y) + FLEX_SLOT > q.D / 2 - q.wall));
+        if (out || Math.hypot(a.x - c.x, a.y - c.y) < w + 2 * FLEX_SLOT + 0.4)
           warnings.push(t('wkTftBtnFit'));
       }
     } else if (x114On()) {

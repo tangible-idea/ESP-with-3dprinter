@@ -443,8 +443,8 @@ const STATIC_I18N = {
     wtGrpPowerX114: 'Power (battery → XIAO 1.14" PH2.0, onboard charging)',
     wtX114HallNote: 'Grove SDA (D4) is shared with the IMU I2C — pick a free analog pin before wiring',
     wtX114Btns: 'Buttons', wtX114BtnNote: 'A·B front caps, C on the side',
-    lblWkTftBtnOn: 'TENSTAR front buttons printed in the lid (flexure)', lblWkTftBtn1X: 'Button 1 X (from board center)', lblWkTftBtn1Y: 'Button 1 Y (from board center)', lblWkTftBtn2X: 'Button 2 X (from board center)', lblWkTftBtn2Y: 'Button 2 Y (from board center)', lblWkTftBtnH: 'Button height above PCB',
-    hintWkTftBtn: 'Same flexure and flame buttons as the XIAO 1.14", hinged toward the USB end with the flame tip toward the screen. The default positions are estimates: measure your board from its center and set X and Y, then test print the lid. Pad size, arm thickness, plunger gap and the flame option are shared with the XIAO settings.',
+    lblWkTftBtnOn: 'TENSTAR front buttons printed in the lid (flexure)', lblWkTftBtnUsbX: 'USB-side button X (from board center)', lblWkTftBtnUsbY: 'USB-side button Y (from board center)', lblWkTftBtnLcdX: 'Screen-side button X (from board center)', lblWkTftBtnLcdY: 'Screen-side button Y (from board center)', lblWkTftBtnH: 'Button height above PCB',
+    hintWkTftBtn: 'Flexure flame buttons like the XIAO 1.14", narrower because the two board buttons are only 4.5mm apart. The flames sit offset from each other with a plunger over each button, the hinge toward the middle of the case and the tip toward the 16-pin row. Default positions are measured from a seller photo using the pin pitch, so check them on your board. Arm thickness, plunger gap and the flame option are shared with the XIAO settings.',
     wkTftBtnFit: '⚠ TENSTAR buttons overlap the screen window, a wall or each other — adjust the button positions',
     optWkEspTft: 'TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)',
     lblWkTftCompH: 'TFT connector height (above PCB)', lblWkTftEndGap: 'Display board USB end ↔ wall gap',
@@ -646,8 +646,8 @@ const STATIC_I18N = {
     wtGrpPowerX114: '전원 (배터리 → XIAO 1.14" PH2.0, 보드 자체 충전)',
     wtX114HallNote: 'Grove SDA(D4)는 IMU I2C와 공유 — 배선 전 빈 아날로그 핀을 정하세요',
     wtX114Btns: '버튼', wtX114BtnNote: 'A·B 앞면 캡, C 옆면',
-    lblWkTftBtnOn: 'TENSTAR 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkTftBtn1X: '버튼 1 X (보드 중심 기준)', lblWkTftBtn1Y: '버튼 1 Y (보드 중심 기준)', lblWkTftBtn2X: '버튼 2 X (보드 중심 기준)', lblWkTftBtn2Y: '버튼 2 Y (보드 중심 기준)', lblWkTftBtnH: '버튼 높이 (PCB 위)',
-    hintWkTftBtn: 'XIAO 1.14"와 같은 휨·불꽃 버튼입니다. 경첩은 USB 쪽, 불꽃 끝은 화면 쪽을 향합니다. 기본 위치는 추정값이니 보드 중심에서 잰 X·Y를 넣고 뚜껑을 시험 출력하세요. 패드 크기, 팔 두께, 누름 기둥 틈, 불꽃 옵션은 XIAO 설정과 함께 씁니다.',
+    lblWkTftBtnOn: 'TENSTAR 앞 버튼 뚜껑 일체형 (휨 버튼)', lblWkTftBtnUsbX: 'USB 쪽 버튼 X (보드 중심 기준)', lblWkTftBtnUsbY: 'USB 쪽 버튼 Y (보드 중심 기준)', lblWkTftBtnLcdX: '화면 쪽 버튼 X (보드 중심 기준)', lblWkTftBtnLcdY: '화면 쪽 버튼 Y (보드 중심 기준)', lblWkTftBtnH: '버튼 높이 (PCB 위)',
+    hintWkTftBtn: 'XIAO 1.14"와 같은 휨 불꽃 버튼이지만, 보드 버튼 두 개가 4.5mm 간격으로 붙어 있어 더 좁게 만듭니다. 불꽃은 서로 어긋나게 놓고 각 버튼 위에 누름 기둥이 옵니다. 경첩은 케이스 가운데 쪽, 불꽃 끝은 16핀 열 쪽을 향합니다. 기본 위치는 판매 사진에서 핀 간격으로 잰 값이니 실제 보드에서 확인하세요. 팔 두께, 누름 기둥 틈, 불꽃 옵션은 XIAO 설정과 함께 씁니다.',
     wkTftBtnFit: '⚠ TENSTAR 버튼이 화면 창이나 벽, 다른 버튼과 겹칩니다 — 버튼 위치를 조절하세요',
     optWkEspTft: 'TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)',
     lblWkTftCompH: 'TFT 커넥터 높이 (PCB 위)', lblWkTftEndGap: '디스플레이 보드 USB 끝↔벽 간격',
@@ -983,7 +983,7 @@ const P = {
   wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
   wkX114BtnFlex: true, wkX114BtnFlame: true, wkX114FlexT: 0.8, wkX114BtnGap: 0.2, wkX114PinsOn: true, wkX114PinFit: 0.15, wkLidGrip: 0.1,   // LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
-  wkTftBtnOn: true, wkTftBtn1X: -16, wkTftBtn1Y: -6.8, wkTftBtn2X: -16, wkTftBtn2Y: 6.8, wkTftBtnH: 1.6,
+  wkTftBtnOn: true, wkTftBtnUsbX: -16, wkTftBtnUsbY: -5.7, wkTftBtnLcdX: -11.5, wkTftBtnLcdY: -5.8, wkTftBtnH: 1.6,
   wkTftCompH: 3.6, wkTftEndGap: 0, wkTftLcdX: 6.4, wkTftWinW: 24.0, wkTftWinD: 13.6, wkTftWinX: -1.0,
   shape: 'rect',   // 'rect' 둥근 네모 | 'circle' 완전 원형 (딤섬 찜기)
   W: 44, D: 39, R: 8, wall: 2.3, bands: true, fitClr: 0.08,
@@ -1112,7 +1112,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
                  'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
-                 'wkTftBtn1X','wkTftBtn1Y','wkTftBtn2X','wkTftBtn2Y','wkTftBtnH','wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
+                 'wkTftBtnUsbX','wkTftBtnUsbY','wkTftBtnLcdX','wkTftBtnLcdY','wkTftBtnH','wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
 let rebuildTimer = null;
@@ -1198,9 +1198,8 @@ const applyWorkoutOptionsUI = () => {
   const tftBtn = tftOnly && P.wkTftBtnOn !== false;
   document.getElementById('wkTftBtnOn').checked = P.wkTftBtnOn !== false;
   document.getElementById('wkTftBtnOn').disabled = !tftOnly;
-  for (const id of ['wkTftBtn1X', 'wkTftBtn1Y', 'wkTftBtn2X', 'wkTftBtn2Y', 'wkTftBtnH'])
+  for (const id of ['wkTftBtnUsbX', 'wkTftBtnUsbY', 'wkTftBtnLcdX', 'wkTftBtnLcdY', 'wkTftBtnH'])
     document.getElementById(id).disabled = !tftBtn;
-  document.getElementById('wkX114BtnD').disabled = !x114 && !tftBtn;
   document.getElementById('wkX114BtnFlame').disabled = !(x114 && P.wkX114BtnFlex) && !tftBtn;
   document.getElementById('wkX114BtnCatch').disabled = !x114 || P.wkX114BtnFlex;
   for (const id of ['wkX114FlexT', 'wkX114BtnGap'])
