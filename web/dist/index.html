@@ -144,7 +144,7 @@
   body.prod-plant [data-product="plant"] { display: block; }
   #product { font-weight: 600; }
 </style>
-  <script type="module" crossorigin src="/assets/index-BEHtLQqP.js"></script>
+  <script type="module" crossorigin src="/assets/index-sv9YxA8C.js"></script>
 </head>
 <body>
 <div id="panel">
@@ -382,6 +382,14 @@
   </details>
 
   <details open data-product="workout">
+    <summary data-i18n="secWorkoutBoard">Board</summary>
+    <div class="body">
+      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="tft" data-i18n="optWkEspTft">TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)</option><option value="x114" data-i18n="optWkEspX114">Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)</option></select></div>
+      <div class="hint" data-i18n="hintWkBoard">All workout sensor options are saved separately for each board.</div>
+    </div>
+  </details>
+
+  <details open data-product="workout">
     <summary data-i18n="secWorkoutCase">Case &amp; magnet fit</summary>
     <div class="body">
       <div class="row"><label data-i18n="lblWkWidth">Case width</label><input type="range" id="wkWidth" min="44.5" max="60" step="0.5" value="49.5"><span class="val" id="wkWidthv"></span></div>
@@ -415,7 +423,6 @@
   <details open data-product="workout">
     <summary data-i18n="secWorkoutComp">Electronics layout</summary>
     <div class="body">
-      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="tft" data-i18n="optWkEspTft">TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)</option><option value="x114" data-i18n="optWkEspX114">Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)</option></select></div>
       <div class="row"><label data-i18n="lblWkModType">Charge module</label><select id="wkModType"><option value="tp4056" data-i18n="optModTp4056">TP4056 USB-C (27×17.3×4.0)</option><option value="generic" data-i18n="optModGeneric">Existing module (19×14×4.5)</option></select></div>
       <div class="row"><label data-i18n="lblWkChgW">Charger long side X</label><input type="range" id="wkChgW" min="15" max="30" step="0.1" value="27"><span class="val" id="wkChgWv"></span></div>
       <div class="row"><label data-i18n="lblWkChgD">Charger short side Y</label><input type="range" id="wkChgD" min="10" max="20" step="0.1" value="17.3"><span class="val" id="wkChgDv"></span></div>

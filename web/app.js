@@ -425,6 +425,7 @@ const STATIC_I18N = {
     lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkXiaoLedge: 'XIAO hole end ledge', lblWkXiaoUsbGrip: 'XIAO USB inner socket depth', lblWkXiaoRailH: 'XIAO side rail height', lblWkXiaoRailLip: 'XIAO side rail hook', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB slot fit (+ = looser)',
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
+    secWorkoutBoard: 'Board', hintWkBoard: 'All workout sensor options are saved separately for each board. A board you open for the first time starts from the current values.',
     secWorkoutComp: 'Electronics layout',
     lblWkEspType: 'ESP32 board',
     optWkEspX114: 'Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)',
@@ -628,6 +629,7 @@ const STATIC_I18N = {
     lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkXiaoLedge: 'XIAO 구멍 끝 턱', lblWkXiaoUsbGrip: 'XIAO USB 안쪽 소켓 깊이', lblWkXiaoRailH: 'XIAO 옆 레일 높이', lblWkXiaoRailLip: 'XIAO 옆 레일 걸림', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 구멍 여유 (+ = 헐겁게)',
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
+    secWorkoutBoard: '보드', hintWkBoard: '운동 센서의 모든 옵션이 보드별로 따로 저장됩니다. 처음 여는 보드는 지금 값에서 시작합니다.',
     secWorkoutComp: '전자부품 배치',
     lblWkEspType: 'ESP32 보드',
     optWkEspX114: 'Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)',
@@ -975,6 +977,7 @@ const P = {
   wkUsbFit: 0.3,   // ESP32 USB-C 소켓 여유 (셸 폭 8.94에 더하는 값, 음수 = 조여서 물림)
   wkMpuW: 16, wkMpuL: 21, wkMpuH: 3.5, wkHallOn: true, wkOledOn: true, wkOledType: '096', wkOledPlug: false, wkEspPinsUp: true, wkOledLift: 3.0, wkPinHoleD: 1.2,
   wkHallGap: 1, wkHallT: 3.25,
+  wkBoards: {},   // 보드별 운동 센서 옵션 저장본 (현재 보드 값은 P에 그대로 있다)
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // TENSTAR ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
@@ -1096,7 +1099,7 @@ try {
   }
 } catch (e) { /* 무시 */ }
 // 디자인 동기화 블록이 채운다 — 값이 바뀔 때마다 저장본 비교·드라이브 업로드
-let paramsHook = null, syncUI = null;
+let paramsHook = null, syncUI = null, boardHook = null;
 const saveParams = () => {
   try { localStorage.setItem('dimsum-params', JSON.stringify(P)); } catch (e) { /* 무시 */ }
   paramsHook?.();
@@ -1240,26 +1243,37 @@ document.getElementById('wkModType').addEventListener('change', e => {
   }
   queueRebuild();
 });
-document.getElementById('wkEspType').addEventListener('change', e => {
-  P.wkEspType = e.target.value;
-  fixWkHallGpio();
-  // 디스플레이 보드는 기본 케이스에 안 들어갈 수 있으므로 필요한 만큼 넓혀 준다.
-  // XIAO 1.14"는 PH2.0 플러그 배선이 긴 변으로 나오므로 Y에 3mm 여유를 더 둔다.
-  const grow = (k, need, max) => {
-    need = Math.min(max, Math.ceil(need * 2) / 2);
-    if (P[k] >= need) return;
-    P[k] = need;
-    document.getElementById(k).value = need;
-    document.getElementById(k + 'v').textContent = need.toFixed(1);
-  };
-  if (P.wkEspType === 'tft') grow('wkWidth', 2 * P.wkWall + P.wkTftEndGap + 50.8 + 0.4, 60);
-  if (P.wkEspType === 'x114') {
-    grow('wkWidth', 2 * P.wkWall + P.wkTftEndGap + 46.7 + 0.4, 60);
-    grow('wkLength', 2 * P.wkWall + 25 + 0.4 + 3, 45);
+// 보드별 옵션: wk로 시작하는 값을 보드마다 따로 둔다. 보드를 바꿀 때 지금 값을 저장하고 새 보드 값을 꺼낸다.
+const WK_SHARED = new Set(['wkEspType', 'wkBoards', 'wkRev']);
+const wkBoardKeys = () => Object.keys(P).filter(k => /^wk/.test(k) && !WK_SHARED.has(k));
+const snapshotWkBoard = () => {
+  P.wkBoards[P.wkEspType] = Object.fromEntries(wkBoardKeys().map(k => [k, P[k]]));
+};
+function switchWkBoard(next) {
+  const prev = P.wkEspType;
+  if (next === prev) return;
+  snapshotWkBoard();
+  P.wkEspType = next;
+  const stored = P.wkBoards[next];
+  if (stored) {
+    for (const k of wkBoardKeys()) if (k in stored) P[k] = stored[k];
+  } else {
+    // 처음 여는 보드: 지금 값에서 시작하되 디스플레이 보드는 기본 케이스에 안 들어갈 수 있어 넓혀 준다.
+    // XIAO 1.14"는 PH2.0 플러그 배선이 긴 변으로 나오므로 Y에 3mm 여유를 더 둔다.
+    const grow = (k, need, max) => { P[k] = Math.max(P[k], Math.min(max, Math.ceil(need * 2) / 2)); };
+    if (next === 'tft') grow('wkWidth', 2 * P.wkWall + P.wkTftEndGap + 50.8 + 0.4, 60);
+    if (next === 'x114') {
+      grow('wkWidth', 2 * P.wkWall + P.wkTftEndGap + 46.7 + 0.4, 60);
+      grow('wkLength', 2 * P.wkWall + 25 + 0.4 + 3, 45);
+    }
   }
-  applyWorkoutOptionsUI();
+  fixWkHallGpio();
+  boardHook?.(prev, next);
+  syncControls();
+  saveParams();
   queueRebuild();
-});
+}
+document.getElementById('wkEspType').addEventListener('change', e => switchWkBoard(e.target.value));
 document.getElementById('wkHallOn').checked = P.wkHallOn;
 document.getElementById('wkOledOn').checked = P.wkOledOn;
 applyWorkoutOptionsUI();
@@ -1597,6 +1611,8 @@ function syncControls() {
   document.getElementById('tEspOn').checked = P.tEspOn;
   document.getElementById('tOledOn').checked = P.tOledOn;
   document.getElementById('wkHallOn').checked = P.wkHallOn;
+  document.getElementById('wkLoopOn').checked = P.wkLoopOn;
+  document.getElementById('wkLogoOn').checked = P.wkLogoOn;
   document.getElementById('wkEspType').value = P.wkEspType;
   document.getElementById('wkModType').value = P.wkModType;
   document.getElementById('wkOledOn').checked = P.wkOledOn;
@@ -1627,7 +1643,11 @@ document.getElementById('presetExport').addEventListener('click', () => {
 // 저장본(JSON 객체)을 P에 덮어쓰고 화면/모델을 갱신한다. 적용된 항목 수를 돌려준다.
 function applyPreset(obj) {
   let n = 0;
+  // 다른 보드 프리셋을 불러와도 지금 보드의 값은 보드별 저장본에 남긴다.
+  if (obj.wkEspType && obj.wkEspType !== P.wkEspType) snapshotWkBoard();
+  const boards = { ...P.wkBoards, ...(obj.wkBoards || {}) };
   for (const k in obj) if (k in P) { P[k] = obj[k]; n++; }
+  P.wkBoards = boards;
   migrateBuzzerFit(obj); migrateX114PinFit(obj);
   syncControls();
   applyProductUI();
@@ -1696,7 +1716,17 @@ presetFile.addEventListener('change', e => {
     row.appendChild(btn);
     tracked.push({ k, el, row, btn });
   }
-  const changedKeys = d => keysOf(d).filter(k => !same(P[k], meta.saved[d][k]));
+  // wkBoards는 드라이브에는 함께 올리되 저장본 비교와 되돌리기에서는 뺀다.
+  const changedKeys = d => keysOf(d).filter(k => k !== 'wkBoards' && !same(P[k], meta.saved[d][k]));
+  // 저장본 기준값도 보드별로 나눠, 보드를 바꿨다고 옵션이 '변경됨'으로 표시되지 않게 한다.
+  boardHook = (prev, next) => {
+    const sv = meta.saved.workout, store = (sv._boards ||= {});
+    store[prev] = Object.fromEntries(wkBoardKeys().map(k => [k, sv[k]]));
+    const base = store[next] || {};
+    for (const k of wkBoardKeys()) sv[k] = k in base ? base[k] : P[k];
+    sv.wkEspType = next;
+    persistMeta();
+  };
   const fmtVal = v => typeof v === 'boolean' ? (v ? 'ON' : 'OFF') : String(v);
 
   function revert(keys) {
