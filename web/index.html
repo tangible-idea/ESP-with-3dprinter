@@ -383,7 +383,7 @@
   <details open data-product="workout">
     <summary data-i18n="secWorkoutBoard">Board</summary>
     <div class="body">
-      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="tft" data-i18n="optWkEspTft">TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)</option><option value="x114" data-i18n="optWkEspX114">Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)</option></select></div>
+      <div class="row"><label data-i18n="lblWkEspType">ESP32 board</label><select id="wkEspType"><option value="c3mini" data-i18n="optEspC3mini">ESP32-C3 supermini (24×18)</option><option value="xiao" data-i18n="optWkEspXiao">Seeed XIAO ESP32C3</option><option value="nrf" data-i18n="optWkEspNrf">nRF52840 SuperMini (33×18)</option><option value="tft" data-i18n="optWkEspTft">TENSTAR ESP32-S3 1.14" TFT (50.8×22.9)</option><option value="x114" data-i18n="optWkEspX114">Seeed XIAO 1.14" IPS (nRF52840 / ESP32-S3)</option></select></div>
       <div class="hint" data-i18n="hintWkBoard">All workout sensor options are saved separately for each board.</div>
     </div>
   </details>
@@ -391,8 +391,8 @@
   <details open data-product="workout">
     <summary data-i18n="secWorkoutCase">Case &amp; magnet fit</summary>
     <div class="body">
-      <div class="row"><label data-i18n="lblWkWidth">Case width</label><input type="range" id="wkWidth" min="44.5" max="60" step="0.5" value="49.5"><span class="val" id="wkWidthv"></span></div>
-      <div class="row"><label data-i18n="lblWkLength">Case length</label><input type="range" id="wkLength" min="25" max="45" step="0.5" value="31"><span class="val" id="wkLengthv"></span></div>
+      <div class="row"><label data-i18n="lblWkWidth">Case width</label><input type="range" id="wkWidth" min="44.5" max="70" step="0.5" value="49.5"><span class="val" id="wkWidthv"></span></div>
+      <div class="row"><label data-i18n="lblWkLength">Case length</label><input type="range" id="wkLength" min="20" max="45" step="0.5" value="31"><span class="val" id="wkLengthv"></span></div>
       <div class="row"><label data-i18n="lblWkBodyH">Body height</label><input type="range" id="wkBodyH" min="7" max="22" step="0.5" value="11.5"><span class="val" id="wkBodyHv"></span></div>
       <div class="row"><label data-i18n="lblWkWall">Wall thickness</label><input type="range" id="wkWall" min="1.2" max="3" step="0.1" value="1.6"><span class="val" id="wkWallv"></span></div>
       <div class="row"><label data-i18n="lblWkRound">Corner rounding</label><input type="range" id="wkRound" min="0" max="8" step="0.5" value="5.5"><span class="val" id="wkRoundv"></span></div>
@@ -426,7 +426,7 @@
       <div class="row"><label data-i18n="lblWkChgW">Charger long side X</label><input type="range" id="wkChgW" min="15" max="30" step="0.1" value="27"><span class="val" id="wkChgWv"></span></div>
       <div class="row"><label data-i18n="lblWkChgD">Charger short side Y</label><input type="range" id="wkChgD" min="10" max="20" step="0.1" value="17.3"><span class="val" id="wkChgDv"></span></div>
       <div class="hint" data-i18n="hintWkEspType">XIAO replaces the charger in the electronics tray. Connect the battery directly to the B+ and B− pads on the back of the board; its USB-C port charges the battery.</div>
-      <div class="row"><label data-i18n="lblWkXiaoPocketX">XIAO long side X (USB to rear)</label><input type="range" id="wkXiaoPocketX" min="20" max="24" step="0.1" value="22.0"><span class="val" id="wkXiaoPocketXv"></span></div>
+      <div class="row"><label data-i18n="lblWkXiaoPocketX">XIAO long side X (USB to rear)</label><input type="range" id="wkXiaoPocketX" min="20" max="36" step="0.1" value="22.0"><span class="val" id="wkXiaoPocketXv"></span></div>
       <div class="row"><label data-i18n="lblWkXiaoPocketY">XIAO short side Y (between pin rows)</label><input type="range" id="wkXiaoPocketY" min="16" max="19" step="0.1" value="17.8"><span class="val" id="wkXiaoPocketYv"></span></div>
       <div class="row"><label data-i18n="lblWkXiaoLedge">XIAO hole end ledge</label><input type="range" id="wkXiaoLedge" min="0.6" max="5" step="0.1" value="1.5"><span class="val" id="wkXiaoLedgev"></span></div>
       <div class="row"><label data-i18n="lblWkXiaoUsbGrip">XIAO USB inner socket depth</label><input type="range" id="wkXiaoUsbGrip" min="0" max="3" step="0.1" value="1.0"><span class="val" id="wkXiaoUsbGripv"></span></div>
@@ -472,6 +472,7 @@
       <div class="row"><label data-i18n="lblWkEspPinsUp">SuperMini pins up through lid</label><input type="checkbox" id="wkEspPinsUp" checked></div>
       <div class="row"><label data-i18n="lblWkPinHoleD">Pin hole size</label><input type="range" id="wkPinHoleD" min="0.7" max="2" step="0.05" value="1.2"><span class="val" id="wkPinHoleDv"></span></div>
       <div class="row"><label data-i18n="lblWkOledLift">OLED lift above pins</label><input type="range" id="wkOledLift" min="0" max="8" step="0.1" value="3"><span class="val" id="wkOledLiftv"></span></div>
+      <div class="row"><label data-i18n="lblWkMpuRot">Turn MPU6050 90° (shorter case)</label><input type="checkbox" id="wkMpuRot"></div>
       <div class="row"><label data-i18n="lblWkMpuW">MPU6050 width</label><input type="range" id="wkMpuW" min="14" max="22" step="0.5" value="16"><span class="val" id="wkMpuWv"></span></div>
       <div class="row"><label data-i18n="lblWkMpuL">MPU6050 length</label><input type="range" id="wkMpuL" min="18" max="27" step="0.5" value="21"><span class="val" id="wkMpuLv"></span></div>
       <div class="row"><label data-i18n="lblWkMpuPocket">MPU6050 pocket depth</label><input type="range" id="wkMpuPocket" min="0" max="4" step="0.1" value="1.6"><span class="val" id="wkMpuPocketv"></span></div>
@@ -510,6 +511,7 @@
         <button id="wkExBezel" data-i18n="btnWkExBezel">OLED bezel.stl</button>
         <button id="wkExCaps" data-i18n="btnWkExCaps" disabled>Front button caps.stl</button>
       </div>
+      <div class="btns" style="margin-top:10px"><button class="ghost" id="wkExAll" data-i18n="btnWkExAll">⬇ All parts.3mf</button></div>
       <div class="hint" data-i18n="hintWorkoutExport">Print the base and tray as shown. The lid export is automatically flipped so its flat top rests on the bed; no supports are required.</div>
     </div>
   </details>
