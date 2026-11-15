@@ -55,7 +55,7 @@ const I18N = {
     cloudError: msg => `⚠ Google Drive error: ${msg}`,
     // GPIO 역할 이름 (우클릭 메뉴)
     roleSwitch: 'Switch', roleSwitch2: 'Switch 2', roleOledSda: 'OLED SDA',
-    roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED green', roleBuzzer: 'Buzzer',
+    roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED green', roleBuzzer: 'Buzzer', roleImuInt: 'IMU INT (wake)',
     roleWorkoutHall: 'KY-035 analog',
     gpioSelect: (name) => `${name} GPIO select`,
     // 배선표
@@ -64,6 +64,7 @@ const I18N = {
     wtGrpPowerChain: 'Power (battery → charger → ESP32)',
     wtGrpPowerXiao: 'Power (battery → XIAO, onboard charging)',
     wtGrpPowerNrf: 'Power (battery → nRF52840, onboard charging)', wtNrfPadNote: 'pin next to USB-C',
+    wtImuWakeNote: 'wakes the nRF from System OFF (no power switch)',
     wtXiaoPadNote: 'back-side pad', wtXiaoChgNote: 'charges the battery',
     wtBatPlus: 'Battery +', wtBatMinus: 'Battery −',
     wtChgBplus: 'Charger B+', wtChgBminus: 'Charger B−',
@@ -187,7 +188,7 @@ const I18N = {
     presetError: '⚠ 프리셋 파일을 읽을 수 없습니다 (JSON 형식 오류)',
     cloudError: msg => `⚠ 구글 드라이브 오류: ${msg}`,
     roleSwitch: '스위치', roleSwitch2: '스위치 2', roleOledSda: 'OLED SDA',
-    roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED 초록', roleBuzzer: '부저',
+    roleOledScl: 'OLED SCL', roleLed: 'LED', roleLedGreen: 'LED 초록', roleBuzzer: '부저', roleImuInt: 'IMU INT (깨우기)',
     roleWorkoutHall: 'KY-035 아날로그',
     gpioSelect: (name) => `${name} GPIO 선택`,
     wtGrpPower: '전원',
@@ -195,6 +196,7 @@ const I18N = {
     wtGrpPowerChain: '전원 (배터리 → 충전모듈 → ESP32)',
     wtGrpPowerXiao: '전원 (배터리 → XIAO, 보드 자체 충전)',
     wtGrpPowerNrf: '전원 (배터리 → nRF52840, 보드 자체 충전)', wtNrfPadNote: 'USB-C 옆 첫 핀',
+    wtImuWakeNote: '움직이면 System OFF에서 깨움 (전원 스위치 대신)',
     wtXiaoPadNote: '뒷면 패드', wtXiaoChgNote: '배터리 충전 겸용',
     wtBatPlus: '배터리 +', wtBatMinus: '배터리 −',
     wtChgBplus: '충전모듈 B+', wtChgBminus: '충전모듈 B−',
@@ -468,6 +470,9 @@ const STATIC_I18N = {
     lblWkMpuPocket: 'IMU pocket depth', lblWkMpuX: 'IMU X (− = toward charger)', lblWkMpuY: 'IMU Y', lblWkMpuPegD: 'IMU peg diameter', lblWkMpuPegIn: 'IMU peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
     lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" plugs into XIAO (no solder)', hintWkOledPlug: 'The 0.49" header order GND·VCC·SCL·SDA matches the XIAO row GND·3V3·D10·D9, so the OLED plugs straight in, lying face-up over the board. The lid presses it from above and only the display window shows. I2C becomes SDA=GPIO9, SCL=GPIO10 (wire the MPU6050 there too). Lower the ESP section height until the pins grip well.',
+    lblWkLedOn: 'Two-tone 3-pin LED (2×5) in the lid', lblWkLedX: 'LED X', lblWkLedY: 'LED Y', lblWkLedOut: 'LED sticks out above lid',
+    hintWkLed: 'The same 2×5 red/green LED as the clicker (body 5×2, 7 deep, pins 2.54 apart, center = common −). It press-fits into a 5.3×2.3 hole in the lid top; a sleeve around it runs down to the lowest face of the lid so it prints without supports. Wire red and green to GPIOs through resistors and the center leg to GND. Right-click a wire to change its GPIO.',
+    wkLedOled: '⚠ LED overlaps the OLED pocket — move LED X/Y', wkLedClamp: 'ℹ LED position was pulled inside the lid joint',
     lblWkImuType: 'IMU module', optImuMpu: 'MPU6050 (GY-521, 16×21)', optImuLsm: 'LSM6DS3 (GY-LSM6DS3, 13×18)',
     lblWkMpuRot: 'Turn IMU 90° (shorter case)', lblWkMpuW: 'IMU width', lblWkMpuL: 'IMU length', lblWkMpuH: 'IMU thickness',
     hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and a lid with an optional 0.96" or 0.49" OLED set flush into its flat top under a bezel that shows only the display. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
@@ -673,6 +678,9 @@ const STATIC_I18N = {
     lblWkMpuPocket: 'IMU 자리 깊이', lblWkMpuX: 'IMU X (− = 충전모듈 쪽)', lblWkMpuY: 'IMU Y', lblWkMpuPegD: 'IMU 고정 핀 지름', lblWkMpuPegIn: 'IMU 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
     lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" XIAO 핀 직결 (납땜 없음)', hintWkOledPlug: '0.49" 헤더 순서 GND·VCC·SCL·SDA가 XIAO 핀 열 GND·3V3·D10·D9와 같아 OLED를 화면이 위로 오게 보드 위에 눕혀 그대로 꽂습니다. 뚜껑이 위에서 눌러 주고 화면 창만 보입니다. I2C는 SDA=GPIO9, SCL=GPIO10이 되며 MPU6050도 여기에 연결하세요. 핀이 충분히 물리도록 ESP 칸 높이를 낮추세요.',
+    lblWkLedOn: '뚜껑에 투톤 3핀 LED (2×5)', lblWkLedX: 'LED X', lblWkLedY: 'LED Y', lblWkLedOut: 'LED 윗면 돌출',
+    hintWkLed: '클리커와 같은 2×5 빨강/초록 LED(몸통 5×2, 깊이 7, 핀 간격 2.54, 가운데 = 공통 −)입니다. 뚜껑 윗면의 5.3×2.3 구멍에 눌러 끼우고, 둘레 슬리브가 뚜껑 가장 낮은 면까지 내려와 서포트 없이 출력됩니다. 빨강·초록 다리는 저항을 거쳐 GPIO에, 가운데 다리는 GND에 잇습니다. 배선을 우클릭하면 GPIO를 바꿀 수 있습니다.',
+    wkLedOled: '⚠ LED가 OLED 포켓과 겹칩니다 — LED X/Y를 옮기세요', wkLedClamp: 'ℹ LED 위치를 뚜껑 결합부 안쪽으로 당겼습니다',
     lblWkImuType: 'IMU 모듈', optImuMpu: 'MPU6050 (GY-521, 16×21)', optImuLsm: 'LSM6DS3 (GY-LSM6DS3, 13×18)',
     lblWkMpuRot: 'IMU 90° 돌려 놓기 (짧은 변 줄이기)', lblWkMpuW: 'IMU 폭', lblWkMpuL: 'IMU 길이', lblWkMpuH: 'IMU 두께',
     hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" 또는 0.49" OLED가 평평한 윗면에 박히고 화면 창만 보이는 베젤로 덮는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
@@ -989,6 +997,7 @@ const P = {
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoUsbIn: 0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // TENSTAR ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
+  wkLedOn: false, wkLedX: 20, wkLedY: 0, wkLedOut: 1.0, wkLedRGpio: 3, wkLedGGpio: 4, wkImuIntGpio: 29,   // 뚜껑 윗면 2×5 투톤 3핀 LED
   wkMpuRot: false, wkImuType: 'mpu6050',   // 가속도·자이로 모듈 (mpu6050 | lsm6ds3)
   wkLoopOn: true, wkLoopD: 2.4, wkLoopBar: 4.0, wkLoopZ: 5.0, wkLoopY: 0,   // 1층 +X 끝면 옆으로 나란한 둥근 구멍 키링 통로 (구멍 지름, 구멍 사이 기둥 폭, 높이, Y 위치)
   wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
@@ -1122,7 +1131,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoUsbIn','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoUsbIn','wkLedX','wkLedY','wkLedOut','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftBtnUsbX','wkTftBtnUsbY','wkTftBtnLcdX','wkTftBtnLcdY','wkTftBtnH','wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1216,6 +1225,9 @@ const applyWorkoutOptionsUI = () => {
   document.getElementById('wkX114BtnCatch').disabled = !x114 || P.wkX114BtnFlex;
   for (const id of ['wkX114FlexT', 'wkX114BtnGap'])
     document.getElementById(id).disabled = !(x114 && P.wkX114BtnFlex) && !tftBtn;
+  document.getElementById('wkLedOn').disabled = tft;
+  for (const id of ['wkLedX', 'wkLedY', 'wkLedOut'])
+    document.getElementById(id).disabled = tft || !P.wkLedOn;
   document.getElementById('wkX114PinsOn').checked = P.wkX114PinsOn;
   document.getElementById('wkX114PinsOn').disabled = !x114;
   document.getElementById('wkX114PinFit').disabled = !x114 || !P.wkX114PinsOn;
@@ -1317,6 +1329,12 @@ document.getElementById('wkImuType').addEventListener('change', e => {
   P.wkWidth = Math.max(44.5, Math.min(70, Math.ceil((P.wkWidth + footX() - x0) * 2) / 2));
   syncControls();
   saveParams();
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+document.getElementById('wkLedOn').checked = !!P.wkLedOn;
+document.getElementById('wkLedOn').addEventListener('change', e => {
+  P.wkLedOn = e.target.checked;
   applyWorkoutOptionsUI();
   queueRebuild();
 });
@@ -1667,6 +1685,7 @@ function syncControls() {
   document.getElementById('wkHallOn').checked = P.wkHallOn;
   document.getElementById('wkLoopOn').checked = P.wkLoopOn;
   document.getElementById('wkMpuRot').checked = !!P.wkMpuRot;
+  document.getElementById('wkLedOn').checked = !!P.wkLedOn;
   document.getElementById('wkImuType').value = P.wkImuType || 'mpu6050';
   document.getElementById('wkLogoOn').checked = P.wkLogoOn;
   document.getElementById('wkEspType').value = P.wkEspType;
@@ -3826,6 +3845,13 @@ const fixWkHallGpio = () => {
   if (P.wkEspType === 'x114' && !ESP_PINS_X114[P.wkHallGpio]) P.wkHallGpio = 4;
   // KY-035는 아날로그 출력이라 ADC 핀(AIN0 = P0.02)을 기본으로 쓴다.
   if (P.wkEspType === 'nrf' && !ESP_PINS_NRF[P.wkHallGpio]) P.wkHallGpio = 2;
+  // 투톤 LED 핀: 보드에 없는 번호면 보드별 기본값으로 (nRF P0.22 / P0.24, 나머지 3 / 4)
+  const ledPins = P.wkEspType === 'nrf' ? ESP_PINS_NRF : P.wkEspType === 'xiao' ? ESP_PINS_XIAO : ESP_PINS_C3MINI;
+  const [dr, dg] = P.wkEspType === 'nrf' ? [22, 24] : [3, 4];
+  if (!ledPins[P.wkLedRGpio]) P.wkLedRGpio = dr;
+  if (!ledPins[P.wkLedGGpio]) P.wkLedGGpio = dg;
+  // nRF: IMU INT1 → 깨우기 핀 (기본 P0.29)
+  if (P.wkEspType === 'nrf' && !ESP_PINS_NRF[P.wkImuIntGpio]) P.wkImuIntGpio = 29;
 };
 fixWkHallGpio();
 let ALL_GPIOS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 21];
@@ -3857,6 +3883,9 @@ const GPIO_ROLES = {
   led2: { key: 'led2Gpio', name: 'roleLedGreen' },
   bz:   { key: 'bzGpio', name: 'roleBuzzer' },
   hall: { key: 'wkHallGpio', name: 'roleWorkoutHall' },
+  wkled: { key: 'wkLedRGpio', name: 'roleLed' },
+  wkled2: { key: 'wkLedGGpio', name: 'roleLedGreen' },
+  wkint: { key: 'wkImuIntGpio', name: 'roleImuInt' },
 };
 
 // ------------------------------------------------------------------
@@ -3942,6 +3971,7 @@ function renderWireTable() {
     row(WIRE_COLORS.minus, im('wtMpuGnd'), t('wtEspGnd'));
     row(WIRE_COLORS.sda, im('wtMpuSda'), pn(sda));
     row(WIRE_COLORS.scl, im('wtMpuScl'), pn(scl));
+    if (nrf) row(WIRE_COLORS.gpio, imuName() + ' INT1', pn(P.wkImuIntGpio), t('wtImuWakeNote'));
     if (P.wkOledOn) {
       grp(t('wtGrpOled'));
       const note = plug ? t('wtPlugNote') : xiao ? t('wtRibbonNote') : undefined;
@@ -3949,6 +3979,12 @@ function renderWireTable() {
       row(WIRE_COLORS.minus, t('wtOledGnd'), t('wtEspGnd'), note);
       row(WIRE_COLORS.sda, t('wtOledSda'), pn(sda), note);
       row(WIRE_COLORS.scl, t('wtOledScl'), pn(scl), note || t('wtSckNote'));
+    }
+    if (P.wkLedOn) {
+      grp(t('wtGrpLedRgb'));
+      row(WIRE_COLORS.led, t('wtLedRed'), pn(P.wkLedRGpio), t('wtResistorRed'));
+      row(WIRE_COLORS.led2, t('wtLedGreen'), pn(P.wkLedGGpio), t('wtResistor'));
+      row(WIRE_COLORS.minus, t('wtLedCommon'), t('wtEspGnd'));
     }
     wireTableEl.innerHTML = `<table><tbody>${rows.join('')}</tbody></table>`;
     return;

@@ -260,6 +260,12 @@ export function initWorkout(env) {
   // OLED는 핀 끝 위로 wkOledLift 만큼 띄워 얹는다 (핀 모드가 아니면 상판에 바로 앉음).
   const oledLift = () => (oledOn() && pinsUp() ? Math.max(0, Number(P.wkOledLift) || 0) : 0);
   const LID_CAGE_DEFAULT = 4.6, LID_PLATE = 1.8;
+  // 2×5 사각 투톤 3핀 LED (클리커 r25와 같은 부품): 몸통 5 × 2, 깊이 7, 핀 2.54 피치(X 방향),
+  // 1번 = 빨강, 가운데 = 공통 캐소드, 3번 = 초록. 뚜껑 윗면 구멍(몸통 + 0.3)에 마찰로 끼우고,
+  // 구멍 둘레 슬리브(0.8)가 뚜껑 가장 낮은 면(출력 베드 면)까지 내려가 몸통을 잡는다.
+  // 그래서 뚜껑을 바로 세워 출력해도 슬리브가 허공에서 시작하지 않는다.
+  const WK_LED = { w: 5, t: 2, h: 7, pitch: 2.54, clr: 0.3, sleeve: 0.8 };
+  const wkLedOn = () => !!P.wkLedOn && !dispOn();
 
   let geos = [null, null, null], meshes = [null, null, null], lastLayout = null, bezelGeo = null, capGeo = null, logoGeo = null, btnFlameGeo = null;
   const partMat = color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, transparent: true, opacity: 0.9 });
@@ -447,6 +453,24 @@ export function initWorkout(env) {
     for (const [w, d, x, y] of jointBridges(q, j))
       g = sub(g, boxBrush(w, d, BASE_JOINT_H + 0.6, x, y, -0.4, 0));
     return g;
+  }
+
+  // 뚜껑 로컬 윗면 높이 (OLED가 있으면 베젤 윗면까지 올라온 면)
+  function lidTopZ(q) {
+    if (oledOn() && !oledPlug()) return q.lidCageH + LID_PLATE + oledLift() + oledDims().rimH;
+    return q.lidCageH + LID_PLATE;
+  }
+  // LED 자세 (뚜껑 로컬). X/Y는 결합 텅 안쪽으로 가둔다. out = 윗면 위로 나오는 길이.
+  function ledPose(q) {
+    const j = jointDims(q);
+    const hw = WK_LED.w + WK_LED.clr, ht = WK_LED.t + WK_LED.clr;
+    const ow = hw + 2 * WK_LED.sleeve, od = ht + 2 * WK_LED.sleeve;
+    const xl = Math.max(0, j.inW / 2 - ow / 2 - 0.2), yl = Math.max(0, j.inD / 2 - od / 2 - 0.2);
+    const x = Math.max(-xl, Math.min(xl, Number(P.wkLedX) || 0));
+    const y = Math.max(-yl, Math.min(yl, Number(P.wkLedY) || 0));
+    const top = lidTopZ(q), out = Math.max(0, Math.min(5, Number(P.wkLedOut ?? 1)));
+    const sz0 = miniOn() ? 0 : q.lidCageH - JOINT_H;   // 뚜껑에서 가장 낮은 면
+    return { x, y, top, out, z0: top + out - WK_LED.h, hw, ht, ow, od, sz0 };
   }
 
   function jointDims(q) {
@@ -1253,6 +1277,11 @@ export function initWorkout(env) {
         lid = sub(lid, boxBrush(slotW, 3.2, LID_PLATE + 0.8,
                                 0, o.pinY + Math.sign(o.pinY) * -0.2, q.lidCageH - 0.4, 0.65));
     }
+    if (wkLedOn()) {
+      const lp = ledPose(q);
+      lid = add(lid, boxBrush(lp.ow, lp.od, lp.top - lp.sz0 - 0.05, lp.x, lp.y, lp.sz0, 0.4));
+      lid = sub(lid, boxBrush(lp.hw, lp.ht, lp.top - lp.sz0 + 1.0, lp.x, lp.y, lp.sz0 - 0.5, 0));
+    }
     return lid;
   }
 
@@ -1361,6 +1390,13 @@ export function initWorkout(env) {
                    [miniPinX(i), sy * MINI_PIN_ROW_Y, pcbTop + HEADER_BODY + HEADER_PIN / 2],
                    MATS.mod);
       }
+    }
+    if (wkLedOn()) {
+      const lp = ledPose(q), zc = lp.z0 + WK_LED.h / 2;
+      ghostBox(G[2], [WK_LED.w / 2, WK_LED.t, WK_LED.h], [lp.x - WK_LED.w / 4, lp.y, zc], MATS.ledR || hallMat);
+      ghostBox(G[2], [WK_LED.w / 2, WK_LED.t, WK_LED.h], [lp.x + WK_LED.w / 4, lp.y, zc], MATS.ledG || mpuMat);
+      for (const k of [-1, 0, 1])
+        ghostBox(G[2], [0.5, 0.5, 4], [lp.x + k * WK_LED.pitch, lp.y, lp.z0 - 2], MATS.mod);
     }
     if (oledPlug()) {
       // XIAO에 꽂힌 부품이므로 트레이 그룹에 둔다.
@@ -1534,6 +1570,11 @@ export function initWorkout(env) {
     wire(mpuGnd, espGnd, colors.minus, 'GND', null);
     wire(mpuSda, espSda, colors.sda, 'SDA', pinLabel(i2c.sda), 'sda');
     wire(mpuScl, espScl, colors.scl, 'SCL', pinLabel(i2c.scl), 'scl');
+    // nRF는 전원 스위치 없이 System OFF로 끄고, IMU 움직임 인터럽트(INT1)로 GPIO SENSE 깨우기를 한다.
+    if (nrfOn()) {
+      const mpuInt = mpuPin(mpuSpec0().w / 2 - 0.8);
+      wire(mpuInt, espGpio(P.wkImuIntGpio, 29), colors.gpio, 'INT', pinLabel(P.wkImuIntGpio), 'wkint');
+    }
 
     // OLED: MPU6050과 GPIO8/9 I2C 버스를 공유한다. 핀 직결이면 배선 없음.
     if (oledOn() && !oledPlug()) {
@@ -1548,6 +1589,18 @@ export function initWorkout(env) {
       wire(oGnd, espGnd, colors.minus, 'GND', null, undefined, under, rb);
       wire(oSda, espSda, colors.sda, 'SDA', pinLabel(i2c.sda), 'sda', under, rb);
       wire(oScl, espScl, colors.scl, 'SCL', pinLabel(i2c.scl), 'scl', under, rb);
+    }
+
+    // 투톤 LED: 1번 빨강, 가운데 공통 −, 3번 초록. 다리는 몸통 밑에서 아래로 내려간다.
+    if (wkLedOn()) {
+      const lp = ledPose(q);
+      const legZ = lp.z0 - 4;
+      const leg = k => world(G[2], [lp.x + k * WK_LED.pitch, lp.y, legZ]);
+      const under = Math.min(leg(0)[2], world(G[2], [0, 0, q.lidCageH - 1.0])[2]);
+      const rb = xiaoOn();
+      wire(leg(-1), espGpio(P.wkLedRGpio, 3), colors.led ?? colors.gpio, 'LED R', pinLabel(P.wkLedRGpio), 'wkled', under, rb);
+      wire(leg(1), espGpio(P.wkLedGGpio, 4), colors.led2 ?? colors.gpio, 'LED G', pinLabel(P.wkLedGGpio), 'wkled2', under, rb);
+      wire(leg(0), espGnd, colors.minus, 'LED −', null, undefined, under, rb);
     }
     flush();
   }
@@ -1600,6 +1653,17 @@ export function initWorkout(env) {
       if (q.W + 0.01 < pairNeedW) warnings.push(t('wkRowOverlap'));
       const mpuNeedD = q.mpu.d + CLR + 2 * q.wall;
       if (q.D + 0.01 < mpuNeedD) warnings.push(t('wkMpuDepthFit', mpuNeedD.toFixed(1)));
+    }
+    if (wkLedOn()) {
+      // LED 슬리브가 OLED 포켓(베젤 자리)과 겹치는지, LED 다리 밑이 트레이 부품에 닿는지 본다.
+      const lp = ledPose(q);
+      const ov = (cx, cy, w, d) => Math.abs(lp.x - cx) < (lp.ow + w) / 2 && Math.abs(lp.y - cy) < (lp.od + d) / 2;
+      if (oledOn() && !oledPlug()) {
+        const bz = bezelDims(q);
+        if (ov(0, 0, bz.w + 1.2, bz.d + 1.2)) warnings.push(t('wkLedOled'));
+      }
+      if (Math.abs(lp.x - (Number(P.wkLedX) || 0)) > 0.05 || Math.abs(lp.y - (Number(P.wkLedY) || 0)) > 0.05)
+        warnings.push(t('wkLedClamp'));
     }
     const batteryTop = q.batteryZ + P.wkBatH;
     if (batteryTop > q.baseH - 0.4) warnings.push(t('wkBatteryHeight', (batteryTop + 0.4).toFixed(1)));
