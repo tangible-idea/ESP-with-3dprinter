@@ -493,6 +493,8 @@ const STATIC_I18N = {
     wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
     wkMpuDepthFit: d => `⚠ IMU pocket needs at least ${d}mm on the short side`,
     wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
+    wkBatRecessMax: m => `ℹ Battery can rise only ${m}mm into the tray floor here (board/IMU seats above it)`,
+    lblWkBatRecess: 'Battery rises into tray floor', hintWkBatRecess: 'Cuts a battery-shaped recess under the electronics tray so the top of the battery sits inside the tray floor; lower "Battery base height" by the same amount to make the product thinner. At least 0.4mm stays under the board and IMU seats (shallower IMU pocket = deeper recess). The base tongue along the long sides is removed over the battery length — the short-end tongue and the raised battery locate the parts. The recess ceiling prints as a bridge across the battery width.',
     wkMpuHeightFit: '⚠ IMU is too thick for the electronics tray and ESP32 clearance',
     wkHallFit: (d, h) => `⚠ KY-035 upright pocket needs at least ${d}mm on the short side and ${h}mm base height`,
     wkOledFit: (w, d, size) => `⚠ The ${size} OLED pocket needs at least ${w}×${d}mm lid footprint`,
@@ -701,6 +703,8 @@ const STATIC_I18N = {
     wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
     wkMpuDepthFit: d => `⚠ IMU 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
     wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
+    wkBatRecessMax: m => `ℹ 이 설정에서는 배터리를 2층 바닥 속으로 ${m}mm까지만 올릴 수 있습니다 (위에 보드·IMU 자리)`,
+    lblWkBatRecess: '배터리를 2층 바닥 속으로', hintWkBatRecess: '2층 트레이 밑면을 배터리 모양으로 파서 배터리 윗부분이 2층 바닥 속에 들어가게 합니다. 같은 양만큼 "배터리 베이스 높이"를 낮추면 제품이 얇아집니다. 보드·IMU 자리 밑으로는 0.4mm를 남깁니다(IMU 자리 깊이를 줄이면 더 깊게 팔 수 있음). 배터리 길이 구간의 긴 변 결합 텅은 빠지고, 짧은 변 텅과 올라온 배터리가 위치를 잡습니다. 파인 천장은 배터리 폭만큼 브리지로 출력됩니다.',
     wkMpuHeightFit: '⚠ IMU이 너무 두꺼워 전자부품 트레이와 ESP32 사이에 들어가지 않습니다',
     wkHallFit: (d, h) => `⚠ KY-035 세움 포켓에는 짧은 변 ${d}mm, 베이스 높이 ${h}mm 이상이 필요합니다`,
     wkOledFit: (w, d, size) => `⚠ ${size} OLED 포켓에는 뚜껑 외형이 최소 ${w}×${d}mm 필요합니다`,
@@ -997,7 +1001,7 @@ const P = {
   wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoUsbIn: 0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // TENSTAR ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
-  wkLedOn: false, wkLedX: 20, wkLedY: 0, wkLedOut: 1.0, wkLedRGpio: 3, wkLedGGpio: 4, wkImuIntGpio: 29,   // 뚜껑 윗면 2×5 투톤 3핀 LED
+  wkLedOn: false, wkLedX: 20, wkLedY: 0, wkLedOut: 1.0, wkLedRGpio: 3, wkLedGGpio: 4, wkImuIntGpio: 29, wkBatRecess: 0,   // 뚜껑 윗면 2×5 투톤 3핀 LED
   wkMpuRot: false, wkImuType: 'mpu6050',   // 가속도·자이로 모듈 (mpu6050 | lsm6ds3)
   wkLoopOn: true, wkLoopD: 2.4, wkLoopBar: 4.0, wkLoopZ: 5.0, wkLoopY: 0,   // 1층 +X 끝면 옆으로 나란한 둥근 구멍 키링 통로 (구멍 지름, 구멍 사이 기둥 폭, 높이, Y 위치)
   wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
@@ -1131,7 +1135,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoUsbIn','wkLedX','wkLedY','wkLedOut','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoUsbIn','wkLedX','wkLedY','wkLedOut','wkBatRecess','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftBtnUsbX','wkTftBtnUsbY','wkTftBtnLcdX','wkTftBtnLcdY','wkTftBtnH','wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1226,6 +1230,7 @@ const applyWorkoutOptionsUI = () => {
   for (const id of ['wkX114FlexT', 'wkX114BtnGap'])
     document.getElementById(id).disabled = !(x114 && P.wkX114BtnFlex) && !tftBtn;
   document.getElementById('wkLedOn').disabled = tft;
+  document.getElementById('wkBatRecess').disabled = tft;
   for (const id of ['wkLedX', 'wkLedY', 'wkLedOut'])
     document.getElementById(id).disabled = tft || !P.wkLedOn;
   document.getElementById('wkX114PinsOn').checked = P.wkX114PinsOn;

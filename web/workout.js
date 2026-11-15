@@ -366,6 +366,10 @@ export function initWorkout(env) {
         mpuDepth = Math.min(mpuDepth, TRAY_FLOOR - BASE_JOINT_H - 0.2);
     }
     const mpuSeatZ = TRAY_FLOOR - mpuDepth;
+    // 배터리 윗부분을 2층 바닥 밑면 속으로 올려 넣는 깊이(wkBatRecess). 2층 밑면을 배터리 외형대로
+    // 그만큼 파고, 1층은 그만큼 낮출 수 있다. 위에 앉는 보드·IMU 자리 밑으로 0.4는 남긴다.
+    const batRecMax = dispOn() ? 0 : Math.max(0, Math.min(SEAT_Z, mpuSeatZ) - 0.4);
+    const batRec = Math.min(batRecMax, Math.max(0, Number(P.wkBatRecess) || 0));
     const chargerMax = mpuX - (mpu.w + CLR) / 2 - (board.w + CLR) / 2 - 1.2;
     const chargerX = Math.min(Math.max(chargerMin, chargerX0 + P.wkChgX),
                               Math.max(chargerMin, chargerMax));
@@ -420,7 +424,7 @@ export function initWorkout(env) {
     return {
       tft, x114,
       W, D, baseH, wall, trayTop, lidCageH, innerW, innerHalfD,
-      mpu, gap, chargerX, boardY, mpuX, mpuY, mpuDepth, mpuSeatZ,
+      mpu, gap, chargerX, boardY, mpuX, mpuY, mpuDepth, mpuSeatZ, batRec, batRecMax,
       // 스위치 창 위로 벽이 1mm는 남아야 하고, 몸통이 뚜껑에 닿지 않게 높이를 묶는다.
       swZ: Math.max(TRAY_FLOOR_TOP + SW.d / 2 + 0.3,
                     Math.min(P.wkSwZ, trayTop - 1.0 - (SW.d + 0.3) / 2)),
@@ -504,6 +508,11 @@ export function initWorkout(env) {
       // 2층 결합 홈 다리가 들어갈 자리 (다리 폭 + 양쪽 fit + 0.2)
       for (const [w, d, x, y] of jointBridges(q, j, 2 * fit + 0.4))
         tongue = sub(tongue, boxBrush(w, d, BASE_JOINT_H + 0.4, x, y, q.baseH - 0.1, 0));
+      // 배터리가 2층 속으로 올라가면 긴 변 텅이 배터리 옆구리(폭 20.4 > 텅 안쪽)를 막으므로
+      // 배터리 길이 구간의 텅은 뺀다. 짧은 변·모서리 텅과 올라간 배터리 자체가 위치를 잡아 준다.
+      if (q.batRec > 0)
+        tongue = sub(tongue, boxBrush(BAT.w + CLR + 0.8 + 2 * fit, q.D + 2, BASE_JOINT_H + 0.4,
+                                      0, 0, q.baseH - 0.1, 0));
       body = add(body, tongue);
     }
     if (P.wkLoopOn) body = sub(body, meshBrush(loopTunnelGeo(q)));
@@ -848,6 +857,16 @@ export function initWorkout(env) {
       tray = sub(tray, jointGroove(q, j));
     tray = add(tray, ring(q.W, q.D, q.W - 2 * q.wall, q.D - 2 * q.wall,
                           q.trayTop - TRAY_FLOOR, TRAY_FLOOR, r));
+    // 배터리 윗부분이 들어올 밑면 자리 (배터리 외형 + 0.4, 벽 안쪽까지)
+    if (q.batRec > 0) {
+      const rd = Math.min(BAT.d + CLR + 0.4, q.D - 2 * q.wall);
+      let rx0 = -(BAT.w + CLR + 0.4) / 2;
+      const rx1 = -rx0;
+      // XIAO/nRF는 보드 밑 바닥 관통 구멍과 결합 홈 사이에 0.5 폭 띠가 베드에 따로 남으므로
+      // 파는 자리를 -X 쪽 결합 홈까지 늘려 그 띠를 없앤다(그 위 보드 받침 턱은 그대로).
+      if (xiaoOn() && BASE_JOINT_H > 0) rx0 = Math.min(rx0, -j.inW / 2);
+      tray = sub(tray, boxBrush(rx1 - rx0, rd, q.batRec + 0.2, (rx0 + rx1) / 2, q.batteryY, -0.2, 1.4));
+    }
     // 모듈 자리: 바닥을 보드 외형대로 POCKET_D만큼 파서 떨어뜨려 넣는다.
     // 얕아도 사방 벽이 보드를 자리잡아 준다.
     // 납땜 릴리프: 보드 밑면 패드 열에 납이 볼록하게 남으면 보드가 뜬다. 그 줄을
@@ -1666,7 +1685,10 @@ export function initWorkout(env) {
         warnings.push(t('wkLedClamp'));
     }
     const batteryTop = q.batteryZ + P.wkBatH;
-    if (batteryTop > q.baseH - 0.4) warnings.push(t('wkBatteryHeight', (batteryTop + 0.4).toFixed(1)));
+    if (batteryTop > q.baseH + q.batRec - 0.4 + 0.01)
+      warnings.push(t('wkBatteryHeight', (batteryTop + 0.4 - q.batRec).toFixed(1)));
+    if ((Number(P.wkBatRecess) || 0) > q.batRecMax + 0.01)
+      warnings.push(t('wkBatRecessMax', q.batRecMax.toFixed(1)));
     if (!dispOn() && q.mpu.h > q.trayTop - q.mpuSeatZ - q.lidCageH - 0.8 && !oledPlug())
       warnings.push(t('wkMpuHeightFit'));
     if (xiaoOn() && SEAT_Z + XIAO.h > q.trayTop - q.lidCageH - 0.2 && !oledPlug())
