@@ -424,7 +424,7 @@ const STATIC_I18N = {
     lblWkWireX: 'Battery wire hole X', lblWkWireY: 'Battery wire hole Y',
     lblWkWireLen: 'Wire hole length', lblWkWireW: 'Wire hole width',
     lblWkSwOn: 'Power switch', lblWkSwY: 'Switch Y', lblWkSwZ: 'Switch height',
-    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkXiaoLedge: 'XIAO hole end ledge', lblWkXiaoUsbGrip: 'XIAO USB inner socket depth', lblWkXiaoRailH: 'XIAO side rail height', lblWkXiaoRailLip: 'XIAO side rail hook', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB slot fit (+ = looser)',
+    lblWkDivBar: 'Divider bar length', lblWkDivH: 'Divider bar height', lblWkClipLip: 'XIAO clip hook', lblWkXiaoLedge: 'XIAO hole end ledge', lblWkXiaoUsbIn: 'Push board toward USB wall', hintWkXiaoUsbIn: 'Moves the XIAO / nRF board toward the −X wall so the USB-C port sits closer to the outside. 0 = old position (port about 2.3mm inside the outer face). Stops when the PCB end is 0.2mm from the inner wall face.', lblWkXiaoUsbGrip: 'XIAO USB inner socket depth', lblWkXiaoRailH: 'XIAO side rail height', lblWkXiaoRailLip: 'XIAO side rail hook', lblWkSolderW: 'Solder relief slot', lblWkDivGrow: 'Divider thicker (USB side)', lblWkChgX: 'TP4056 X offset', lblWkUsbY: 'USB hole Y', lblWkUsbFit: 'ESP32 USB slot fit (+ = looser)',
     lblWkHallGap: 'Hall–magnet gap', lblWkHallT: 'KY-035 thickness',
     hintWorkoutCase: 'A 30×10×2mm magnet sits under the battery. When enabled, the 15×19mm KY-035 board stands beside it with the Hall element end downward; adjust the gap so the built-in magnet creates a stable baseline without saturating the analog output. Disable it to remove the slot and recenter the battery and magnet.',
     secWorkoutBoard: 'Board', hintWkBoard: 'All workout sensor options are saved separately for each board. A board you open for the first time starts from the current values.',
@@ -465,16 +465,17 @@ const STATIC_I18N = {
     lblWkXiaoPocketX: 'XIAO / nRF long side X (USB to rear)',
     lblWkXiaoPocketY: 'XIAO / nRF short side Y (between pin rows)',
     lblWkEspCaseH: 'ESP section height',
-    lblWkMpuPocket: 'MPU6050 pocket depth', lblWkMpuX: 'MPU6050 X (− = toward charger)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 peg diameter', lblWkMpuPegIn: 'MPU6050 peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
+    lblWkMpuPocket: 'IMU pocket depth', lblWkMpuX: 'IMU X (− = toward charger)', lblWkMpuY: 'IMU Y', lblWkMpuPegD: 'IMU peg diameter', lblWkMpuPegIn: 'IMU peg inset', lblWkChgLedge: 'Charger seat ledge', lblWkModType: 'Charge module', lblWkChgW: 'Charger long side X', lblWkChgD: 'Charger short side Y', lblWkTrayFloor: 'Tray floor thickness', hintWkTrayFloor: 'Layer 2 floor. At 3.4 mm and up the layer 1↔2 joint stays 2.2 mm deep. Thinner floors first remove the board pockets, then make the joint shallower; when the joint would drop below 0.8 mm it is removed and the layers just stack. Reprint layer 1 after changing it.',
     hintWkEspCaseH: 'Changes the SuperMini lid cage or XIAO tray clearance and the overall case height. Lower values may leave too little room for the board.',
     lblWkOledOn: 'Use OLED', lblWkOledType: 'OLED size', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" plugs into XIAO (no solder)', hintWkOledPlug: 'The 0.49" header order GND·VCC·SCL·SDA matches the XIAO row GND·3V3·D10·D9, so the OLED plugs straight in, lying face-up over the board. The lid presses it from above and only the display window shows. I2C becomes SDA=GPIO9, SCL=GPIO10 (wire the MPU6050 there too). Lower the ESP section height until the pins grip well.',
-    lblWkMpuRot: 'Turn MPU6050 90° (shorter case)', lblWkMpuW: 'MPU6050 width', lblWkMpuL: 'MPU6050 length', lblWkMpuH: 'MPU6050 thickness',
+    lblWkImuType: 'IMU module', optImuMpu: 'MPU6050 (GY-521, 16×21)', optImuLsm: 'LSM6DS3 (GY-LSM6DS3, 13×18)',
+    lblWkMpuRot: 'Turn IMU 90° (shorter case)', lblWkMpuW: 'IMU width', lblWkMpuL: 'IMU length', lblWkMpuH: 'IMU thickness',
     hintWorkoutComp: 'Three stacked parts keep the footprint compact: KY-035+magnet+battery base, electronics tray with MPU6050 and the selected power board, and a lid with an optional 0.96" or 0.49" OLED set flush into its flat top under a bezel that shows only the display. The OLED wires pass through the lid. Verify each module silkscreen before wiring.',
     secWorkoutExport: 'STL export', btnWkExBody: 'Hall + battery base.stl / .3mf', btnWkExTray: 'Electronics tray.stl', btnWkExLid: 'ESP32 display lid.stl / .3mf', btnWkExBezel: 'OLED bezel.stl',
     hintWorkoutExport: 'Print the base and tray as shown. With OLED off, the lid export is flipped onto its flat top. With OLED on, it exports upright so the OLED pocket faces up; use bridge-friendly settings for the ESP32-cage ceiling and the hollowed top skin. Print the OLED bezel separately (exported face-down), drop the OLED in, then press the bezel into its recess (a dot of glue if loose). Only the display window stays visible. "All parts.3mf" puts every part you need for the current settings into one file as separate objects, each already in the orientation above and laid out side by side on the bed; two-color parts (logo, flame buttons) stay as two parts inside their object.',
     workoutDims: (w, l, h, ms) => `Workout sensor ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'TENSTAR ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : P.wkEspType === 'nrf' ? 'nRF52840 SuperMini (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
-    wkRowOverlap: '⚠ Board and MPU6050 pockets overlap — increase case width or reduce the MPU6050 width',
+    workoutReady: (hall, oled) => `✓ Stack: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} magnet · 40×20×${P.wkBatH} cell · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (onboard IMU · mic · charging)' : P.wkEspType === 'tft' ? 'TENSTAR ESP32-S3 1.14" TFT (onboard IMU · charging)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (onboard charging)' : P.wkEspType === 'nrf' ? 'nRF52840 SuperMini (onboard charging)' : (P.wkModType === 'generic' ? '19×14 charger' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · ' + imuName()}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
+    wkRowOverlap: '⚠ Board and IMU pockets overlap — increase case width or reduce the IMU width',
     wkPlugWall: d => `⚠ The plugged-in OLED hits the tray wall — make the short side Y at least ${d}mm`,
     wkPlugLow: h => `⚠ The lid sits too low for the plugged-in OLED header — raise ESP section height to about ${h}mm`,
     wkPlugGrip: (g, h) => `⚠ OLED pins only reach ${g}mm into the XIAO — lower ESP section height to about ${h}mm`,
@@ -485,9 +486,9 @@ const STATIC_I18N = {
     wkPinTrim: (stick, keep) => `ℹ ESP pins stick ${stick} mm above the lid — trim them to ${keep} mm or raise the OLED lift`,
     lblWkEspPinsUp: 'SuperMini pins up through lid', lblWkOledLift: 'OLED lift above pins', lblWkPinHoleD: 'Pin hole size',
     wkBatteryFit: (w, d) => `⚠ TW802040 battery needs at least ${w}×${d}mm outside with the current wall`,
-    wkMpuDepthFit: d => `⚠ MPU6050 pocket needs at least ${d}mm on the short side`,
+    wkMpuDepthFit: d => `⚠ IMU pocket needs at least ${d}mm on the short side`,
     wkBatteryHeight: h => `⚠ Battery base needs at least ${h}mm height with the current magnet skin`,
-    wkMpuHeightFit: '⚠ MPU6050 is too thick for the electronics tray and ESP32 clearance',
+    wkMpuHeightFit: '⚠ IMU is too thick for the electronics tray and ESP32 clearance',
     wkHallFit: (d, h) => `⚠ KY-035 upright pocket needs at least ${d}mm on the short side and ${h}mm base height`,
     wkOledFit: (w, d, size) => `⚠ The ${size} OLED pocket needs at least ${w}×${d}mm lid footprint`,
     wtGrpWorkoutSw: 'Power switch (SPDT slide)',
@@ -628,7 +629,7 @@ const STATIC_I18N = {
     lblWkWireX: '배터리선 구멍 X', lblWkWireY: '배터리선 구멍 Y',
     lblWkWireLen: '배터리선 구멍 길이', lblWkWireW: '배터리선 구멍 폭',
     lblWkSwOn: '전원 스위치', lblWkSwY: '스위치 Y', lblWkSwZ: '스위치 높이',
-    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkXiaoLedge: 'XIAO 구멍 끝 턱', lblWkXiaoUsbGrip: 'XIAO USB 안쪽 소켓 깊이', lblWkXiaoRailH: 'XIAO 옆 레일 높이', lblWkXiaoRailLip: 'XIAO 옆 레일 걸림', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 구멍 여유 (+ = 헐겁게)',
+    lblWkDivBar: '칸막이 막대 길이', lblWkDivH: '칸막이 막대 높이', lblWkClipLip: 'XIAO 클립 걸림', lblWkXiaoLedge: 'XIAO 구멍 끝 턱', lblWkXiaoUsbIn: '보드를 USB 벽 쪽으로', hintWkXiaoUsbIn: 'XIAO / nRF 보드를 −X 벽 쪽으로 밀어 USB-C 포트가 바깥면에 더 가깝게 나오게 합니다. 0 = 기존 자리(포트가 바깥면보다 약 2.3mm 안쪽). PCB 끝이 벽 안쪽면에서 0.2mm 떨어지면 더 밀리지 않습니다.', lblWkXiaoUsbGrip: 'XIAO USB 안쪽 소켓 깊이', lblWkXiaoRailH: 'XIAO 옆 레일 높이', lblWkXiaoRailLip: 'XIAO 옆 레일 걸림', lblWkSolderW: '납땜 관통 슬롯 폭', lblWkDivGrow: '칸막이 두껍게 (USB쪽)', lblWkChgX: 'TP4056 X 오프셋', lblWkUsbY: 'USB 구멍 Y', lblWkUsbFit: 'ESP32 USB 구멍 여유 (+ = 헐겁게)',
     lblWkHallGap: '홀센서–자석 간격', lblWkHallT: 'KY-035 설치 두께',
     hintWorkoutCase: '30×10×2mm 자석을 배터리 아래에 둡니다. 사용 시 15×19mm KY-035 보드는 홀소자 끝이 아래로 가도록 옆에 세우며, 내장 자석이 아날로그 출력을 포화시키지 않도록 간격을 조절합니다. 사용을 끄면 슬롯이 없어지고 배터리와 자석이 중앙 정렬됩니다.',
     secWorkoutBoard: '보드', hintWkBoard: '운동 센서의 모든 옵션이 보드별로 따로 저장됩니다. 처음 여는 보드는 지금 값에서 시작합니다.',
@@ -669,16 +670,17 @@ const STATIC_I18N = {
     lblWkXiaoPocketX: 'XIAO / nRF 긴 변 X (USB 방향)',
     lblWkXiaoPocketY: 'XIAO / nRF 짧은 변 Y (핀 열 사이)',
     lblWkEspCaseH: 'ESP 수납부 높이',
-    lblWkMpuPocket: 'MPU6050 자리 깊이', lblWkMpuX: 'MPU6050 X (− = 충전모듈 쪽)', lblWkMpuY: 'MPU6050 Y', lblWkMpuPegD: 'MPU6050 고정 핀 지름', lblWkMpuPegIn: 'MPU6050 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
+    lblWkMpuPocket: 'IMU 자리 깊이', lblWkMpuX: 'IMU X (− = 충전모듈 쪽)', lblWkMpuY: 'IMU Y', lblWkMpuPegD: 'IMU 고정 핀 지름', lblWkMpuPegIn: 'IMU 핀 위치 (모서리에서)', lblWkChgLedge: '충전모듈 받침 턱', lblWkModType: '충전모듈', lblWkChgW: '충전모듈 긴 변 X', lblWkChgD: '충전모듈 짧은 변 Y', lblWkTrayFloor: '2층 바닥 두께', hintWkTrayFloor: '3.4mm 이상이면 1층↔2층 결합 깊이 2.2mm가 유지됩니다. 얇게 하면 보드 포켓이 먼저 없어지고, 그다음 결합이 얕아집니다. 결합이 0.8mm 밑으로 내려가면 텅을 없애고 그냥 얹히는 평판이 됩니다. 바꾸면 1층도 다시 출력하세요.',
     hintWkEspCaseH: 'SuperMini는 뚜껑 케이지 높이, XIAO는 트레이 내부 높이를 조절하며 케이스 전체 높이도 함께 바뀝니다. 너무 낮으면 보드가 닿을 수 있습니다.',
     lblWkOledOn: 'OLED 사용', lblWkOledType: 'OLED 크기', optWkOled096: '0.96" (25×27)', optWkOled049: '0.49" (15×16)', lblWkOledPlug: '0.49" XIAO 핀 직결 (납땜 없음)', hintWkOledPlug: '0.49" 헤더 순서 GND·VCC·SCL·SDA가 XIAO 핀 열 GND·3V3·D10·D9와 같아 OLED를 화면이 위로 오게 보드 위에 눕혀 그대로 꽂습니다. 뚜껑이 위에서 눌러 주고 화면 창만 보입니다. I2C는 SDA=GPIO9, SCL=GPIO10이 되며 MPU6050도 여기에 연결하세요. 핀이 충분히 물리도록 ESP 칸 높이를 낮추세요.',
-    lblWkMpuRot: 'MPU6050 90° 돌려 놓기 (짧은 변 줄이기)', lblWkMpuW: 'MPU6050 폭', lblWkMpuL: 'MPU6050 길이', lblWkMpuH: 'MPU6050 두께',
+    lblWkImuType: 'IMU 모듈', optImuMpu: 'MPU6050 (GY-521, 16×21)', optImuLsm: 'LSM6DS3 (GY-LSM6DS3, 13×18)',
+    lblWkMpuRot: 'IMU 90° 돌려 놓기 (짧은 변 줄이기)', lblWkMpuW: 'IMU 폭', lblWkMpuL: 'IMU 길이', lblWkMpuH: 'IMU 두께',
     hintWorkoutComp: '3단 구조입니다: KY-035+자석+배터리 베이스, MPU6050과 선택한 전원 보드가 놓이는 트레이, 선택형 0.96" 또는 0.49" OLED가 평평한 윗면에 박히고 화면 창만 보이는 베젤로 덮는 뚜껑. OLED 배선은 뚜껑 슬롯을 통과합니다. 실제 배선 전 모듈 실크를 확인하세요.',
     secWorkoutExport: 'STL 내보내기', btnWkExBody: '홀센서 배터리 베이스.stl / .3mf', btnWkExTray: '전자부품 트레이.stl', btnWkExLid: 'ESP32 디스플레이 뚜껑.stl / .3mf', btnWkExBezel: 'OLED 베젤.stl',
     hintWorkoutExport: '베이스와 트레이는 보이는 방향으로 출력하세요. OLED를 끄면 뚜껑은 평평한 윗면이 베드에 닿도록 뒤집혀 저장됩니다. OLED를 켜면 윗면 OLED 포켓이 위를 향하도록 정방향으로 저장되므로 ESP32 케이지 천장과 속을 비운 윗면 스킨에 브리지 설정을 사용하세요. OLED 베젤은 따로 출력(보이는 면이 베드)하고, OLED를 넣은 뒤 베젤을 홈에 눌러 끼우세요(헐거우면 접착제 한 방울). 화면 창만 보이고 나머지는 가려집니다. "전체 파트.3mf"는 지금 설정에 필요한 파트를 모두 오브젝트별로 한 파일에 담고, 위 출력 방향 그대로 베드 위에 나란히 놓습니다. 2색 파트(로고, 불꽃 버튼)는 그 오브젝트 안의 두 파트로 그대로 들어갑니다.',
     workoutDims: (w, l, h, ms) => `운동 센서 ${w} × ${l} × ${h}mm · CSG ${ms}ms`,
-    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'TENSTAR ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : P.wkEspType === 'nrf' ? 'nRF52840 SuperMini (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · MPU6050'}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
-    wkRowOverlap: '⚠ 보드와 MPU6050 포켓이 겹칩니다 — 케이스 폭을 늘리거나 MPU6050 폭을 줄이세요',
+    workoutReady: (hall, oled) => `✓ 적층: ${hall ? 'KY-035 15×19 · ' : ''}30×10×${P.wkMagH} 자석 · 40×20×${P.wkBatH} 셀 · ${P.wkEspType === 'x114' ? 'Seeed XIAO 1.14" IPS (IMU·마이크·충전 내장)' : P.wkEspType === 'tft' ? 'TENSTAR ESP32-S3 1.14" TFT (IMU·충전 내장)' : (P.wkEspType === 'xiao' ? 'XIAO ESP32C3 (자체 충전)' : P.wkEspType === 'nrf' ? 'nRF52840 SuperMini (자체 충전)' : (P.wkModType === 'generic' ? '19×14 충전모듈' : 'TP4056') + ' · ESP32-C3 SuperMini') + ' · ' + imuName()}${oled ? ` · ${P.wkOledType === '049' ? '0.49"' : '0.96"'} OLED` : ''}`,
+    wkRowOverlap: '⚠ 보드와 IMU 포켓이 겹칩니다 — 케이스 폭을 늘리거나 IMU 폭을 줄이세요',
     wkPlugWall: d => `⚠ 직결 OLED가 트레이 벽에 닿습니다 — 짧은 변 Y를 최소 ${d}mm로 늘리세요`,
     wkPlugLow: h => `⚠ 꽂은 OLED 헤더에 비해 뚜껑이 너무 낮습니다 — ESP 칸 높이를 약 ${h}mm로 올리세요`,
     wkPlugGrip: (g, h) => `⚠ OLED 핀이 XIAO에 ${g}mm만 꽂힙니다 — ESP 칸 높이를 약 ${h}mm로 낮추세요`,
@@ -689,9 +691,9 @@ const STATIC_I18N = {
     wkPinTrim: (stick, keep) => `ℹ ESP 핀이 뚜껑 위로 ${stick}mm 나옵니다 — ${keep}mm 이하로 자르거나 OLED 띄움을 늘리세요`,
     lblWkEspPinsUp: 'SuperMini 핀헤더 뚜껑 관통', lblWkOledLift: 'OLED 띄움 높이', lblWkPinHoleD: '핀 구멍 크기',
     wkBatteryFit: (w, d) => `⚠ 현재 벽 두께에서 TW802040 배터리를 넣으려면 외형이 최소 ${w}×${d}mm여야 합니다`,
-    wkMpuDepthFit: d => `⚠ MPU6050 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
+    wkMpuDepthFit: d => `⚠ IMU 포켓을 넣으려면 짧은 변이 최소 ${d}mm여야 합니다`,
     wkBatteryHeight: h => `⚠ 현재 자석 스킨에서 배터리 베이스 높이가 최소 ${h}mm여야 합니다`,
-    wkMpuHeightFit: '⚠ MPU6050이 너무 두꺼워 전자부품 트레이와 ESP32 사이에 들어가지 않습니다',
+    wkMpuHeightFit: '⚠ IMU이 너무 두꺼워 전자부품 트레이와 ESP32 사이에 들어가지 않습니다',
     wkHallFit: (d, h) => `⚠ KY-035 세움 포켓에는 짧은 변 ${d}mm, 베이스 높이 ${h}mm 이상이 필요합니다`,
     wkOledFit: (w, d, size) => `⚠ ${size} OLED 포켓에는 뚜껑 외형이 최소 ${w}×${d}mm 필요합니다`,
     wtGrpWorkoutSw: '전원 스위치 (SPDT 슬라이드)',
@@ -984,10 +986,10 @@ const P = {
   wkHallGap: 1, wkHallT: 3.25,
   wkBoards: {},   // 보드별 운동 센서 옵션 저장본 (현재 보드 값은 P에 그대로 있다)
   wkHallGpio: 0, wkEspType: 'c3mini', wkModType: 'tp4056', wkChgW: 27, wkChgD: 17.3, wkEspCaseH: 5.2,
-  wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
+  wkXiaoPocketX: 22.0, wkXiaoPocketY: 17.8, wkXiaoLedge: 1.5, wkXiaoUsbGrip: 1.0, wkXiaoUsbIn: 0, wkXiaoRailH: 0.8, wkXiaoRailLip: 0.2, wkTrayFloor: 3.4, wkMpuPocket: 1.6, wkMpuX: 0, wkMpuY: 0, wkMpuPegD: 2.6, wkMpuPegIn: 2.5, wkChgLedge: 1.5, wkRev: 16,
   // TENSTAR ESP32-S3 1.14" TFT: 커넥터 높이(PCB 위), USB 끝↔벽 간격(0 = USB-C가 벽 구멍에 바로 닿음), LCD 중심 X(보드 중심 기준), 화면 창
   wkRound: 5.5,   // 케이스 외곽 모서리 반경
-  wkMpuRot: false,
+  wkMpuRot: false, wkImuType: 'mpu6050',   // 가속도·자이로 모듈 (mpu6050 | lsm6ds3)
   wkLoopOn: true, wkLoopD: 2.4, wkLoopBar: 4.0, wkLoopZ: 5.0, wkLoopY: 0,   // 1층 +X 끝면 옆으로 나란한 둥근 구멍 키링 통로 (구멍 지름, 구멍 사이 기둥 폭, 높이, Y 위치)
   wkLogoOn: true, wkLogoL: 13, wkLogoDepth: 0.4, wkLogoY: 0,   // 1층 바닥 가운데 UDO 불꽃 2색 인레이 (불꽃 길이, 깊이, Y 위치)
   wkX114CompD: 5.9, wkX114BtnH: 1.8, wkX114BtnD: 4.5, wkX114LcdRecess: 0.5, wkX114BtnCatch: 0.15, wkX114BtnScoop: 1.8,   // 옆 버튼 C 창 바깥 벌어짐 / LCD 위 상판 밑면 파냄 깊이 / XIAO 1.14": 바닥 윗면↔PCB 밑면(부품 깊이 5.6), 앞 버튼 높이(LCD 쪽 PCB 면 기준)
@@ -1120,7 +1122,7 @@ const sliders = ['W','D','R','wall','fitClr','f1H','f2H','f3H','bossH','standSin
                  'espX','espY','espLift','espBarGap','espZ','espOut','solderD','usbWallT','usbThroat','modY','oledZ','oledProud','batX','wireX','wireY','lidH','swGap',
                  'ledX','ledY','bzX','bzY','bzPinPitch','bzPinD','nfcD','nfcT','nfcBase','nfcX','nfcY',
                  'tWidth','tEdge','tClr','tWall','tBridge','tRound','tFront','tBack',
-                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
+                 'wkWidth','wkLength','wkBodyH','wkBatH','wkWall','wkRound','wkLoopD','wkLoopBar','wkLoopZ','wkLoopY','wkLogoL','wkLogoDepth','wkLogoY','wkFit','wkMagSkin','wkMagH','wkEspCaseH','wkTrayFloor','wkXiaoPocketX','wkXiaoPocketY','wkXiaoUsbIn','wkXiaoLedge','wkXiaoUsbGrip','wkXiaoRailH','wkXiaoRailLip','wkWireX','wkWireY','wkWireLen','wkWireW','wkDivBar','wkDivH','wkClipLip','wkDivGrow','wkSolderW','wkSwY','wkSwZ','wkChgX','wkChgW','wkChgD','wkUsbY','wkUsbFit','wkMpuW','wkMpuL','wkMpuH','wkMpuPocket','wkMpuX','wkMpuY','wkMpuPegD','wkMpuPegIn','wkOledLift','wkPinHoleD','wkChgLedge','wkHallGap','wkHallT',
                  'wkTftBtnUsbX','wkTftBtnUsbY','wkTftBtnLcdX','wkTftBtnLcdY','wkTftBtnH','wkTftCompH','wkTftEndGap','wkTftLcdX','wkTftWinW','wkTftWinD','wkTftWinX','wkX114CompD','wkX114BtnH','wkX114BtnD','wkX114LcdRecess','wkX114BtnCatch','wkX114BtnScoop','wkX114FlexT','wkX114BtnGap','wkX114PinFit','wkLidGrip',
                  'plExt','plOledX','plOledClr',
                  'texDepth','texTile','texRes'];
@@ -1191,10 +1193,10 @@ const applyWorkoutOptionsUI = () => {
     document.getElementById(id).disabled = !mini;
   document.getElementById('wkOledPlug').disabled =
     !(P.wkEspType === 'xiao' && P.wkOledOn && P.wkOledType === '049');
-  for (const id of ['wkXiaoPocketX', 'wkXiaoPocketY', 'wkXiaoLedge', 'wkXiaoUsbGrip', 'wkXiaoRailH', 'wkXiaoRailLip', 'wkClipLip'])
+  for (const id of ['wkXiaoUsbIn', 'wkXiaoPocketX', 'wkXiaoPocketY', 'wkXiaoLedge', 'wkXiaoUsbGrip', 'wkXiaoRailH', 'wkXiaoRailLip', 'wkClipLip'])
     document.getElementById(id).disabled = !xiao;
   // TFT는 IMU·디스플레이가 보드에 있어 MPU6050·OLED·칸막이 설정이 필요 없다.
-  for (const id of ['wkMpuRot', 'wkMpuW', 'wkMpuL', 'wkMpuH', 'wkMpuPocket', 'wkMpuX', 'wkMpuY', 'wkMpuPegD', 'wkMpuPegIn',
+  for (const id of ['wkImuType', 'wkMpuRot', 'wkMpuW', 'wkMpuL', 'wkMpuH', 'wkMpuPocket', 'wkMpuX', 'wkMpuY', 'wkMpuPegD', 'wkMpuPegIn',
                     'wkSolderW', 'wkDivH', 'wkDivBar', 'wkEspCaseH', 'wkOledOn'])
     document.getElementById(id).disabled = tft;
   document.getElementById('wkOledType').disabled = tft || !P.wkOledOn;
@@ -1293,6 +1295,28 @@ applyWorkoutOptionsUI();
 document.getElementById('wkLogoOn').checked = P.wkLogoOn;
 document.getElementById('wkLogoOn').addEventListener('change', e => {
   P.wkLogoOn = e.target.checked;
+  applyWorkoutOptionsUI();
+  queueRebuild();
+});
+// IMU 모듈 종류. 고르면 크기·두께·고정 핀을 그 모듈 기본값으로 바꾸고, 케이스 긴 변(X)은
+// 모듈이 X로 차지하는 길이가 달라진 만큼 같이 늘리거나 줄인다.
+// GY-LSM6DS3는 판매 사진 기준 약 13 × 18 (실측 아님). 고정 구멍 위치를 몰라 핀은 끈다(0).
+const IMU_TYPES = {
+  mpu6050: { w: 16, l: 21, h: 3.5, peg: 2.6, name: 'MPU6050' },
+  lsm6ds3: { w: 13, l: 18, h: 3.0, peg: 0, name: 'LSM6DS3' },
+};
+// 함수 선언(호이스팅)으로 둔다 — 위쪽 i18n 문자열 함수가 이 줄보다 먼저 불릴 수 있다.
+function imuName() { return P.wkImuType === 'lsm6ds3' ? 'LSM6DS3' : 'MPU6050'; }
+document.getElementById('wkImuType').value = P.wkImuType || 'mpu6050';
+document.getElementById('wkImuType').addEventListener('change', e => {
+  const spec = IMU_TYPES[e.target.value] || IMU_TYPES.mpu6050;
+  const footX = () => (P.wkMpuRot ? P.wkMpuL : P.wkMpuW);
+  const x0 = footX();
+  P.wkImuType = e.target.value;
+  [P.wkMpuW, P.wkMpuL, P.wkMpuH, P.wkMpuPegD] = [spec.w, spec.l, spec.h, spec.peg];
+  P.wkWidth = Math.max(44.5, Math.min(70, Math.ceil((P.wkWidth + footX() - x0) * 2) / 2));
+  syncControls();
+  saveParams();
   applyWorkoutOptionsUI();
   queueRebuild();
 });
@@ -1643,6 +1667,7 @@ function syncControls() {
   document.getElementById('wkHallOn').checked = P.wkHallOn;
   document.getElementById('wkLoopOn').checked = P.wkLoopOn;
   document.getElementById('wkMpuRot').checked = !!P.wkMpuRot;
+  document.getElementById('wkImuType').value = P.wkImuType || 'mpu6050';
   document.getElementById('wkLogoOn').checked = P.wkLogoOn;
   document.getElementById('wkEspType').value = P.wkEspType;
   document.getElementById('wkModType').value = P.wkModType;
@@ -3911,11 +3936,12 @@ function renderWireTable() {
     const xiao = P.wkEspType === 'xiao';
     const plug = xiao && P.wkOledOn && P.wkOledType === '049' && P.wkOledPlug;
     const sda = xiao ? 9 : nrf ? 17 : P.sdaGpio, scl = xiao ? 10 : nrf ? 20 : P.sclGpio;
-    grp(t('wtGrpWorkoutMpu'));
-    row(WIRE_COLORS.plus, t('wtMpuVcc'), t('wtEsp3v3'));
-    row(WIRE_COLORS.minus, t('wtMpuGnd'), t('wtEspGnd'));
-    row(WIRE_COLORS.sda, t('wtMpuSda'), pn(sda));
-    row(WIRE_COLORS.scl, t('wtMpuScl'), pn(scl));
+    const im = k => t(k).replace('MPU6050', imuName());
+    grp(im('wtGrpWorkoutMpu'));
+    row(WIRE_COLORS.plus, im('wtMpuVcc'), t('wtEsp3v3'));
+    row(WIRE_COLORS.minus, im('wtMpuGnd'), t('wtEspGnd'));
+    row(WIRE_COLORS.sda, im('wtMpuSda'), pn(sda));
+    row(WIRE_COLORS.scl, im('wtMpuScl'), pn(scl));
     if (P.wkOledOn) {
       grp(t('wtGrpOled'));
       const note = plug ? t('wtPlugNote') : xiao ? t('wtRibbonNote') : undefined;

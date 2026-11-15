@@ -333,9 +333,14 @@ export function initWorkout(env) {
     // 칸막이 자리(2.4)가 모자라 못 당기면 덮개가 남는 깊이까지만 판다.
     const jd = jointDims({ W, D, wall });
     const mpuHalfW = (mpu.w + CLR) / 2, mpuHalfD = (mpu.d + CLR) / 2;
-    // XIAO는 뚜껑 결합 텅보다 안쪽에 놓여야 보드 가장자리가 텅과 충돌하지 않는다.
+    // XIAO/nRF 기본 자리는 뚜껑 결합 텅 안쪽(보드 끝이 텅 안쪽면 + CLR)이라 USB 셸 끝이 바깥면보다
+    // 2mm 넘게 안에 묻힌다. 텅은 트레이 맨 위 JOINT_H에만 있어 보드보다 한참 위이므로,
+    // wkXiaoUsbIn 만큼 보드를 −X 벽 쪽으로 밀 수 있게 한다. PCB 끝이 벽 안쪽면에서 0.2
+    // 떨어진 데까지만 (USB 셸은 벽 구멍 안으로 들어간다).
+    const xiaoPushMax = Math.max(0, (-jd.inW / 2 + CLR) - (-W / 2 + wall + 0.2));
+    const xiaoPush = Math.min(xiaoPushMax, Math.max(0, Number(P.wkXiaoUsbIn) || 0));
     const chargerMin = xiaoOn()
-      ? -jd.inW / 2 + board.w / 2 + CLR
+      ? -jd.inW / 2 + board.w / 2 + CLR - xiaoPush
       : -innerW / 2 + (board.w + CLR) / 2;
     // wkMpuX/wkMpuY로 MPU 자리를 옮긴다. X는 +X 벽에 붙은 자리가 한계이고, 음수면
     // 충전모듈 쪽으로 오되(충전모듈은 -X 끝까지 밀려남) 칸막이 자리 1.2는 남긴다.
@@ -913,11 +918,15 @@ export function initWorkout(env) {
       // XIAO는 포켓 바닥을 통째로 뚫어 1층과 이어 준다. Y는 포켓 폭 그대로라 보드를
       // 비스듬히 기울이면 구멍을 드나들고, 평평하게 놓으면 X 양 끝 턱(wkXiaoLedge)에
       // 걸쳐 앉는다. 포켓은 결합 홈 안쪽에 놓이므로 구멍도 홈을 건드리지 않는다.
-      const holeW = Math.max(4, board.w + CLR - 2 * P.wkXiaoLedge);
+      // 보드를 USB 벽 쪽으로 밀었으면 관통 구멍 X도 결합 홈 안쪽(0.5 남김)까지만 낸다.
+      const hLim = BASE_JOINT_H > 0 ? jointDims(q).inW / 2 - 0.5 : Infinity;
+      const hx0 = Math.max(-hLim, q.chargerX - (board.w + CLR) / 2 + P.wkXiaoLedge);
+      const hx1 = Math.min(hLim, q.chargerX + (board.w + CLR) / 2 - P.wkXiaoLedge);
+      const holeW = Math.max(4, hx1 - hx0), holeX = (hx0 + hx1) / 2;
       // Y는 결합 홈 안쪽에서 0.5씩 남긴 데까지만 (좁은 케이스에서 홈 천장을 뚫지 않게)
       const holeD = BASE_JOINT_H > 0 ? Math.min(board.d + CLR, jointDims(q).inD - 1.0) : board.d + CLR;
       tray = sub(tray, boxBrush(holeW, holeD, TRAY_FLOOR + 0.4,
-                                q.chargerX, q.boardY, -0.2, 0.6));
+                                holeX, q.boardY, -0.2, 0.6));
 
       // USB 안쪽 소켓: 벽 안쪽면부터 보드 -X 끝 너머까지 칼라를 세워 USB-C 셸의
       // 양옆과 위를 물고, 셸 밑(돌출부)은 받쳐 준다. 셸 옆 버튼(B/R)에 닿지 않도록
