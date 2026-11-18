@@ -380,7 +380,7 @@ const STATIC_I18N = {
     btnEx1: 'Layer 1.stl', btnEx2: 'Layer 2.stl', btnEx3: 'Layer 3.stl', btnEx4: 'Layer 4.stl',
     btnEx5: 'OLED pod.stl', btnEx6: 'OLED cover.stl', btnExOledTest: 'OLED test.stl',
     lblFlip3: 'Flip Layer 3 for printing',
-    btnExGlb: '⬇ Assembled.glb', lblGlbInc: 'Include in the .glb',
+    btnExAll3mf: '⬇ All parts.3mf', btnExGlb: '⬇ Assembled.glb', lblGlbInc: 'Include in the .glb',
     glbF1: 'Layer 1', glbF2: 'Layer 2', glbF3: 'Layer 3', glbLid: 'Layer 4 (lid)',
     glbGhosts: 'Components', glbChar: 'Dim sum character',
     glbEmpty: '\u26a0 Nothing is selected for the .glb',
@@ -590,7 +590,7 @@ const STATIC_I18N = {
     btnEx1: '1층.stl', btnEx2: '2층.stl', btnEx3: '3층.stl', btnEx4: '4층.stl',
     btnEx5: 'OLED포드.stl', btnEx6: 'OLED커버.stl', btnExOledTest: 'OLED 테스트.stl',
     lblFlip3: '3층 출력용 뒤집기',
-    btnExGlb: '⬇ 조립본.glb', lblGlbInc: '.glb에 포함',
+    btnExAll3mf: '⬇ 전체 파트.3mf', btnExGlb: '⬇ 조립본.glb', lblGlbInc: '.glb에 포함',
     glbF1: '1층', glbF2: '2층', glbF3: '3층', glbLid: '4층(뚜껍)',
     glbGhosts: '부품', glbChar: '딕섬 캐릭터',
     glbEmpty: '⚠ .glb에 넣을 항목이 하나도 선택되지 않았습니다',
@@ -4756,8 +4756,9 @@ function download3MFObjects(objects, name, title = 'model', layout = true) {
   downloadBlob(new Blob([zip], { type: 'model/3mf' }), name);
 }
 
-function exportFloor(i, name) {
-  if (!exportGeos[i]) return;
+// 출력 방향으로 정렬한 층 지오메트리 (STL 하나 / 전체 3MF 공용). 없으면 null.
+function floorPrintGeo(i) {
+  if (!exportGeos[i]) return null;
   let geo = (texGeos[i] || exportGeos[i]).clone();   // 무늬가 켜져 있으면 무늬 있는 쪽
   if (i === 2 && document.getElementById('flip3').checked) {
     geo.rotateX(Math.PI);
@@ -4769,7 +4770,23 @@ function exportFloor(i, name) {
     geo.computeBoundingBox();
     geo.translate(0, 0, -geo.boundingBox.min.z);
   }
-  downloadSTL(geo, name);
+  return geo;
+}
+function exportFloor(i, name) {
+  const geo = floorPrintGeo(i);
+  if (geo) downloadSTL(geo, name);
+}
+
+// 지금 설정에서 켜진 파트를 전부 출력 방향 그대로 3MF 한 파일에 (오브젝트별로 베드에 나란히).
+const FLOOR_FILES = ['floor1_battery', 'floor2_esp32', 'floor3_switch_lid', 'floor4_bun_lid', 'oled_pod', 'oled_back_cover'];
+function exportAll3MF() {
+  const objs = [];
+  FLOOR_FILES.forEach((name, i) => {
+    const geo = floorPrintGeo(i);
+    if (geo) objs.push({ name, parts: [{ geo, name }] });
+  });
+  if (!objs.length) return;
+  download3MFObjects(objs, 'dimsum_clicker_all_parts.3mf', 'dimsum_clicker');
 }
 
 // 테스트 내보내기: 조립 위치의 1·2층에서 OLED 타워 주변만 크롭한 조각.
@@ -4818,6 +4835,7 @@ document.getElementById('ex4').addEventListener('click', () => exportFloor(3, 'f
 document.getElementById('ex5').addEventListener('click', () => exportFloor(4, 'oled_pod.stl'));
 document.getElementById('ex6').addEventListener('click', () => exportFloor(5, 'oled_back_cover.stl'));
 document.getElementById('exOledTest').addEventListener('click', exportOledTest);
+document.getElementById('exAll3mf').addEventListener('click', exportAll3MF);
 
 // ------------------------------------------------------------------
 // GLB 내보내기 — 모든 층을 조립 위치(분해 0) 그대로 한 파일로 묶는다.
